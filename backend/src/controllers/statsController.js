@@ -1,119 +1,62 @@
-// ================================================================
-// src/controllers/statsController.js — Data Dashboard
-// ================================================================
-// Endpoint yang dipakai frontend:
-//   GET /api/stats → Dashboard.jsx fetch('http://localhost:5000/api/stats')
-//
-// PERHATIAN dari Dashboard.jsx:
-//   const response = await fetch("http://localhost:5000/api/stats");
-//   → Frontend menggunakan port 5000, bukan 3000!
-//   → Kita set server di port 3000 (.env), tapi kita juga perlu
-//     handle alias port ini.
-//   → Solusi: Tambahkan /api/stats ke server 3000
-//     dan suruh frontend ubah ke http://localhost:3000/api/stats
-//
-// Response yang dibutuhkan Dashboard.jsx (INITIAL_STATS):
-//   { success, data: {
-//       totalPesananHariIni, pesananDariKemarin, totalMenu,
-//       totalPengunjung, pengunjungHariIni, pengunjungMingguIni,
-//       pendapatanHariIni
-//   }}
-// ================================================================
 'use strict';
 
 const pool = require('../config/db');
 
 // ── GET /api/stats ────────────────────────────────────────────────
-// Dipakai Dashboard.jsx — polling setiap 5 detik
 exports.getStats = async (_req, res) => {
   try {
     const flatRate = parseInt(process.env.FLAT_RATE) || 75000;
 
-    // Semua query dijalankan paralel untuk performa maksimal
     const [
-      [pesananHariIni],
-      [pesananKemarin],
-      [totalMenu],
-      [pengunjungTotal],
-      [pengunjungHariIni],
-      [pengunjungMinggu],
-      [pendapatan],
+      pesananHariIni,
+      pesananKemarin,
+      totalMenu,
+      pengunjungTotal,
+      pengunjungHariIni,
+      pengunjungMinggu,
+      pendapatan,
     ] = await Promise.all([
-      // Total pesanan hari ini
-      pool.query(
-        `SELECT COUNT(*) AS total FROM pesanan
-         WHERE DATE(waktu_pesan) = CURDATE()`
-      ),
-      // Total pesanan kemarin (untuk hitung selisih)
-      pool.query(
-        `SELECT COUNT(*) AS total FROM pesanan
-         WHERE DATE(waktu_pesan) = CURDATE() - INTERVAL 1 DAY`
-      ),
-      // Total menu aktif (stok > 0)
-      pool.query(
-        `SELECT COUNT(*) AS total FROM menu
-         WHERE is_active = 1 AND status != 'habis'`
-      ),
-      // Total pengunjung (dari visitor_log)
-      pool.query(
-        `SELECT COUNT(*) AS total FROM visitor_log`
-      ),
-      // Pengunjung hari ini
-      pool.query(
-        `SELECT COUNT(*) AS total FROM visitor_log
-         WHERE tanggal = CURDATE()`
-      ),
-      // Pengunjung minggu ini
-      pool.query(
-        `SELECT COUNT(*) AS total FROM visitor_log
-         WHERE YEARWEEK(tanggal, 1) = YEARWEEK(CURDATE(), 1)`
-      ),
-      // Pendapatan hari ini (flat rate × pesanan Selesai hari ini)
-      pool.query(
-        `SELECT COUNT(*) AS total FROM pesanan
-         WHERE DATE(waktu_pesan) = CURDATE()
-           AND status_pesanan = 'Selesai'`
-      ),
+      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE waktu_pesan::date = CURRENT_DATE`),
+      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE waktu_pesan::date = CURRENT_DATE - INTERVAL '1 day'`),
+      pool.query(`SELECT COUNT(*) AS total FROM menu WHERE is_active = true AND status != 'habis'`),
+      pool.query(`SELECT COUNT(*) AS total FROM visitor_log`),
+      pool.query(`SELECT COUNT(*) AS total FROM visitor_log WHERE tanggal = CURRENT_DATE`),
+      pool.query(`SELECT COUNT(*) AS total FROM visitor_log WHERE DATE_TRUNC('week', tanggal) = DATE_TRUNC('week', CURRENT_DATE)`),
+      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE waktu_pesan::date = CURRENT_DATE AND status_pesanan = 'Selesai'`),
     ]);
 
-    const totalHariIni = pesananHariIni[0].total;
-    const totalKemarin = pesananKemarin[0].total;
+    const totalHariIni = parseInt(pesananHariIni.rows[0].total);
+    const totalKemarin = parseInt(pesananKemarin.rows[0].total);
 
     return res.status(200).json({
       success: true,
       data: {
         totalPesananHariIni: totalHariIni,
         pesananDariKemarin:  totalHariIni - totalKemarin,
-        totalMenu:           totalMenu[0].total,
-        totalPengunjung:     pengunjungTotal[0].total,
-        pengunjungHariIni:   pengunjungHariIni[0].total,
-        pengunjungMingguIni: pengunjungMinggu[0].total,
-        pendapatanHariIni:   pendapatan[0].total * flatRate,
+        totalMenu:           parseInt(totalMenu.rows[0].total),
+        totalPengunjung:     parseInt(pengunjungTotal.rows[0].total),
+        pengunjungHariIni:   parseInt(pengunjungHariIni.rows[0].total),
+        pengunjungMingguIni: parseInt(pengunjungMinggu.rows[0].total),
+        pendapatanHariIni:   parseInt(pendapatan.rows[0].total) * flatRate,
       },
     });
   } catch (err) {
     console.error('[statsController.getStats]', err);
-    // Jika DB belum siap, kembalikan data default agar UI tidak kosong
     return res.status(200).json({
       success: true,
       data: {
-        totalPesananHariIni: 0,
-        pesananDariKemarin:  0,
-        totalMenu:           0,
-        totalPengunjung:     0,
-        pengunjungHariIni:   0,
-        pengunjungMingguIni: 0,
-        pendapatanHariIni:   0,
+        totalPesananHariIni: 0, pesananDariKemarin: 0,
+        totalMenu: 0, totalPengunjung: 0,
+        pengunjungHariIni: 0, pengunjungMingguIni: 0, pendapatanHariIni: 0,
       },
     });
   }
 };
 
 // ── GET /api/stats/sales-chart ────────────────────────────────────
-// Dipakai SalesChart.jsx — persentase per kategori
 exports.getSalesChart = async (_req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          CASE
            WHEN k.id_kategori IN (1,2,3,7) THEN 'Dimsum'
@@ -152,13 +95,12 @@ exports.getSalesChart = async (_req, res) => {
 };
 
 // ── GET /api/stats/visitor-chart ──────────────────────────────────
-// Dipakai VisitorChart.jsx — data [{date, visitors}]
 exports.getVisitorChart = async (_req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
-         DATE_FORMAT(tanggal, '%e %b') AS date,
-         COUNT(*)                       AS visitors
+         TO_CHAR(tanggal, 'FMDD Mon') AS date,
+         COUNT(*)                      AS visitors
        FROM visitor_log
        GROUP BY tanggal
        ORDER BY tanggal ASC
@@ -172,16 +114,15 @@ exports.getVisitorChart = async (_req, res) => {
 };
 
 // ── GET /api/stats/recent-orders ─────────────────────────────────
-// Dipakai RecentOrders.jsx — 5 pesanan terbaru
 exports.getRecentOrders = async (_req, res) => {
   try {
     const colors = ['bg-red-100','bg-orange-100','bg-yellow-100','bg-teal-100','bg-purple-100'];
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          p.id_pesanan AS id,
          CONCAT('Meja ', p.no_meja) AS table_name,
          MIN(m.nama_menu)           AS item,
-         DATE_FORMAT(p.waktu_pesan, '%H:%i') AS time,
+         TO_CHAR(p.waktu_pesan, 'HH24:MI') AS time,
          p.no_meja,
          p.status_pesanan           AS status
        FROM pesanan p
@@ -206,36 +147,35 @@ exports.getRecentOrders = async (_req, res) => {
 };
 
 // ── GET /api/stats/stat-cards ─────────────────────────────────────
-// Dipakai StatCards.jsx — 4 kartu statistik
 exports.getStatCards = async (_req, res) => {
   try {
     const flatRate = parseInt(process.env.FLAT_RATE) || 75000;
-    const [[bulanIni], [bulanLalu], [pelanggan], [pendapatan]] = await Promise.all([
+    const [bulanIni, bulanLalu, pelanggan, pendapatan] = await Promise.all([
       pool.query(
         `SELECT COUNT(*) AS total FROM pesanan
-         WHERE YEAR(waktu_pesan)=YEAR(CURDATE())
-           AND MONTH(waktu_pesan)=MONTH(CURDATE())`
+         WHERE EXTRACT(YEAR FROM waktu_pesan) = EXTRACT(YEAR FROM CURRENT_DATE)
+           AND EXTRACT(MONTH FROM waktu_pesan) = EXTRACT(MONTH FROM CURRENT_DATE)`
       ),
       pool.query(
         `SELECT COUNT(*) AS total FROM pesanan
-         WHERE waktu_pesan >= DATE_FORMAT(CURDATE()-INTERVAL 1 MONTH,'%Y-%m-01')
-           AND waktu_pesan  < DATE_FORMAT(CURDATE(),'%Y-%m-01')`
+         WHERE waktu_pesan >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')
+           AND waktu_pesan  < DATE_TRUNC('month', CURRENT_DATE)`
       ),
       pool.query(
         `SELECT COUNT(DISTINCT no_meja) AS total FROM pesanan
-         WHERE YEAR(waktu_pesan)=YEAR(CURDATE())
-           AND MONTH(waktu_pesan)=MONTH(CURDATE())`
+         WHERE EXTRACT(YEAR FROM waktu_pesan) = EXTRACT(YEAR FROM CURRENT_DATE)
+           AND EXTRACT(MONTH FROM waktu_pesan) = EXTRACT(MONTH FROM CURRENT_DATE)`
       ),
       pool.query(
         `SELECT COUNT(*) AS total FROM pesanan
-         WHERE YEAR(waktu_pesan)=YEAR(CURDATE())
-           AND MONTH(waktu_pesan)=MONTH(CURDATE())
-           AND status_pesanan='Selesai'`
+         WHERE EXTRACT(YEAR FROM waktu_pesan) = EXTRACT(YEAR FROM CURRENT_DATE)
+           AND EXTRACT(MONTH FROM waktu_pesan) = EXTRACT(MONTH FROM CURRENT_DATE)
+           AND status_pesanan = 'Selesai'`
       ),
     ]);
 
-    const totalBulanIni  = bulanIni[0].total;
-    const totalBulanLalu = bulanLalu[0].total;
+    const totalBulanIni  = parseInt(bulanIni.rows[0].total);
+    const totalBulanLalu = parseInt(bulanLalu.rows[0].total);
     const pertumbuhan    = totalBulanLalu > 0
       ? Math.round((totalBulanIni - totalBulanLalu) / totalBulanLalu * 100 * 100) / 100
       : null;
@@ -244,8 +184,8 @@ exports.getStatCards = async (_req, res) => {
       success: true,
       data: {
         total_pesanan:   totalBulanIni,
-        pelanggan:       pelanggan[0].total,
-        pendapatan:      pendapatan[0].total * flatRate,
+        pelanggan:       parseInt(pelanggan.rows[0].total),
+        pendapatan:      parseInt(pendapatan.rows[0].total) * flatRate,
         pertumbuhan_pct: pertumbuhan,
       },
     });

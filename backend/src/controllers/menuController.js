@@ -3,7 +3,6 @@
 const pool = require('../config/db');
 const fs   = require('fs');
 
-// ── Helper: tentukan status berdasarkan stok ──────────────────────
 const resolveStatus = (stok) => {
   if (stok === 0)  return 'habis';
   if (stok <= 5)   return 'hampir_habis';
@@ -14,7 +13,7 @@ const resolveStatus = (stok) => {
 // ── GET /api/menus ────────────────────────────────────────────────
 exports.getAllMenus = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT
          m.id_menu        AS id,
          m.nama_menu      AS nama,
@@ -30,15 +29,10 @@ exports.getAllMenus = async (req, res) => {
          k.nama_kategori  AS category
        FROM menu m
        LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-       WHERE m.is_active = 1
+       WHERE m.is_active = true
        ORDER BY k.urutan ASC, m.nama_menu ASC`
     );
-
-    return res.status(200).json({
-      success: true,
-      total:   rows.length,
-      data:    rows,
-    });
+    return res.status(200).json({ success: true, total: rows.length, data: rows });
   } catch (err) {
     console.error('[menuController.getAllMenus]', err);
     return res.status(500).json({ success: false, message: 'Gagal mengambil data menu.' });
@@ -48,10 +42,10 @@ exports.getAllMenus = async (req, res) => {
 // ── GET /api/menus/:id ────────────────────────────────────────────
 exports.getMenuById = async (req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT m.*, k.nama_kategori AS kategori
        FROM menu m LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-       WHERE m.id_menu = ? AND m.is_active = 1`,
+       WHERE m.id_menu = $1 AND m.is_active = true`,
       [req.params.id]
     );
     if (!rows.length)
@@ -67,7 +61,6 @@ exports.getMenuById = async (req, res) => {
 exports.createMenu = async (req, res) => {
   const { nama_menu, id_kategori, stok } = req.body;
 
-  // Validasi input
   const errors = [];
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
     errors.push('nama_menu wajib diisi.');
@@ -85,10 +78,9 @@ exports.createMenu = async (req, res) => {
     return res.status(422).json({ success: false, errors });
   }
 
-  // Verifikasi kategori ada di DB
   try {
-    const [katRows] = await pool.query(
-      'SELECT id_kategori FROM kategori WHERE id_kategori = ? LIMIT 1',
+    const { rows: katRows } = await pool.query(
+      'SELECT id_kategori FROM kategori WHERE id_kategori = $1 LIMIT 1',
       [parsedKategori]
     );
     if (!katRows.length) {
@@ -99,16 +91,16 @@ exports.createMenu = async (req, res) => {
     const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : null;
     const status     = resolveStatus(parsedStok);
 
-    const [result] = await pool.query(
+    const { rows } = await pool.query(
       `INSERT INTO menu (nama_menu, gambar, id_kategori, stok, status)
-        VALUES (?, ?, ?, ?, ?)`,
+        VALUES ($1, $2, $3, $4, $5) RETURNING id_menu`,
       [nama_menu.trim(), gambarPath, parsedKategori, parsedStok, status]
     );
 
     return res.status(201).json({
       success:   true,
       message:   'Menu berhasil ditambahkan.',
-      id_menu:   result.insertId,
+      id_menu:   rows[0].id_menu,
       nama_menu: nama_menu.trim(),
       stok:      parsedStok,
       status,
@@ -121,29 +113,23 @@ exports.createMenu = async (req, res) => {
   }
 };
 
-
-
-
 // ── PUT /api/menus/:id ────────────────────────────────────────────
 exports.updateMenu = async (req, res) => {
-  const { nama_menu, id_kategori, stok, harga, deskripsi } = req.body;
+  const { nama_menu, id_kategori, stok } = req.body;
   const id = req.params.id;
 
   try {
-    // Ambil data lama untuk hapus gambar lama jika ada gambar baru
-    const [existing] = await pool.query(
-      'SELECT gambar FROM menu WHERE id_menu = ? AND is_active = 1', [id]
+    const { rows: existing } = await pool.query(
+      'SELECT gambar FROM menu WHERE id_menu = $1 AND is_active = true', [id]
     );
     if (!existing.length)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
 
-    const parsedStok    = stok    !== undefined ? parseInt(stok, 10)    : undefined;
-    const parsedHarga   = harga   !== undefined ? parseInt(harga, 10)   : undefined;
-    const parsedKat     = id_kategori !== undefined ? parseInt(id_kategori, 10) : undefined;
-    const newStatus     = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
-    const gambarPath    = req.file ? `/uploads/menus/${req.file.filename}` : undefined;
+    const parsedStok = stok !== undefined ? parseInt(stok, 10) : undefined;
+    const parsedKat  = id_kategori !== undefined ? parseInt(id_kategori, 10) : undefined;
+    const newStatus  = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
+    const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : undefined;
 
-    // Hapus file lama jika ada gambar baru
     if (gambarPath && existing[0].gambar) {
       const oldPath = require('path').join(__dirname, '..', '..', 'public', existing[0].gambar);
       fs.unlink(oldPath, () => {});
@@ -151,12 +137,12 @@ exports.updateMenu = async (req, res) => {
 
     await pool.query(
       `UPDATE menu SET
-         nama_menu    = COALESCE(?, nama_menu),
-         gambar       = COALESCE(?, gambar),
-         id_kategori  = COALESCE(?, id_kategori),
-         stok         = COALESCE(?, stok),
-         status       = COALESCE(?, status)
-       WHERE id_menu = ?`,
+         nama_menu    = COALESCE($1, nama_menu),
+         gambar       = COALESCE($2, gambar),
+         id_kategori  = COALESCE($3, id_kategori),
+         stok         = COALESCE($4, stok),
+         status       = COALESCE($5, status)
+       WHERE id_menu = $6`,
       [
         nama_menu?.trim() || null,
         gambarPath || null,
@@ -176,14 +162,13 @@ exports.updateMenu = async (req, res) => {
 };
 
 // ── DELETE /api/menus/:id ─────────────────────────────────────────
-// Soft delete: set is_active = 0, data tidak hilang dari DB
 exports.deleteMenu = async (req, res) => {
   try {
-    const [result] = await pool.query(
-      'UPDATE menu SET is_active = 0 WHERE id_menu = ?',
+    const result = await pool.query(
+      'UPDATE menu SET is_active = false WHERE id_menu = $1',
       [req.params.id]
     );
-    if (result.affectedRows === 0)
+    if (result.rowCount === 0)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
     return res.status(200).json({ success: true, message: 'Menu berhasil dihapus.' });
   } catch (err) {
@@ -193,10 +178,9 @@ exports.deleteMenu = async (req, res) => {
 };
 
 // ── GET /api/menus/kategori ───────────────────────────────────────
-// Untuk dropdown pilihan kategori di form tambah menu
 exports.getKategori = async (_req, res) => {
   try {
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       'SELECT id_kategori, nama_kategori, warna_chart FROM kategori ORDER BY urutan ASC'
     );
     return res.status(200).json({ success: true, data: rows });
