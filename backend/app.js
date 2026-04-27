@@ -49,13 +49,6 @@ app.use(
   })
 );
 
-app.use(cors({
-  origin: [
-    "https://dimsum-house.vercel.app",
-    "https://dimsum-house-admin.vercel.app"
-  ]
-}));
-
 // Rate Limiting: cegah brute-force & DDoS ringan
 // Tiap IP dibatasi 120 request per 15 menit
 app.use(
