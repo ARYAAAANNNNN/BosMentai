@@ -1,26 +1,26 @@
 // ================================================================
-// src/config/db.js — Koneksi Supabase Client
+// src/config/db.js — Koneksi PostgreSQL Supabase via pg Pool
 // ================================================================
 'use strict';
 
-const { createClient } = require('@supabase/supabase-js'); 
+const { Pool } = require('pg');
 require('dotenv').config();
 
-const supabase = createClient(                            
-  process.env.SUPABASE_URL,                              
-  process.env.SUPABASE_SERVICE_ROLE_KEY                  
-);                                                         
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
-supabase                                                  
-  .from('menu')        
-  .select('count')                                        
-  .then(({ error }) => {                                  
-    if (error) throw error;                                
-    console.log(`✅  Supabase terhubung ke project: "${process.env.SUPABASE_URL}"`);
-  })                                                      
-  .catch(err => {                                         
-    console.error('❌  Gagal konek Supabase:', err.message); 
-    console.error('    → Cek SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY di .env');
-  });                                                     
+pool.query('SELECT NOW()')
+  .then(() => {
+    console.log(`✅  PostgreSQL Supabase terhubung`);
+  })
+  .catch(err => {
+    console.error('❌  Gagal konek Supabase:', err.message);
+    console.error('    → Cek DATABASE_URL di .env');
+  });
 
-module.exports = supabase;                             
+module.exports = pool;
