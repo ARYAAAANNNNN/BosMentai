@@ -12,6 +12,7 @@ const resolveStatus = (stok) => {
 
 // ── GET /api/menus ────────────────────────────────────────────────
 exports.getAllMenus = async (req, res) => {
+  console.log('[menuController] Calling getAllMenus. Type of pool.query:', typeof pool.query);
   try {
     const { rows } = await pool.query(
       `SELECT
