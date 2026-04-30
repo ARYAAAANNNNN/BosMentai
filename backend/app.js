@@ -28,20 +28,21 @@ app.use(helmet({
 
 // CORS: batasi domain yang boleh mengakses API
 const allowedOrigins = [
-  process.env.CORS_ORIGIN_ADMIN || 'http://localhost:5174',
-  process.env.CORS_ORIGIN_APP   || 'http://localhost:5173',
+  process.env.CORS_ORIGIN_ADMIN,
+  process.env.CORS_ORIGIN_APP,
   'http://localhost:5173',
   'http://localhost:5174'
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Izinkan request tanpa origin (misal: Postman, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Izinkan jika origin kosong (Postman), ada di daftar, atau domain vercel.app
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
-        callback(new Error(`CORS: Origin '${origin}' tidak diizinkan.`));
+        console.error(`[CORS Blocked] Origin: ${origin}`);
+        callback(null, false); // Ganti error dengan false agar browser yang menangani
       }
     },
     methods:     ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
