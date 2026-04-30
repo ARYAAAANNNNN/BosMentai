@@ -30,7 +30,7 @@ exports.getAllMenus = async (req, res) => {
          k.nama_kategori  AS category
        FROM menu m
        LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-       WHERE m.is_active = true
+       WHERE m.is_active = 1
        ORDER BY k.urutan ASC, m.nama_menu ASC`
     );
     return res.status(200).json({ success: true, total: rows.length, data: rows });
@@ -51,7 +51,7 @@ exports.getMenuById = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT m.*, k.nama_kategori AS kategori
        FROM menu m LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-       WHERE m.id_menu = $1 AND m.is_active = true`,
+       WHERE m.id_menu = $1 AND m.is_active = 1`,
       [req.params.id]
     );
     if (!rows.length)
@@ -126,7 +126,7 @@ exports.updateMenu = async (req, res) => {
 
   try {
     const { rows: existing } = await pool.query(
-      'SELECT gambar FROM menu WHERE id_menu = $1 AND is_active = true', [id]
+      'SELECT gambar FROM menu WHERE id_menu = $1 AND is_active = 1', [id]
     );
     if (!existing.length)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });

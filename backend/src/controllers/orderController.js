@@ -136,7 +136,7 @@ exports.createOrder = async (req, res) => {
 
     for (const { id_menu, jumlah } of items) {
       const { rows: menuRows } = await conn.query(
-        'SELECT id_menu, nama_menu, stok FROM menu WHERE id_menu = $1 AND is_active = true FOR UPDATE',
+        'SELECT id_menu, nama_menu, stok FROM menu WHERE id_menu = $1 AND is_active = 1 FOR UPDATE',
         [id_menu]
       );
 
