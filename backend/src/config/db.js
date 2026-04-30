@@ -17,10 +17,12 @@ const pool = new Pool({
   },
   max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Naikkan ke 10 detik
+  connectionTimeoutMillis: 10000, 
 });
 
-console.log('[db.js] Pool initialized. Type of pool.query:', typeof pool.query);
+const maskedUrl = process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:([^:@]+)@/, ':****@') : 'MISSING';
+console.log('[db.js] Pool initialized. URL:', maskedUrl);
+console.log('[db.js] Type of pool.query:', typeof pool.query);
 
 pool.query('SELECT NOW()')
   .then(() => {

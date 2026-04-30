@@ -36,7 +36,12 @@ exports.getAllMenus = async (req, res) => {
     return res.status(200).json({ success: true, total: rows.length, data: rows });
   } catch (err) {
     console.error('[menuController.getAllMenus]', err);
-    return res.status(500).json({ success: false, message: 'Gagal mengambil data menu.' });
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Gagal mengambil data menu.', 
+      debug: err.message,
+      hint: 'Cek apakah tabel "menu" sudah dibuat di Supabase.'
+    });
   }
 };
 
