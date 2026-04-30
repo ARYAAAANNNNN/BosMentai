@@ -5,7 +5,7 @@ import RecentOrders from "../components/RecentOrders.jsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const API = "http://localhost:3000";
+const API = import.meta.env.VITE_API_URL || "";
 
 // ── helpers ───────────────────────────────────────────────────────
 const toInput = (d) => d.toISOString().split("T")[0];

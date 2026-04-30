@@ -57,7 +57,7 @@ const Sidebar = () => {
 
       <div className="px-3 space-y-1 border-t border-gray-100 pt-4">
 
-        <div className={`${baseStyle} mx-3 text-[#718096] hover:bg-gray-50 font-medium`} onClick={() => window.location.href = "http://localhost:5173"}>
+        <div className={`${baseStyle} mx-3 text-[#718096] hover:bg-gray-50 font-medium`} onClick={() => window.location.href = import.meta.env.VITE_USER_APP_URL || "https://bosmentai.vercel.app"}>
           <ArrowLeftRight size={18} className="mr-3" />
           <span>Beralih ke user</span>
         </div>

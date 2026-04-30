@@ -3,7 +3,7 @@ import { useOrderContext } from '../context/OrderContext';
 import { useParams } from 'react-router-dom';
 import { orderAPI } from '../services/api';
 
-const BACKEND_URL = 'https://dimsumhouse-production-0226.up.railway.app';
+const BACKEND_URL = import.meta.env.VITE_API_URL || '';
 
 
 
