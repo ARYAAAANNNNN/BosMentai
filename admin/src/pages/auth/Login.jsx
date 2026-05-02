@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../../sevices/api'; // Menggunakan typo 'sevices' sesuai folder Anda
+import { authAPI } from '../../services/api'; // Menggunakan typo 'sevices' sesuai folder Anda
 
 const Login = () => {
   const navigate = useNavigate();

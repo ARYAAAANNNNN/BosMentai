@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
-import { statsAPI } from "../sevices/api";
+import { statsAPI } from "../services/api";
 
 const FALLBACK = [
   { name: "Dimsum",    value: 35, color: "#C0534A" },

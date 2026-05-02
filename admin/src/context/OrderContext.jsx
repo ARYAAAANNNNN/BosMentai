@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { menuAPI, orderAPI } from '../sevices/api';
+import { menuAPI, orderAPI } from '../services/api';
 
 const OrderContext = createContext();
 

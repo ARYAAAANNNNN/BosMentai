@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrderContext } from '../context/OrderContext';
-import { STORAGE_URL } from '../sevices/api';
+import { STORAGE_URL } from '../services/api';
 
 const getStatus = (stok) => {
   const n = parseInt(stok) || 0;

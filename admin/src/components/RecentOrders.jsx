@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Armchair } from "lucide-react";
-import { STORAGE_URL, statsAPI } from "../sevices/api";
+import { STORAGE_URL, statsAPI } from "../services/api";
 
 /**
  * RecentOrders

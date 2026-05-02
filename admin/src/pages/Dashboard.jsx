@@ -5,7 +5,7 @@ import { useOrderContext } from "../context/OrderContext.jsx";
 import RecentOrders       from "../components/RecentOrders";
 import SalesChart         from "../components/SalesChart";
 import LineChart          from "./LineChart.jsx";
-import { statsAPI, laporanAPI } from "../sevices/api";
+import { statsAPI, laporanAPI } from "../services/api";
 
 // ─── Helper: Format Rupiah ─────────────────────────────────────────
 const formatRupiah = (angka) =>

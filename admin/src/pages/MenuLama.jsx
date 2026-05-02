@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, X, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { useOrderContext } from '../context/OrderContext';
-import { STORAGE_URL } from '../sevices/api';
+import { STORAGE_URL } from '../services/api';
 
 // ─── Status stok ──────────────────────────────────────────────────────────────
 const getStatus = (stok) => {
@@ -492,4 +492,4 @@ const Menu = () => {
   );
 };
 
-export default Menu;
+export default Menu;
