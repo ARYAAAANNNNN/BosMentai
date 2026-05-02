@@ -1,28 +1,52 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../sevices/api'; // Menggunakan typo 'sevices' sesuai folder Anda
 
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    username: '',
+    password: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   // Handle submit form login
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulasi proses loading 2 detik
-    setTimeout(() => {
+    try {
+      const response = await authAPI.login(formData.username, formData.password);
+      
+      if (response.success) {
+        // Simpan token dan data user ke localStorage
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        setIsLoading(false);
+        setIsSuccess(true);
+
+        // Pindah ke halaman admin setelah animasi selesai
+        setTimeout(() => {
+          setIsSuccess(false);
+          navigate('/admin');
+        }, 1500);
+      } else {
+        throw new Error(response.message || 'Login gagal');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Terjadi kesalahan saat login.');
       setIsLoading(false);
-      setIsSuccess(true);
-
-      // Pindah ke halaman admin setelah animasi selesai
-      setTimeout(() => {
-        setIsSuccess(false);
-        navigate('/admin');
-      }, 1500);
-    }, 2000);
+    }
   };
 
   return (
@@ -65,17 +89,26 @@ const Login = () => {
         {/* Area form login */}
         <div className="px-16 pt-4 pb-16 text-center">
           <h2 className="text-3xl font-bold text-[#1A202C] mb-2">Masuk</h2>
-          <p className="text-gray-500 text-sm mb-10">Masuk untuk melanjutkan pesanan Anda</p>
+          <p className="text-gray-500 text-sm mb-6">Masuk untuk melanjutkan pesanan Anda</p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 text-xs rounded">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="text-left">
 
-            {/* Input email */}
+            {/* Input username (diubah dari email ke username sesuai DB) */}
             <div className="mb-5">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Email :</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Username :</label>
               <input
-                type="email"
-                placeholder="abc@gmail.com"
-                className="w-full px-4 py-3 bg-[#F0F2F5] border border-gray-200 rounded-lg text-gray-500 outline-none text-sm placeholder-gray-400"
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Masukkan username"
+                className="w-full px-4 py-3 bg-[#F0F2F5] border border-gray-200 rounded-lg text-gray-700 outline-none text-sm placeholder-gray-400"
                 required
               />
             </div>
@@ -86,6 +119,9 @@ const Login = () => {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   placeholder="............"
                   className="w-full px-4 py-3 pr-11 bg-[#F0F2F5] border border-gray-200 rounded-lg text-gray-600 outline-none text-sm placeholder-gray-400"
                   required

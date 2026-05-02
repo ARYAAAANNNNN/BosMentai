@@ -13,7 +13,7 @@
 //   Atau gunakan: statsAPI.get() dari file ini
 // ================================================================
 
-const BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
 
 // ── Helper fetch dengan error handling ───────────────────────────
 const apiFetch = async (url, options = {}) => {
@@ -171,5 +171,41 @@ export const laporanAPI = {
     if (dari)   params.set('dari',   dari);
     if (sampai) params.set('sampai', sampai);
     return apiFetch(`${BASE_URL}/laporan/export/pdf?${params}`);
+  },
+};
+
+// ── authAPI ───────────────────────────────────────────────────────
+// Dipakai: Login.jsx, Navbar.jsx, PrivateRoute.jsx
+export const authAPI = {
+  // POST /api/auth/login
+  login: (username, password) =>
+    apiFetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  // POST /api/auth/register
+  register: (data) =>
+    apiFetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // POST /api/auth/logout
+  logout: () => {
+    const token = localStorage.getItem('token');
+    return apiFetch(`${BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // GET /api/auth/me
+  me: () => {
+    const token = localStorage.getItem('token');
+    if (!token) return Promise.reject('No token found');
+    return apiFetch(`${BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   },
 };

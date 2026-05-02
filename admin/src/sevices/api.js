@@ -1,114 +1,88 @@
-const BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
-export const STORAGE_URL = import.meta.env.VITE_API_URL;
+// ================================================================
+// src/services/api.js — API Service Layer
+// ================================================================
+// File ini SAMA PERSIS dipakai di:
+//   admin/src/services/api.js
+//   appdimsum/src/services/api.js
+//
+// BASE_URL selalu http://localhost:3000/api
+//
+// PENTING — Dashboard.jsx harus diubah:
+//   SEBELUM: fetch("http://localhost:5000/api/stats")
+//   SESUDAH: fetch("http://localhost:3000/api/stats")
+//   Atau gunakan: statsAPI.get() dari file ini
+// ================================================================
 
-// ── Helper dengan error handling ─────────────────────────────────
+const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
+
+// ── Helper fetch dengan error handling ───────────────────────────
 const apiFetch = async (url, options = {}) => {
-  let res;
-  try {
-    res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      ...options,
-    });
-  } catch (networkErr) {
-    // Server mati / CORS / URL salah
-    throw new Error(`Tidak dapat terhubung ke server: ${networkErr.message}`);
+  const response = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    ...options,
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || `HTTP Error ${response.status}`);
   }
-
-  // Cek apakah response bertipe JSON sebelum di-parse
-  const contentType = res.headers.get('Content-Type') || '';
-  if (!contentType.includes('application/json')) {
-    throw new Error(
-      `Server mengembalikan bukan JSON (HTTP ${res.status}). ` +
-      `Pastikan VITE_API_URL di file .env sudah benar dan server berjalan.`
-    );
-  }
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
   return data;
 };
 
-// ================================================================
-// menuAPI — CRUD Menu
-// Admin  : tambah/edit/hapus menu
-// AppUser: ambil daftar menu (ganti menuData.js)
-// ================================================================
+// ── menuAPI ───────────────────────────────────────────────────────
+// Dipakai: RestaurantMenu.jsx, OrderContext.jsx, Menu.jsx
 export const menuAPI = {
-  // GET /api/menus — admin semua menu
-  // query: { kategori, status, search }
-  getAll: (query = {}) => {
-    const params = new URLSearchParams(query);
-    return apiFetch(`${BASE_URL}/menus?${params}`);
-  },
+  // GET /api/menus — semua menu aktif
+  getAll: () =>
+    apiFetch(`${BASE_URL}/menus`),
 
-  // GET /api/menus/user — appdimsum MenuPage.jsx (GANTI menuData.js)
-  // Response: { data: [{id, name, category, image, price, stok}], categories }
-  // query: { category: 'Dimsum' } (opsional, default Semua)
-  getForUser: (category = null) => {
-    const params = new URLSearchParams();
-    if (category && category !== 'Semua') params.set('category', category);
-    return apiFetch(`${BASE_URL}/menus/user?${params}`);
-  },
-
-  // GET /api/menus/kategori — daftar kategori untuk dropdown & tab filter
-  getKategori: () =>
-    apiFetch(`${BASE_URL}/menus/kategori`),
-
-  // GET /api/menus/:id
+  // GET /api/menus/:id — satu menu by ID
   getById: (id) =>
     apiFetch(`${BASE_URL}/menus/${id}`),
 
-  // POST /api/menus — tambah menu baru + upload gambar
-  // formData: FormData object { nama_menu, id_kategori, stok, harga, deskripsi, gambar }
-  create: (formData) =>
-    fetch(`${BASE_URL}/menus`, { method: 'POST', body: formData }).then(r => r.json()),
+  // GET /api/menus/kategori — daftar kategori untuk dropdown
+  getKategori: () =>
+    apiFetch(`${BASE_URL}/menus/kategori`),
 
-  // PUT /api/menus/:id — edit menu (hanya field yang dikirim)
-  // formData: FormData object (bisa tanpa gambar jika tidak ganti foto)
+  // POST /api/menus — tambah menu baru dengan gambar
+  // formData harus FormData object (bukan JSON)
+  create: (formData) =>
+    fetch(`${BASE_URL}/menus`, {
+      method: 'POST',
+      body: formData, // JANGAN set Content-Type, biarkan browser set boundary multipart
+    }).then(r => r.json()),
+
+  // PUT /api/menus/:id — edit menu (bisa sekalian ganti gambar)
   update: (id, formData) =>
-    fetch(`${BASE_URL}/menus/${id}`, { method: 'PUT', body: formData }).then(r => r.json()),
+    fetch(`${BASE_URL}/menus/${id}`, {
+      method: 'PUT',
+      body: formData,
+    }).then(r => r.json()),
 
   // DELETE /api/menus/:id — soft delete
   delete: (id) =>
     apiFetch(`${BASE_URL}/menus/${id}`, { method: 'DELETE' }),
-
-  // PATCH /api/menus/:id/stok — update stok manual
-  // body: { stok: 50 }  ATAU  { delta: -2 }
-  updateStok: (id, body) =>
-    apiFetch(`${BASE_URL}/menus/${id}/stok`, {
-      method: 'PATCH',
-      body:   JSON.stringify(body),
-    }),
 };
 
-// ================================================================
-// orderAPI — Manajemen Pesanan
-// ================================================================
+// ── orderAPI ──────────────────────────────────────────────────────
+// Dipakai: Orders.jsx, KelolaPesanan.jsx, DetailPesanan.jsx, ConfirmPage.jsx
 export const orderAPI = {
-  // GET /api/orders — admin list pesanan
-  // query: { status, search, meja }
-  getAll: (query = {}) => {
-    const params = new URLSearchParams(query);
-    return apiFetch(`${BASE_URL}/orders?${params}`);
-  },
+  // GET /api/orders — semua pesanan
+  getAll: () =>
+    apiFetch(`${BASE_URL}/orders`),
 
-  // GET /api/orders/kitchen — KitchenPage (pending/cooking/ready)
-  getKitchen: () =>
-    apiFetch(`${BASE_URL}/orders/kitchen`),
-
-  // GET /api/orders/:id — DetailPesanan.jsx
+  // GET /api/orders/:id — detail satu pesanan (DetailPesanan.jsx)
   getById: (id) =>
     apiFetch(`${BASE_URL}/orders/${id}`),
 
-  // POST /api/orders — buat pesanan baru (ConfirmPage.jsx & MenuPage.jsx)
-  // body: { no_meja: 12, catatan: "...", items: [{id_menu: 1, jumlah: 2}] }
+  // POST /api/orders — buat pesanan baru
+  // data: { no_meja: number, catatan: string, items: [{id_menu, jumlah}] }
   create: (data) =>
     apiFetch(`${BASE_URL}/orders`, {
       method: 'POST',
       body:   JSON.stringify(data),
     }),
 
-  // PATCH /api/orders/:id/status — update status
+  // PATCH /api/orders/:id/status — update status pesanan
   // status: 'pending'|'Menunggu'|'cooking'|'Diproses'|'ready'|'Selesai'
   updateStatus: (id, status) =>
     apiFetch(`${BASE_URL}/orders/${id}/status`, {
@@ -116,16 +90,16 @@ export const orderAPI = {
       body:   JSON.stringify({ status }),
     }),
 
-  // DELETE /api/orders/:id — hapus pesanan
+  // DELETE /api/orders/:id — hapus pesanan (tombol Hapus di Orders.jsx)
   delete: (id) =>
     apiFetch(`${BASE_URL}/orders/${id}`, { method: 'DELETE' }),
 };
 
-// ================================================================
-// statsAPI — Data Dashboard
-// ================================================================
+// ── statsAPI ──────────────────────────────────────────────────────
+// Dipakai: Dashboard.jsx, SalesChart.jsx, VisitorChart.jsx,
+//          RecentOrders.jsx, StatCards.jsx
 export const statsAPI = {
-  // GET /api/stats — Dashboard.jsx (polling 5 detik)
+  // GET /api/stats — Dashboard.jsx polling 5 detik
   // Response: { totalPesananHariIni, pesananDariKemarin, totalMenu,
   //             totalPengunjung, pengunjungHariIni, pengunjungMingguIni, pendapatanHariIni }
   get: () =>
@@ -148,55 +122,90 @@ export const statsAPI = {
     apiFetch(`${BASE_URL}/stats/stat-cards`),
 };
 
-// ================================================================
-// laporanAPI — Laporan Penjualan
-// ================================================================
+// ── laporanAPI ────────────────────────────────────────────────────
+// Dipakai: LaporanMenu.jsx, LaporanPenjualan.jsx
 export const laporanAPI = {
   // GET /api/laporan?dari=&sampai= — tabel laporan
   getAll: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    return apiFetch(`${BASE_URL}/laporan?${p}`);
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    return apiFetch(`${BASE_URL}/laporan?${params}`);
   },
 
-  // GET /api/laporan/summary — 4 kartu statistik LaporanMenu.jsx
+  // GET /api/laporan/summary — 4 kartu statistik
   getSummary: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    return apiFetch(`${BASE_URL}/laporan/summary?${p}`);
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    return apiFetch(`${BASE_URL}/laporan/summary?${params}`);
   },
 
   // GET /api/laporan/top-menu — menu terlaris
   getTopMenu: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    return apiFetch(`${BASE_URL}/laporan/top-menu?${p}`);
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    return apiFetch(`${BASE_URL}/laporan/top-menu?${params}`);
   },
 
   // GET /api/laporan/chart — grafik pesanan per hari
   getChart: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    return apiFetch(`${BASE_URL}/laporan/chart?${p}`);
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    return apiFetch(`${BASE_URL}/laporan/chart?${params}`);
   },
 
-  // Export Excel → buka tab baru untuk download CSV
+  // Export Excel — buka URL langsung di browser untuk download
   exportExcel: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    window.open(`${BASE_URL}/laporan/export/excel?${p}`, '_blank');
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    window.open(`${BASE_URL}/laporan/export/excel?${params}`, '_blank');
   },
 
-  // Export PDF → data JSON untuk generate PDF di frontend
+  // Export PDF data — frontend pakai ini untuk generate PDF
   exportPdf: (dari, sampai) => {
-    const p = new URLSearchParams();
-    if (dari)   p.set('dari',   dari);
-    if (sampai) p.set('sampai', sampai);
-    return apiFetch(`${BASE_URL}/laporan/export/pdf?${p}`);
+    const params = new URLSearchParams();
+    if (dari)   params.set('dari',   dari);
+    if (sampai) params.set('sampai', sampai);
+    return apiFetch(`${BASE_URL}/laporan/export/pdf?${params}`);
+  },
+};
+
+// ── authAPI ───────────────────────────────────────────────────────
+// Dipakai: Login.jsx, Navbar.jsx, PrivateRoute.jsx
+export const authAPI = {
+  // POST /api/auth/login
+  login: (username, password) =>
+    apiFetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+
+  // POST /api/auth/register
+  register: (data) =>
+    apiFetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // POST /api/auth/logout
+  logout: () => {
+    const token = localStorage.getItem('token');
+    return apiFetch(`${BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // GET /api/auth/me
+  me: () => {
+    const token = localStorage.getItem('token');
+    if (!token) return Promise.reject('No token found');
+    return apiFetch(`${BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   },
 };
