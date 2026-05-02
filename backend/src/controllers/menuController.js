@@ -171,7 +171,7 @@ exports.updateMenu = async (req, res) => {
 exports.deleteMenu = async (req, res) => {
   try {
     const result = await pool.query(
-      'UPDATE menu SET is_active = false WHERE id_menu = $1',
+      'UPDATE menu SET is_active = 0 WHERE id_menu = $1',
       [req.params.id]
     );
     if (result.rowCount === 0)
