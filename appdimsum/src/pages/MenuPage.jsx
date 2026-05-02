@@ -65,17 +65,7 @@ const MenuCard = ({ item, onAdd, isAdded }) => {
           </div>
         )}
 
-        {/* Badge kategori */}
-        <span style={{
-          position: 'absolute', top: 10, left: 10,
-          background: 'linear-gradient(135deg,#dc2626,#b91c1c)',
-          color: 'white', fontSize: 10, fontWeight: 700,
-          padding: '3px 10px', borderRadius: 99,
-          boxShadow: '0 2px 6px rgba(185,28,28,0.4)',
-          letterSpacing: '0.5px', textTransform: 'uppercase',
-        }}>
-          {item.kategori}
-        </span>
+        {/* Badge kategori dihapus agar foto lebih bersih */}
 
         {/* Overlay stok habis */}
         {isHabis && (
