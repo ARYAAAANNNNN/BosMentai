@@ -461,7 +461,7 @@ const MenuPage = () => {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#6b7280', fontSize: 14 }}>Status:</span>
-                    <span style={{ fontWeight: 700, color: '#16a34a', fontSize: 14 }}>AYCE — Gratis 🎉</span>
+                    <span style={{ fontWeight: 700, color: '#16a34a', fontSize: 14 }}>AYCE — Gratis </span>
                   </div>
                 </div>
 
