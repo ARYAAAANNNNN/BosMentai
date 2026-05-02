@@ -473,7 +473,7 @@ const MenuPage = () => {
                     fontWeight: 700, cursor: 'pointer', marginBottom: 10, fontSize: 15,
                   }}
                 >
-                  ❌ Hapus Semua
+                  Hapus Semua
                 </button>
 
                 <button
@@ -485,7 +485,7 @@ const MenuPage = () => {
                     boxShadow: '0 5px 18px rgba(34,197,94,0.4)',
                   }}
                 >
-                  ✅ Konfirmasi Pesanan ({totalItems} item)
+                  Konfirmasi Pesanan ({totalItems} item)
                 </button>
               </>
             )}
