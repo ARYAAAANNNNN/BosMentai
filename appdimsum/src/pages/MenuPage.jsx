@@ -314,7 +314,7 @@ const MenuPage = () => {
 
         {filteredMenu.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '64px 20px' }}>
-            <div style={{ fontSize: 60, marginBottom: 16 }}>😔</div>
+            <div style={{ fontSize: 60, marginBottom: 16 }}></div>
             <p style={{ color: '#374151', fontSize: 17, fontWeight: 700 }}>Menu tidak ditemukan</p>
             <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 6 }}>Coba kata kunci lain atau lihat semua menu</p>
             <button
