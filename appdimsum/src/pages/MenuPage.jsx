@@ -12,7 +12,7 @@ const MenuCard = ({ item, onAdd, isAdded }) => {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered]   = useState(false);
   const isHabis = item.stok === 0;
-  const emoji   = '🍽️';
+  const emoji   = '';
 
   return (
     <div
@@ -255,7 +255,7 @@ const MenuPage = () => {
             <div style={{
               background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
               padding: '7px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600,
-            }}>🍽️ Meja {currentTableNumber}</div>
+            }}>Meja {currentTableNumber}</div>
             <button
               onClick={() => setShowCart(true)}
               style={{
@@ -430,7 +430,7 @@ const MenuPage = () => {
                         {item.image
                           ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>
-                              {'🍽️'}
+                              {''}
                             </div>
                         }
                       </div>
@@ -496,7 +496,7 @@ const MenuPage = () => {
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer style={{ borderTop: '1px solid #f3f4f6', padding: '18px 20px', textAlign: 'center' }}>
         <p style={{ color: '#9ca3af', fontSize: 12 }}>
-          📱 Scan QR Code di meja Anda untuk memesan &bull; AYCE Dimsum SmartOrder System
+          Scan QR Code di meja Anda untuk memesan &bull; AYCE Dimsum SmartOrder System
         </p>
       </footer>
     </div>
