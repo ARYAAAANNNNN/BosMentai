@@ -31,9 +31,6 @@ const handleUpload = (req, res, next) => {
 // GET  /api/menus              → RestaurantMenu.jsx, OrderContext.jsx
 router.get('/',              menuController.getAllMenus);
 
-// GET  /api/menus/kategori     → dropdown kategori di form tambah menu
-router.get('/kategori',      menuController.getKategori);
-
 // GET  /api/menus/:id          → detail satu menu
 router.get('/:id',           menuController.getMenuById);
 

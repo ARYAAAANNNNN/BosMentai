@@ -40,10 +40,6 @@ export const menuAPI = {
   getById: (id) =>
     apiFetch(`${BASE_URL}/menus/${id}`),
 
-  // GET /api/menus/kategori — daftar kategori untuk dropdown
-  getKategori: () =>
-    apiFetch(`${BASE_URL}/menus/kategori`),
-
   // POST /api/menus — tambah menu baru dengan gambar
   // formData harus FormData object (bukan JSON)
   create: (formData) =>

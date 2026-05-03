@@ -200,7 +200,7 @@ export default function LaporanPenjualan() {
           <table style={s.table}>
             <thead>
               <tr style={{ background: "#e53e3e" }}>
-                {["Tanggal", "Menu", "Kategori", "Terjual"].map((h) => (
+                {["Tanggal", "Menu", "Terjual"].map((h) => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
@@ -212,7 +212,7 @@ export default function LaporanPenjualan() {
                 </tr>
               ) : detailRows.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={s.tdEmpty}>Tidak ada data pada rentang ini</td>
+                  <td colSpan={3} style={s.tdEmpty}>Tidak ada data pada rentang ini</td>
                 </tr>
               ) : (
                 detailRows.map((row, i) => (
@@ -243,9 +243,6 @@ export default function LaporanPenjualan() {
                       {row.tanggal}
                     </td>
                     <td style={s.td}>{row.menu}</td>
-                    <td style={s.td}>
-                      <span style={s.kategoriChip}>{row.kategori || "—"}</span>
-                    </td>
                     <td style={{ ...s.td, fontWeight: 700, color: "#e53e3e" }}>
                       {row.terjual}
                     </td>
@@ -257,7 +254,7 @@ export default function LaporanPenjualan() {
             {detailRows.length > 0 && (
               <tfoot>
                 <tr style={{ background: "#fef2f2", borderTop: "2px solid #fca5a5" }}>
-                  <td style={s.tfootTd} colSpan={3}>TOTAL KESELURUHAN</td>
+                  <td style={s.tfootTd} colSpan={2}>TOTAL KESELURUHAN</td>
                   <td style={{ ...s.tfootTd, color: "#e53e3e", fontSize: 14 }}>
                     {totalTerjualAll}
                   </td>
@@ -301,10 +298,10 @@ export default function LaporanPenjualan() {
                 // ── Tabel data ───────────────────────────────────
                 autoTable(doc, {
                   startY: 44,
-                  head: [["Tanggal", "Menu", "Kategori", "Terjual"]],
+                  head: [["Tanggal", "Menu", "Terjual"]],
                   body: [
-                    ...json.data.map(r => [r.tanggal, r.menu, r.kategori, r.terjual]),
-                    ["", "", { content: "TOTAL", styles: { fontStyle: "bold" } }, { content: String(json.total_terjual), styles: { fontStyle: "bold", textColor: [229, 62, 62] } }],
+                    ...json.data.map(r => [r.tanggal, r.menu, r.terjual]),
+                    ["", { content: "TOTAL", styles: { fontStyle: "bold" } }, { content: String(json.total_terjual), styles: { fontStyle: "bold", textColor: [229, 62, 62] } }],
                   ],
                   headStyles: {
                     fillColor: [229, 62, 62],
@@ -316,9 +313,8 @@ export default function LaporanPenjualan() {
                   alternateRowStyles: { fillColor: [255, 247, 247] },
                   columnStyles: {
                     0: { cellWidth: 28 },
-                    1: { cellWidth: 80 },
-                    2: { cellWidth: 40 },
-                    3: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+                    1: { cellWidth: 120 },
+                    2: { cellWidth: 22, halign: "center", fontStyle: "bold" },
                   },
                   margin: { left: 14, right: 14 },
                   tableLineColor: [229, 229, 229],
@@ -455,15 +451,7 @@ const s = {
   tdEmpty: { textAlign: "center", padding: 28, color: "#9ca3af" },
   tfootTd: { padding: "11px 18px", textAlign: "left", fontWeight: 700, color: "#374151", fontSize: 12 },
 
-  kategoriChip: {
-    background: "#fef2f2",
-    color: "#e53e3e",
-    padding: "3px 10px",
-    borderRadius: 20,
-    fontSize: 11,
-    fontWeight: 600,
-    border: "1px solid #fecaca",
-  },
+
 
   // export
   exportRow: { display: "flex", justifyContent: "flex-end", gap: 16, paddingBottom: 16 },

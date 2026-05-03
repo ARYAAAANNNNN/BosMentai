@@ -58,26 +58,14 @@ exports.getSalesChart = async (_req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT
-         CASE
-           WHEN k.id_kategori IN (1,2,3,7) THEN 'Dimsum'
-           WHEN k.id_kategori = 4           THEN 'Goreng'
-           WHEN k.id_kategori = 6           THEN 'Dessert'
-           WHEN k.id_kategori = 5           THEN 'Minuman'
-           ELSE                                  'Menu Lain'
-         END AS name,
-         CASE
-           WHEN k.id_kategori IN (1,2,3,7) THEN '#B34949'
-           WHEN k.id_kategori = 4           THEN '#E87A7A'
-           WHEN k.id_kategori = 6           THEN '#D4B5B5'
-           WHEN k.id_kategori = 5           THEN '#9E9E9E'
-           ELSE                                  '#CACACA'
-         END AS color,
+         m.nama_menu AS name,
+         '#B34949' AS color,
          SUM(dp.jumlah) AS total
        FROM detail_pesanan dp
        JOIN menu m ON dp.id_menu = m.id_menu
-       JOIN kategori k ON m.id_kategori = k.id_kategori
-       GROUP BY name, color
-       ORDER BY total DESC`
+       GROUP BY m.id_menu, m.nama_menu
+       ORDER BY total DESC
+       LIMIT 5`
     );
 
     const grandTotal = rows.reduce((s, r) => s + Number(r.total), 0);

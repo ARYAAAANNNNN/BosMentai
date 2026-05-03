@@ -143,14 +143,12 @@ exports.exportPdf = async (req, res) => {
       `SELECT
          TO_CHAR(p.waktu_pesan::date, 'DD/MM/YYYY') AS tanggal,
          m.nama_menu                                  AS menu,
-         COALESCE(k.nama_kategori, '-')               AS kategori,
          SUM(dp.jumlah)                               AS terjual
        FROM detail_pesanan dp
        JOIN pesanan p  ON dp.id_pesanan = p.id_pesanan
        JOIN menu m     ON dp.id_menu    = m.id_menu
-       LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
        WHERE p.waktu_pesan::date BETWEEN $1 AND $2
-       GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu, k.nama_kategori
+       GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu
        ORDER BY p.waktu_pesan::date ASC, terjual DESC`,
       [dari, sampai]
     );
@@ -181,14 +179,12 @@ exports.getDetailMenu = async (req, res) => {
       `SELECT
          TO_CHAR(p.waktu_pesan::date, 'DD/MM/YYYY') AS tanggal,
          m.nama_menu    AS menu,
-         k.nama_kategori AS kategori,
          SUM(dp.jumlah)  AS terjual
        FROM detail_pesanan dp
        JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
        JOIN menu m    ON dp.id_menu    = m.id_menu
-       LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
        WHERE p.waktu_pesan::date BETWEEN $1 AND $2
-       GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu, k.nama_kategori
+       GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu
        ORDER BY p.waktu_pesan::date ASC, terjual DESC`,
       [dari, sampai]
     );

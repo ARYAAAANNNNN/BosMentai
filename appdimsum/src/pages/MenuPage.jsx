@@ -152,11 +152,8 @@ const MenuPage = () => {
   const currentTableNumber = tableId ? parseInt(tableId, 10) : 12;
   const { menuItems, addOrder } = useOrderContext();
 
-  const dynamicCategories = ['Semua', ...new Set(
-    menuItems.map(m => m.kategori || m.category).filter(Boolean)
-  )];
 
-  const [activeCategory, setActiveCategory] = useState('Semua');
+
   const [cart,           setCart]           = useState([]);
   const [addedItems,     setAddedItems]     = useState({});
   const [showCart,       setShowCart]       = useState(false);
@@ -167,16 +164,12 @@ const MenuPage = () => {
   // ── Filter & mapping ──────────────────────────────────────────────────────
   const filteredMenu = menuItems
     .filter(item => {
-      const kat  = item.kategori || item.category || '';
       const nama = (item.nama || item.nama_menu || '').toLowerCase();
-      const matchKat    = activeCategory === 'Semua' || kat === activeCategory;
-      const matchSearch = nama.includes(search.toLowerCase());
-      return matchKat && matchSearch;
+      return nama.includes(search.toLowerCase());
     })
     .map(item => ({
       id:      item.id,
       name:    item.nama || item.nama_menu,
-      kategori: item.kategori || item.category,
       image:   item.image ? `${BACKEND_URL}${item.image}` : null,
       stok:    item.stok !== undefined ? item.stok : 0,
     }));
@@ -270,42 +263,13 @@ const MenuPage = () => {
         </div>
       </header>
 
-      {/* ── Category Tabs ───────────────────────────────────────── */}
-      <div style={{
-        maxWidth: 960, margin: '0 auto', padding: '14px 20px',
-        display: 'flex', gap: 8, overflowX: 'auto',
-        scrollbarWidth: 'none', msOverflowStyle: 'none',
-      }}>
-        {dynamicCategories.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            style={{
-              padding: '8px 20px', borderRadius: 20, border: 'none',
-              fontWeight: 600, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap',
-              transition: 'all 0.2s',
-              background: activeCategory === cat
-                ? 'linear-gradient(135deg,#dc2626,#b91c1c)'
-                : 'white',
-              color: activeCategory === cat ? 'white' : '#374151',
-              boxShadow: activeCategory === cat
-                ? '0 4px 12px rgba(185,28,28,0.4)'
-                : '0 2px 6px rgba(0,0,0,0.08)',
-              transform: activeCategory === cat ? 'scale(1.02)' : 'scale(1)',
-            }}
-          >
-            {cat === 'Semua' ? 'Semua' : cat}
-          </button>
-        ))}
-      </div>
+
 
       {/* ── Menu Container ──────────────────────────────────────── */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px 40px' }}>
         <div style={{ marginBottom: 16 }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1f2937', letterSpacing: '-0.3px' }}>
-            {activeCategory === 'Semua'
-              ? 'Semua Menu'
-              : activeCategory}
+            Semua Menu
           </h2>
           <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 3 }}>
             {filteredMenu.length} menu tersedia &bull; AYCE — Gratis!
@@ -318,7 +282,7 @@ const MenuPage = () => {
             <p style={{ color: '#374151', fontSize: 17, fontWeight: 700 }}>Menu tidak ditemukan</p>
             <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 6 }}>Coba kata kunci lain atau lihat semua menu</p>
             <button
-              onClick={() => { setActiveCategory('Semua'); setSearch(''); }}
+              onClick={() => { setSearch(''); }}
               style={{
                 marginTop: 18, padding: '10px 24px', border: 'none', borderRadius: 12,
                 background: 'linear-gradient(135deg,#dc2626,#b91c1c)',
@@ -426,7 +390,6 @@ const MenuPage = () => {
                       </div>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontWeight: 700, fontSize: 14, color: '#1f2937' }}>{item.name}</p>
-                        <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 1 }}>{item.kategori}</p>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <button

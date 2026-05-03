@@ -21,17 +21,13 @@ exports.getAllMenus = async (req, res) => {
          m.nama_menu,
          m.gambar         AS image,
          m.gambar,
-         m.id_kategori,
          m.stok,
          m.status,
          m.total_dipesan  AS pesanan,
-         m.is_active,
-         k.nama_kategori  AS kategori,
-         k.nama_kategori  AS category
+         m.is_active
        FROM menu m
-       LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
        WHERE m.is_active = 1
-       ORDER BY k.urutan ASC, m.nama_menu ASC`
+       ORDER BY m.nama_menu ASC`
     );
     return res.status(200).json({ success: true, total: rows.length, data: rows });
   } catch (err) {
@@ -49,8 +45,8 @@ exports.getAllMenus = async (req, res) => {
 exports.getMenuById = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT m.*, k.nama_kategori AS kategori
-       FROM menu m LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
+      `SELECT m.*
+       FROM menu m
        WHERE m.id_menu = $1 AND m.is_active = 1`,
       [req.params.id]
     );
@@ -65,15 +61,11 @@ exports.getMenuById = async (req, res) => {
 
 // ── POST /api/menus ───────────────────────────────────────────────
 exports.createMenu = async (req, res) => {
-  const { nama_menu, id_kategori, stok } = req.body;
+  const { nama_menu, stok } = req.body;
 
   const errors = [];
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
     errors.push('nama_menu wajib diisi.');
-
-  const parsedKategori = parseInt(id_kategori, 10);
-  if (isNaN(parsedKategori) || parsedKategori <= 0)
-    errors.push('id_kategori harus berupa angka positif.');
 
   const parsedStok = parseInt(stok, 10);
   if (isNaN(parsedStok) || parsedStok < 0)
@@ -85,22 +77,13 @@ exports.createMenu = async (req, res) => {
   }
 
   try {
-    const { rows: katRows } = await pool.query(
-      'SELECT id_kategori FROM kategori WHERE id_kategori = $1 LIMIT 1',
-      [parsedKategori]
-    );
-    if (!katRows.length) {
-      if (req.file) fs.unlink(req.file.path, () => {});
-      return res.status(404).json({ success: false, message: `Kategori id ${parsedKategori} tidak ditemukan.` });
-    }
-
     const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : null;
     const status     = resolveStatus(parsedStok);
 
     const { rows } = await pool.query(
-      `INSERT INTO menu (nama_menu, gambar, id_kategori, stok, status)
-        VALUES ($1, $2, $3, $4, $5) RETURNING id_menu`,
-      [nama_menu.trim(), gambarPath, parsedKategori, parsedStok, status]
+      `INSERT INTO menu (nama_menu, gambar, stok, status)
+        VALUES ($1, $2, $3, $4) RETURNING id_menu`,
+      [nama_menu.trim(), gambarPath, parsedStok, status]
     );
 
     return res.status(201).json({
@@ -121,7 +104,7 @@ exports.createMenu = async (req, res) => {
 
 // ── PUT /api/menus/:id ────────────────────────────────────────────
 exports.updateMenu = async (req, res) => {
-  const { nama_menu, id_kategori, stok } = req.body;
+  const { nama_menu, stok } = req.body;
   const id = req.params.id;
 
   try {
@@ -132,7 +115,6 @@ exports.updateMenu = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
 
     const parsedStok = stok !== undefined ? parseInt(stok, 10) : undefined;
-    const parsedKat  = id_kategori !== undefined ? parseInt(id_kategori, 10) : undefined;
     const newStatus  = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
     const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : undefined;
 
@@ -145,14 +127,12 @@ exports.updateMenu = async (req, res) => {
       `UPDATE menu SET
          nama_menu    = COALESCE($1, nama_menu),
          gambar       = COALESCE($2, gambar),
-         id_kategori  = COALESCE($3, id_kategori),
-         stok         = COALESCE($4, stok),
-         status       = COALESCE($5, status)
-       WHERE id_menu = $6`,
+         stok         = COALESCE($3, stok),
+         status       = COALESCE($4, status)
+       WHERE id_menu = $5`,
       [
         nama_menu?.trim() || null,
         gambarPath || null,
-        parsedKat  || null,
         parsedStok !== undefined ? parsedStok : null,
         newStatus  || null,
         id,
@@ -183,15 +163,3 @@ exports.deleteMenu = async (req, res) => {
   }
 };
 
-// ── GET /api/menus/kategori ───────────────────────────────────────
-exports.getKategori = async (_req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT id_kategori, nama_kategori, warna_chart FROM kategori ORDER BY urutan ASC'
-    );
-    return res.status(200).json({ success: true, data: rows });
-  } catch (err) {
-    console.error('[menuController.getKategori]', err);
-    return res.status(500).json({ success: false, message: 'Gagal mengambil kategori.' });
-  }
-};

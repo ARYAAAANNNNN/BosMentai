@@ -57,13 +57,13 @@ const Dropdown = ({ value, onChange, options }) => {
   );
 };
 
-const BLANK_FORM = { nama_menu: '', id_kategori: '', stok: '' };
+const BLANK_FORM = { nama_menu: '', stok: '' };
 const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 const ALLOWED_EXTS  = ['.jpg', '.jpeg', '.png'];
 const MAX_SIZE_MB   = 2;
 
 
-const Modal = ({ open, onClose, onSave, editData, categories }) => {
+const Modal = ({ open, onClose, onSave, editData }) => {
   const [form, setForm]         = useState(BLANK_FORM);
   const [preview, setPreview]   = useState(null);
   const [file, setFile]         = useState(null);
@@ -76,7 +76,6 @@ const Modal = ({ open, onClose, onSave, editData, categories }) => {
       setForm(editData
         ? { 
             nama_menu: editData.nama, 
-            id_kategori: String(editData.id_kategori || ''), 
             stok: String(editData.stok ?? '')
           }
         : { ...BLANK_FORM }
@@ -135,15 +134,10 @@ const Modal = ({ open, onClose, onSave, editData, categories }) => {
       alert('Nama menu harus diisi!');
       return;
     }
-    if (!form.id_kategori) {
-      alert('Kategori harus dipilih!');
-      return;
-    }
 
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('nama_menu', form.nama_menu);
-    formData.append('id_kategori', form.id_kategori);
     formData.append('stok', form.stok);
     if (file) {
       formData.append('gambar', file);
@@ -237,32 +231,17 @@ const Modal = ({ open, onClose, onSave, editData, categories }) => {
             />
           </div>
 
-          {/* Kategori & Stok */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kategori</label>
-              <select
-                value={form.id_kategori}
-                onChange={e => setForm({ ...form, id_kategori: e.target.value })}
-                className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm cursor-pointer border border-transparent hover:border-red-100 transition-all"
-              >
-                <option value="">Pilih Kategori</option>
-                {categories.map(k => (
-                  <option key={k.id_kategori} value={k.id_kategori}>{k.nama_kategori}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Stok</label>
-              <input
-                type="number"
-                value={form.stok}
-                onChange={e => setForm({ ...form, stok: e.target.value })}
-                placeholder="0"
-                min={0}
-                className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm"
-              />
-            </div>
+          {/* Stok */}
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Stok</label>
+            <input
+              type="number"
+              value={form.stok}
+              onChange={e => setForm({ ...form, stok: e.target.value })}
+              placeholder="0"
+              min={0}
+              className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm"
+            />
           </div>
         </div>
 
@@ -290,10 +269,9 @@ const Modal = ({ open, onClose, onSave, editData, categories }) => {
 
 // ─── Halaman Utama ─────────────────────────────────────────────────────────────
 const Menu = () => {
-  const { menuItems, categories, tambahMenu, editMenu, hapusMenu, loading, refreshData } = useOrderContext();
+  const { menuItems, tambahMenu, editMenu, hapusMenu, loading, refreshData } = useOrderContext();
 
   const [search,       setSearch]   = useState('');
-  const [kategoriName, setKategoriName] = useState('Semua Kategori');
   const [statusFilter, setStatus]   = useState('Semua Status');
   const [page,         setPage]     = useState(1);
   const [modal,        setModal]    = useState(false);
@@ -310,7 +288,6 @@ const Menu = () => {
   // ── Filter & Pagination ───────────────────────────────────────────────────────
   const filtered = menuItems.filter(m =>
     (m.nama?.toLowerCase().includes(search.toLowerCase()) || m.nama_menu?.toLowerCase().includes(search.toLowerCase())) &&
-    (kategoriName === 'Semua Kategori' || m.kategori === kategoriName || m.category === kategoriName) &&
     (statusFilter === 'Semua Status'   || getStatus(m.stok) === statusFilter)
   );
 
@@ -375,11 +352,6 @@ const Menu = () => {
       {/* Filter & Tambah */}
       <div className="flex flex-wrap items-center gap-3 mb-5">
         <Dropdown
-          value={kategoriName}
-          onChange={v => { setKategoriName(v); setPage(1); }}
-          options={['Semua Kategori', ...categories.map(k => k.nama_kategori)]}
-        />
-        <Dropdown
           value={statusFilter}
           onChange={v => { setStatus(v); setPage(1); }}
           options={STATUS_LIST}
@@ -398,7 +370,7 @@ const Menu = () => {
         <table className="min-w-full">
           <thead>
             <tr className="bg-[#C0392B]">
-              {['No', 'Gambar', 'Nama Menu', 'Kategori', 'Stok', 'Status', 'Aksi'].map(h => (
+              {['No', 'Gambar', 'Nama Menu', 'Stok', 'Status', 'Aksi'].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-bold text-white tracking-wide">{h}</th>
               ))}
             </tr>
@@ -406,7 +378,7 @@ const Menu = () => {
           <tbody>
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400 text-sm">
+                <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
                   Tidak ada menu ditemukan
                 </td>
               </tr>
@@ -423,7 +395,6 @@ const Menu = () => {
                     }
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-800">{item.nama || item.nama_menu}</td>
-                  <td className="px-5 py-3 text-sm text-gray-700">{item.kategori || item.category}</td>
                   <td className="px-5 py-3 text-sm text-gray-700">{item.stok}</td>
                   <td className={`px-5 py-3 text-sm font-semibold ${statusColor[status]}`}>{status}</td>
                   <td className="px-5 py-3">
@@ -476,7 +447,6 @@ const Menu = () => {
       <Modal
         key={editData ? `edit-${editData.id}` : 'new'}
         open={modal}
-        categories={categories}
         onClose={() => { setModal(false); setEditData(null); }}
         onSave={handleSave}
         editData={editData}

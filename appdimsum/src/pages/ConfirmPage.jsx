@@ -47,7 +47,7 @@ const ConfirmPage = () => {
         <div className="w-full max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-gray-600">
-              <span className="text-2xl">🎉</span>
+              <span className="text-2xl"></span>
               <div>
                 <p className="font-semibold text-gray-800">Paket: All You Can Eat</p>
                 <p className="text-xs text-gray-500">Gratis tidak perlu bayar</p>

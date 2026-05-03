@@ -98,31 +98,7 @@
   (248, 134, 81, 1),
   (249, 134, 77, 1);
 
-  -- --------------------------------------------------------
-
-  --
-  -- Struktur dari tabel `kategori`
-  --
-
-  CREATE TABLE `kategori` (
-    `id_kategori` int(10) UNSIGNED NOT NULL,
-    `nama_kategori` varchar(100) NOT NULL,
-    `warna_chart` varchar(7) NOT NULL DEFAULT '#9E9E9E' COMMENT 'Hex color untuk SalesChart',
-    `urutan` tinyint(3) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Urutan tab filter menu',
-    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-    `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Master kategori menu';
-
-  --
-  -- Dumping data untuk tabel `kategori`
-  --
-
-  INSERT INTO `kategori` (`id_kategori`, `nama_kategori`, `warna_chart`, `urutan`, `created_at`, `updated_at`) VALUES
-  (1, 'Dimsum', '#B34949', 1, '2026-04-06 00:31:18', '2026-04-10 23:13:57'),
-  (4, 'Goreng', '#E87A7A', 4, '2026-04-06 00:31:18', '2026-04-06 00:31:18'),
-  (5, 'Minuman', '#9E9E9E', 5, '2026-04-06 00:31:18', '2026-04-06 00:31:18'),
-  (6, 'Dessert', '#D4B5B5', 6, '2026-04-06 00:31:18', '2026-04-06 00:31:18'),
-  (8, 'Lain', '#CACACA', 8, '2026-04-06 00:31:18', '2026-04-10 23:13:57');
+  
 
   -- --------------------------------------------------------
 
@@ -169,7 +145,6 @@
     `id_menu` int(10) UNSIGNED NOT NULL,
     `nama_menu` varchar(150) NOT NULL,
     `gambar` varchar(255) DEFAULT NULL COMMENT 'Path: /uploads/menus/<hex>.ext',
-    `id_kategori` int(10) UNSIGNED NOT NULL,
     `stok` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
     `status` enum('tersedia','menipis','hampir_habis','habis') NOT NULL DEFAULT 'tersedia' COMMENT 'tersedia>20 | menipis6-20 | hampir_habis1-5 | habis=0',
     `total_dipesan` int(10) UNSIGNED NOT NULL DEFAULT 0 COMMENT 'Akumulasi total dipesan',
@@ -575,7 +550,7 @@
   --
   DROP TABLE IF EXISTS `v_menu_card`;
 
-  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_menu_card`  AS SELECT `m`.`id_menu` AS `id_menu`, `m`.`nama_menu` AS `name`, `m`.`gambar` AS `image`, `k`.`nama_kategori` AS `category`, `m`.`harga` AS `harga`, `m`.`stok` AS `stok`, `m`.`status` AS `status`, `m`.`is_active` AS `is_active` FROM (`menu` `m` left join `kategori` `k` on(`m`.`id_kategori` = `k`.`id_kategori`)) WHERE `m`.`is_active` = 1 AND `m`.`status` <> 'habis' ORDER BY `k`.`urutan` ASC, `m`.`nama_menu` ASC ;
+  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_menu_card`  AS SELECT `m`.`id_menu` AS `id_menu`, `m`.`nama_menu` AS `name`, `m`.`gambar` AS `image`, `m`.`harga` AS `harga`, `m`.`stok` AS `stok`, `m`.`status` AS `status`, `m`.`is_active` AS `is_active` FROM `menu` `m` WHERE `m`.`is_active` = 1 AND `m`.`status` <> 'habis' ORDER BY `m`.`nama_menu` ASC ;
 
   -- --------------------------------------------------------
 
@@ -593,7 +568,7 @@
   --
   DROP TABLE IF EXISTS `v_restaurant_menu`;
 
-  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_restaurant_menu`  AS SELECT `m`.`id_menu` AS `id_menu`, `m`.`nama_menu` AS `nama`, `m`.`gambar` AS `image`, `k`.`nama_kategori` AS `kategori`, `m`.`harga` AS `harga`, `m`.`stok` AS `stok`, CASE WHEN `m`.`stok` = 0 THEN 'Habis' WHEN `m`.`stok` <= 5 THEN 'Hampir Habis' WHEN `m`.`stok` <= 20 THEN 'Menipis' ELSE 'Tersedia' END AS `status_display`, `m`.`status` AS `status_db`, `m`.`total_dipesan` AS `pesanan`, `m`.`is_active` AS `is_active` FROM (`menu` `m` left join `kategori` `k` on(`m`.`id_kategori` = `k`.`id_kategori`)) WHERE `m`.`is_active` = 1 ORDER BY `k`.`urutan` ASC, `m`.`nama_menu` ASC ;
+  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_restaurant_menu`  AS SELECT `m`.`id_menu` AS `id_menu`, `m`.`nama_menu` AS `nama`, `m`.`gambar` AS `image`, `m`.`harga` AS `harga`, `m`.`stok` AS `stok`, CASE WHEN `m`.`stok` = 0 THEN 'Habis' WHEN `m`.`stok` <= 5 THEN 'Hampir Habis' WHEN `m`.`stok` <= 20 THEN 'Menipis' ELSE 'Tersedia' END AS `status_display`, `m`.`status` AS `status_db`, `m`.`total_dipesan` AS `pesanan`, `m`.`is_active` AS `is_active` FROM `menu` `m` WHERE `m`.`is_active` = 1 ORDER BY `m`.`nama_menu` ASC ;
 
   -- --------------------------------------------------------
 
@@ -602,7 +577,7 @@
   --
   DROP TABLE IF EXISTS `v_sales_chart`;
 
-  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_sales_chart`  AS SELECT `k`.`nama_kategori` AS `label`, `k`.`warna_chart` AS `color`, coalesce(sum(`dp`.`jumlah`),0) AS `total` FROM (((`kategori` `k` left join `menu` `m` on(`k`.`id_kategori` = `m`.`id_kategori` and `m`.`is_active` = 1)) left join `detail_pesanan` `dp` on(`m`.`id_menu` = `dp`.`id_menu`)) left join `pesanan` `p` on(`dp`.`id_pesanan` = `p`.`id_pesanan` and year(`p`.`waktu_pesan`) = year(curdate()) and month(`p`.`waktu_pesan`) = month(curdate()))) GROUP BY `k`.`id_kategori`, `k`.`nama_kategori`, `k`.`warna_chart`, `k`.`urutan` ORDER BY `k`.`urutan` ASC ;
+  CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_sales_chart`  AS SELECT `m`.`nama_menu` AS `label`, '#B34949' AS `color`, coalesce(sum(`dp`.`jumlah`),0) AS `total` FROM ((`menu` `m` left join `detail_pesanan` `dp` on(`m`.`id_menu` = `dp`.`id_menu`)) left join `pesanan` `p` on(`dp`.`id_pesanan` = `p`.`id_pesanan` and year(`p`.`waktu_pesan`) = year(curdate()) and month(`p`.`waktu_pesan`) = month(curdate()))) WHERE `m`.`is_active` = 1 GROUP BY `m`.`id_menu`, `m`.`nama_menu` ORDER BY `total` DESC LIMIT 5 ;
 
   -- --------------------------------------------------------
 
@@ -670,7 +645,6 @@
   --
   ALTER TABLE `menu`
     ADD PRIMARY KEY (`id_menu`),
-    ADD KEY `idx_menu_kategori` (`id_kategori`),
     ADD KEY `idx_menu_status` (`status`),
     ADD KEY `idx_menu_active` (`is_active`);
 
@@ -793,11 +767,7 @@
     ADD CONSTRAINT `fk_detail_menu` FOREIGN KEY (`id_menu`) REFERENCES `menu` (`id_menu`) ON UPDATE CASCADE,
     ADD CONSTRAINT `fk_detail_pesanan` FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-  --
-  -- Ketidakleluasaan untuk tabel `menu`
-  --
-  ALTER TABLE `menu`
-    ADD CONSTRAINT `fk_menu_kategori` FOREIGN KEY (`id_kategori`) REFERENCES `kategori` (`id_kategori`) ON UPDATE CASCADE;
+
 
   --
   -- Ketidakleluasaan untuk tabel `pesanan`

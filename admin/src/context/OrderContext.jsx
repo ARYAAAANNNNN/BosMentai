@@ -7,7 +7,6 @@ export const OrderProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null); // ← state error koneksi
 
@@ -15,14 +14,12 @@ export const OrderProvider = ({ children }) => {
   const fetchData = async (quiet = false) => {
     try {
       if (!quiet) setLoading(true);
-      const [menuRes, catRes, orderRes] = await Promise.all([
+      const [menuRes, orderRes] = await Promise.all([
         menuAPI.getAll(),
-        menuAPI.getKategori(),
         orderAPI.getAll()
       ]);
 
       if (menuRes.success) setMenuItems(menuRes.data);
-      if (catRes.success)  setCategories(catRes.data);
       if (orderRes.success) setOrders(orderRes.data);
 
       setApiError(null); // koneksi berhasil → reset error
@@ -138,7 +135,7 @@ export const OrderProvider = ({ children }) => {
   return (
     <OrderContext.Provider value={{
       orders, selectedOrder, setSelectedOrder, updateOrderStatus, hapusOrder,
-      menuItems, categories, tambahMenu, editMenu, hapusMenu, updateStok,
+      menuItems, tambahMenu, editMenu, hapusMenu, updateStok,
       loading, apiError, refreshData: fetchData
     }}>
       {children}

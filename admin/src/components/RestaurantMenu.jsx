@@ -38,10 +38,8 @@ const RestaurantMenu = ({ searchTerm = '' }) => {
 
   const filteredItems = menuItems.filter(item => {
     const name     = item.nama || item.nama_menu || item.name || '';
-    const category = item.kategori || item.category || '';
     return (
-      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.toLowerCase().includes(searchTerm.toLowerCase())
+      name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -102,13 +100,10 @@ const RestaurantMenu = ({ searchTerm = '' }) => {
                   )}
                 </div>
 
-                {/* Nama & Kategori */}
+                {/* Nama */}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">
                     {item.nama || item.nama_menu || item.name}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {item.kategori || item.category}
                   </p>
                 </div>
 

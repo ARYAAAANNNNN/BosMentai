@@ -67,7 +67,6 @@ export const OrderProvider = ({ children }) => {
     setMenuItems(prev => [...prev, {
       id:       Date.now(),
       nama:     menuBaru.nama_menu,
-      kategori: menuBaru.category,
       stok:     parseInt(menuBaru.stok) || 0,
       harga:    parseInt(menuBaru.harga) || 0,
       pesanan:  0,
@@ -80,7 +79,6 @@ export const OrderProvider = ({ children }) => {
       item.id === id ? {
         ...item,
         nama:     data.nama_menu  ?? item.nama,
-        kategori: data.category   ?? item.kategori,
         stok:     data.stok !== undefined ? parseInt(data.stok) : item.stok,
         harga:    data.harga !== undefined ? parseInt(data.harga) : item.harga,
         image:    data.image      ?? item.image,
