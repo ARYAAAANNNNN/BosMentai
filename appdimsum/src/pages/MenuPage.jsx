@@ -322,7 +322,19 @@ const MenuPage = () => {
             boxShadow: '0 30px 60px rgba(0,0,0,0.25)',
             animation: 'fadeIn 0.3s ease',
           }}>
-            <div style={{ fontSize: 68, marginBottom: 16 }}>✅</div>
+            <div style={{
+              width: 80, height: 80,
+              background: '#f0fdf4',
+              borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px',
+              color: '#22c55e',
+              fontSize: 40,
+              border: '4px solid #bbf7d0',
+              boxShadow: '0 8px 16px rgba(34,197,94,0.15)',
+            }}>
+              ✓
+            </div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: '#16a34a', marginBottom: 8 }}>Pesanan Dikirim!</h2>
             <p style={{ color: '#6b7280', fontSize: 14 }}>Pesanan Anda sedang diproses di dapur</p>
             <div style={{ marginTop: 16, color: '#9ca3af', fontSize: 13 }}>Kembali ke menu...</div>
