@@ -332,6 +332,8 @@ const Modal = ({ open, onClose, onSave, editData }) => {
   );
 };
 
+const PER_PAGE = 10;
+
 // ─── Halaman Utama ─────────────────────────────────────────────────────────────
 const Menu = () => {
   const { menuItems, tambahMenu, editMenu, hapusMenu, loading, refreshData } = useOrderContext();
