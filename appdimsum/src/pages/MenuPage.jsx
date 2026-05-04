@@ -323,15 +323,14 @@ const MenuPage = () => {
             animation: 'fadeIn 0.3s ease',
           }}>
             <div style={{
-              width: 80, height: 80,
-              background: '#f0fdf4',
+              width: 72, height: 72,
+              background: '#22c55e',
               borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 20px',
-              color: '#22c55e',
-              fontSize: 40,
-              border: '4px solid #bbf7d0',
-              boxShadow: '0 8px 16px rgba(34,197,94,0.15)',
+              margin: '0 auto 24px',
+              color: 'white',
+              fontSize: 38,
+              boxShadow: '0 10px 25px rgba(34,197,94,0.3)',
             }}>
               ✓
             </div>
