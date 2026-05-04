@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useOrderContext } from '../context/OrderContext';
 import { useParams } from 'react-router-dom';
-import { orderAPI } from '../services/api';
+import { orderAPI, STORAGE_URL } from '../services/api';
 
-const BACKEND_URL = import.meta.env.VITE_API_URL || '';
+const BACKEND_URL = STORAGE_URL;
 
 
 
@@ -12,7 +12,7 @@ const MenuCard = ({ item, onAdd, isAdded }) => {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered]   = useState(false);
   const isHabis = item.stok === 0;
-  const emoji   = '';
+  const emoji   = '🥟';
 
   return (
     <div
