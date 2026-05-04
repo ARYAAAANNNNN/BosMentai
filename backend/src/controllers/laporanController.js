@@ -5,7 +5,6 @@ const pool = require('../config/db');
 // ── GET /api/laporan?dari=&sampai= ────────────────────────────────
 exports.getLaporan = async (req, res) => {
   try {
-    const flatRate = parseInt(process.env.FLAT_RATE) || 75000;
     const dari   = req.query.dari   || new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
     const sampai = req.query.sampai || new Date().toISOString().split('T')[0];
 
@@ -15,19 +14,20 @@ exports.getLaporan = async (req, res) => {
          p.waktu_pesan::date                          AS tanggal_raw,
          COUNT(DISTINCT p.id_pesanan)                 AS jumlahpesanan,
          COALESCE(SUM(dp.jumlah), 0)                  AS jumlahitem,
-         COUNT(DISTINCT CASE WHEN p.status_pesanan='Selesai' THEN p.id_pesanan END) * $1 AS pendapatan
+         COALESCE(SUM(p.total_harga), 0)              AS pendapatan
        FROM pesanan p
        LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
-       WHERE p.waktu_pesan::date BETWEEN $2 AND $3
+       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY p.waktu_pesan::date
        ORDER BY p.waktu_pesan::date ASC`,
-      [flatRate, dari, sampai]
+      [dari, sampai]
     );
 
     const data = rows.map(r => ({
       ...r,
       jumlahPesanan: parseInt(r.jumlahpesanan),
       jumlahItem:    parseInt(r.jumlahitem),
+      pendapatan:    parseFloat(r.pendapatan)
     }));
 
     return res.status(200).json({ success: true, dari, sampai, total: data.length, data });
@@ -43,8 +43,8 @@ exports.getSummary = async (req, res) => {
     const dari   = req.query.dari   || new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
     const sampai = req.query.sampai || new Date().toISOString().split('T')[0];
 
-    const [totalPesanan, totalItem, diproses, terlaris] = await Promise.all([
-      pool.query(`SELECT COUNT(*) AS total FROM pesanan`),
+    const [totalPesanan, totalItem, diproses, pendapatan, terlaris] = await Promise.all([
+      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE waktu_pesan::date BETWEEN $1 AND $2`, [dari, sampai]),
       pool.query(
         `SELECT COALESCE(SUM(dp.jumlah), 0) AS total
          FROM detail_pesanan dp
@@ -55,6 +55,11 @@ exports.getSummary = async (req, res) => {
       pool.query(
         `SELECT COUNT(*) AS total FROM pesanan
          WHERE status_pesanan IN ('Diproses','cooking','pending','Menunggu','ready')`
+      ),
+      pool.query(
+        `SELECT COALESCE(SUM(total_harga), 0) AS total FROM pesanan 
+         WHERE status_pesanan = 'Selesai' AND waktu_pesan::date BETWEEN $1 AND $2`,
+        [dari, sampai]
       ),
       pool.query(
         `SELECT m.nama_menu, SUM(dp.jumlah) AS total_qty
@@ -75,12 +80,41 @@ exports.getSummary = async (req, res) => {
         totalPesanan: parseInt(totalPesanan.rows[0].total),
         totalItem:    parseInt(totalItem.rows[0].total),
         diproses:     parseInt(diproses.rows[0].total),
+        pendapatan:   parseFloat(pendapatan.rows[0].total),
         terlaris:     terlaris.rows[0]?.nama_menu || '-',
       },
     });
   } catch (err) {
     console.error('[laporanController.getSummary]', err);
     return res.status(500).json({ success: false, message: 'Gagal ambil summary.' });
+  }
+};
+
+// ── GET /api/laporan/kategori ─────────────────────────────────────
+exports.getLaporanKategori = async (req, res) => {
+  try {
+    const dari   = req.query.dari   || new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+    const sampai = req.query.sampai || new Date().toISOString().split('T')[0];
+
+    const { rows } = await pool.query(
+      `SELECT 
+         k.nama_kategori AS name, 
+         SUM(dp.jumlah) AS qty,
+         SUM(dp.subtotal) AS revenue
+       FROM detail_pesanan dp
+       JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
+       JOIN menu m ON dp.id_menu = m.id_menu
+       JOIN kategori k ON m.id_kategori = k.id_kategori
+       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       GROUP BY k.id_kategori, k.nama_kategori
+       ORDER BY revenue DESC`,
+      [dari, sampai]
+    );
+
+    return res.status(200).json({ success: true, data: rows });
+  } catch (err) {
+    console.error('[laporanController.getLaporanKategori]', err);
+    return res.status(500).json({ success: false, message: 'Gagal ambil laporan kategori.' });
   }
 };
 
@@ -118,7 +152,7 @@ exports.getChart = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT
          TO_CHAR(waktu_pesan::date, 'DD/MM') AS label,
-         COUNT(*) AS total
+         COALESCE(SUM(total_harga), 0) AS total
        FROM pesanan
        WHERE waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY waktu_pesan::date
@@ -143,7 +177,8 @@ exports.exportPdf = async (req, res) => {
       `SELECT
          TO_CHAR(p.waktu_pesan::date, 'DD/MM/YYYY') AS tanggal,
          m.nama_menu                                  AS menu,
-         SUM(dp.jumlah)                               AS terjual
+         SUM(dp.jumlah)                               AS terjual,
+         SUM(dp.subtotal)                             AS total_pendapatan
        FROM detail_pesanan dp
        JOIN pesanan p  ON dp.id_pesanan = p.id_pesanan
        JOIN menu m     ON dp.id_menu    = m.id_menu
@@ -154,13 +189,15 @@ exports.exportPdf = async (req, res) => {
     );
 
     const totalTerjual = rows.reduce((s, r) => s + Number(r.terjual), 0);
+    const totalPendapatan = rows.reduce((s, r) => s + Number(r.total_pendapatan), 0);
 
     return res.status(200).json({
       success:       true,
-      nama_restoran: 'Bos Mentai & Dimsum',
+      nama_restoran: 'Bos Mentai',
       periode:       `${dari} s/d ${sampai}`,
       dicetak:       new Date().toLocaleDateString('id-ID', { dateStyle: 'full' }),
       total_terjual: totalTerjual,
+      total_pendapatan: totalPendapatan,
       data:          rows,
     });
   } catch (err) {

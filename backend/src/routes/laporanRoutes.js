@@ -14,6 +14,9 @@ router.get('/',               laporanController.getLaporan);
 // 4 kartu statistik — LaporanMenu.jsx CardStat
 router.get('/summary',        laporanController.getSummary);
 
+// Laporan per kategori
+router.get('/kategori',       laporanController.getLaporanKategori);
+
 // Top menu terlaris — LaporanMenu.jsx ListItem
 router.get('/top-menu',       laporanController.getTopMenu);
 

@@ -1,7 +1,6 @@
-'use strict';
-
 const pool = require('../config/db');
-const fs   = require('fs');
+const supabase = require('../config/supabase');
+const fs = require('fs');
 
 const resolveStatus = (stok) => {
   if (stok === 0)  return 'habis';
@@ -10,9 +9,48 @@ const resolveStatus = (stok) => {
   return 'tersedia';
 };
 
+// Helper untuk upload ke Supabase Storage
+const uploadToSupabase = async (file) => {
+  if (!file) return null;
+  
+  const fileExt = file.originalname.split('.').pop();
+  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const fileData = fs.readFileSync(file.path);
+  
+  const { data, error } = await supabase.storage
+    .from('menu-images')
+    .upload(filePath, fileData, {
+      contentType: file.mimetype,
+      upsert: true
+    });
+
+  if (error) {
+    console.error('Error uploading to Supabase:', error);
+    throw new Error('Gagal unggah gambar ke Supabase Storage.');
+  }
+
+  // Hapus file sementara dari server
+  fs.unlink(file.path, () => {});
+  
+  return data.path; // Mengembalikan path di bucket
+};
+
+// Helper untuk hapus dari Supabase Storage
+const deleteFromSupabase = async (path) => {
+  if (!path) return;
+  const { error } = await supabase.storage
+    .from('menu-images')
+    .remove([path]);
+  
+  if (error) {
+    console.error('Error deleting from Supabase:', error);
+  }
+};
+
 // ── GET /api/menus ────────────────────────────────────────────────
 exports.getAllMenus = async (req, res) => {
-  console.log('[menuController] Calling getAllMenus. Type of pool.query:', typeof pool.query);
   try {
     const { rows } = await pool.query(
       `SELECT
@@ -22,6 +60,7 @@ exports.getAllMenus = async (req, res) => {
          m.gambar         AS image,
          m.gambar,
          m.stok,
+         m.harga,
          m.status,
          m.id_kategori,
          m.total_dipesan  AS pesanan,
@@ -36,8 +75,7 @@ exports.getAllMenus = async (req, res) => {
     return res.status(500).json({ 
       success: false, 
       message: 'Gagal mengambil data menu.', 
-      debug: err.message,
-      hint: 'Cek apakah tabel "menu" sudah dibuat di Supabase.'
+      debug: err.message
     });
   }
 };
@@ -62,7 +100,7 @@ exports.getMenuById = async (req, res) => {
 
 // ── POST /api/menus ───────────────────────────────────────────────
 exports.createMenu = async (req, res) => {
-  const { nama_menu, stok, id_kategori } = req.body;
+  const { nama_menu, stok, id_kategori, harga } = req.body;
 
   const errors = [];
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
@@ -72,19 +110,23 @@ exports.createMenu = async (req, res) => {
   if (isNaN(parsedStok) || parsedStok < 0)
     errors.push('stok tidak boleh negatif.');
 
+  const parsedHarga = parseFloat(harga);
+  if (isNaN(parsedHarga) || parsedHarga < 0)
+    errors.push('harga tidak valid.');
+
   if (errors.length > 0) {
     if (req.file) fs.unlink(req.file.path, () => {});
     return res.status(422).json({ success: false, errors });
   }
 
   try {
-    const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : null;
+    const gambarPath = req.file ? await uploadToSupabase(req.file) : null;
     const status     = resolveStatus(parsedStok);
 
     const { rows } = await pool.query(
-      `INSERT INTO menu (nama_menu, gambar, stok, status, id_kategori)
-        VALUES ($1, $2, $3, $4, $5) RETURNING id_menu`,
-      [nama_menu.trim(), gambarPath, parsedStok, status, id_kategori || 1]
+      `INSERT INTO menu (nama_menu, gambar, stok, status, id_kategori, harga)
+        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_menu`,
+      [nama_menu.trim(), gambarPath, parsedStok, status, id_kategori || 1, parsedHarga]
     );
 
     return res.status(201).json({
@@ -93,6 +135,7 @@ exports.createMenu = async (req, res) => {
       id_menu:   rows[0].id_menu,
       nama_menu: nama_menu.trim(),
       stok:      parsedStok,
+      harga:     parsedHarga,
       status,
       gambar:    gambarPath,
     });
@@ -105,7 +148,7 @@ exports.createMenu = async (req, res) => {
 
 // ── PUT /api/menus/:id ────────────────────────────────────────────
 exports.updateMenu = async (req, res) => {
-  const { nama_menu, stok, id_kategori } = req.body;
+  const { nama_menu, stok, id_kategori, harga } = req.body;
   const id = req.params.id;
 
   try {
@@ -115,13 +158,17 @@ exports.updateMenu = async (req, res) => {
     if (!existing.length)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
 
-    const parsedStok = stok !== undefined ? parseInt(stok, 10) : undefined;
-    const newStatus  = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
-    const gambarPath = req.file ? `/uploads/menus/${req.file.filename}` : undefined;
-
-    if (gambarPath && existing[0].gambar) {
-      const oldPath = require('path').join(__dirname, '..', '..', 'public', existing[0].gambar);
-      fs.unlink(oldPath, () => {});
+    const parsedStok  = stok !== undefined ? parseInt(stok, 10) : undefined;
+    const parsedHarga = harga !== undefined ? parseFloat(harga) : undefined;
+    const newStatus   = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
+    
+    let gambarPath = undefined;
+    if (req.file) {
+      gambarPath = await uploadToSupabase(req.file);
+      // Hapus gambar lama dari Supabase
+      if (existing[0].gambar) {
+        await deleteFromSupabase(existing[0].gambar);
+      }
     }
 
     await pool.query(
@@ -130,14 +177,16 @@ exports.updateMenu = async (req, res) => {
          gambar       = COALESCE($2, gambar),
          stok         = COALESCE($3, stok),
          status       = COALESCE($4, status),
-         id_kategori  = COALESCE($5, id_kategori)
-       WHERE id_menu = $6`,
+         id_kategori  = COALESCE($5, id_kategori),
+         harga        = COALESCE($6, harga)
+       WHERE id_menu = $7`,
       [
         nama_menu?.trim() || null,
         gambarPath || null,
         parsedStok !== undefined ? parsedStok : null,
         newStatus  || null,
         id_kategori || null,
+        parsedHarga !== undefined ? parsedHarga : null,
         id,
       ]
     );
@@ -153,12 +202,19 @@ exports.updateMenu = async (req, res) => {
 // ── DELETE /api/menus/:id ─────────────────────────────────────────
 exports.deleteMenu = async (req, res) => {
   try {
+    const { rows } = await pool.query('SELECT gambar FROM menu WHERE id_menu = $1', [req.params.id]);
+    
     const result = await pool.query(
       'UPDATE menu SET is_active = 0 WHERE id_menu = $1',
       [req.params.id]
     );
+    
     if (result.rowCount === 0)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
+
+    // Optional: Hapus gambar dari Supabase saat hapus menu (atau biarkan jika hanya soft delete)
+    // if (rows[0]?.gambar) await deleteFromSupabase(rows[0].gambar);
+
     return res.status(200).json({ success: true, message: 'Menu berhasil dihapus.' });
   } catch (err) {
     console.error('[menuController.deleteMenu]', err);

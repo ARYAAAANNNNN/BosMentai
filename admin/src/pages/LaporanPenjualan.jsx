@@ -18,42 +18,31 @@ export default function LaporanPenjualan() {
   const [endDate,   setEndDate]   = useState(today());
 
   // real-time state
-  const [summary,     setSummary]     = useState(null);
-  const [detailRows,  setDetailRows]  = useState([]);
-  const [chartData,   setChartData]   = useState([]);
-  const [loading,     setLoading]     = useState(false);
-  const [animCards,   setAnimCards]   = useState(false);
-  const [toast,       setToast]       = useState(null);
-  const [selectedRow, setSelectedRow] = useState(null);
-
-  const showToast = (msg, color = "#22c55e") => {
-    setToast({ msg, color });
-    clearTimeout(window._toastT);
-    window._toastT = setTimeout(() => setToast(null), 2500);
-  };
+  const [categoryRows, setCategoryRows] = useState([]);
 
   const fetchAll = useCallback(async (dari, sampai, quiet = false) => {
     if (!quiet) setLoading(true);
     try {
       const qs = `dari=${dari}&sampai=${sampai}`;
-      const [sumRes, detailRes, chartRes] = await Promise.all([
+      const [sumRes, detailRes, chartRes, catRes] = await Promise.all([
         fetch(`${API}/api/laporan/summary?${qs}`),
         fetch(`${API}/api/laporan/detail-menu?${qs}`),
         fetch(`${API}/api/laporan/chart?${qs}`),
+        fetch(`${API}/api/laporan/kategori?${qs}`),
       ]);
 
-      const [sumJson, detailJson, chartJson] = await Promise.all([
-        sumRes.json(), detailRes.json(), chartRes.json(),
+      const [sumJson, detailJson, chartJson, catJson] = await Promise.all([
+        sumRes.json(), detailRes.json(), chartRes.json(), catRes.json(),
       ]);
 
       if (sumJson.success)    setSummary(sumJson.data);
       if (detailJson.success) setDetailRows(detailJson.data);
+      if (catJson.success)    setCategoryRows(catJson.data);
       if (chartJson.success) {
         setChartData(
           chartJson.data.map((r) => ({
             tanggal: r.label,
-            pesanan: r.total,
-            item:    r.total,
+            pendapatan: r.total,
           }))
         );
       }
@@ -91,13 +80,13 @@ export default function LaporanPenjualan() {
   // ── derived card values ───────────────────────────────────────
   const totalPesanan = summary?.totalPesanan ?? "—";
   const totalItem    = summary?.totalItem    ?? "—";
-  const diproses     = summary?.diproses     ?? "—";
+  const pendapatan   = summary?.pendapatan   ? `Rp ${summary.pendapatan.toLocaleString('id-ID')}` : "Rp 0";
   const terlaris     = summary?.terlaris     ?? "—";
 
   const cards = [
     { label: "Total Pesanan",      value: totalPesanan, sub: "pesanan total",        bg: "#e53e3e" },
-    { label: "Total Menu Terjual", value: totalItem,    sub: "item terjual",          bg: "#d97706" },
-    { label: "Sedang Diproses",    value: diproses,     sub: "pesanan aktif",         bg: "#dc2626" },
+    { label: "Total Pendapatan",   value: pendapatan,   sub: "revenue bersih",        bg: "#d97706" },
+    { label: "Total Menu Terjual", value: totalItem,    sub: "item terjual",          bg: "#dc2626" },
     { label: "Menu Terlaris",      value: terlaris,     sub: "paling banyak dipesan", bg: "#16a34a" },
   ];
 
@@ -195,73 +184,65 @@ export default function LaporanPenjualan() {
           </div>
         </div>
 
-        {/* ── Table: Tanggal | Menu | Kategori | Terjual ── */}
-        <div style={s.tableWrap}>
-          <table style={s.table}>
-            <thead>
-              <tr style={{ background: "#e53e3e" }}>
-                {["Tanggal", "Menu", "Terjual"].map((h) => (
-                  <th key={h} style={s.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {loading && detailRows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={s.tdEmpty}>Memuat data…</td>
+        {/* ── Table: Tanggal | Menu | Terjual ── */}
+        <div style={s.midRow}>
+            <div style={s.tableWrap}>
+            <div style={s.panelTitle}>Rincian Penjualan per Menu</div>
+            <table style={s.table}>
+                <thead>
+                <tr style={{ background: "#e53e3e" }}>
+                    {["Tanggal", "Menu", "Terjual"].map((h) => (
+                    <th key={h} style={s.th}>{h}</th>
+                    ))}
                 </tr>
-              ) : detailRows.length === 0 ? (
-                <tr>
-                  <td colSpan={3} style={s.tdEmpty}>Tidak ada data pada rentang ini</td>
+                </thead>
+                <tbody>
+                {detailRows.length === 0 ? (
+                    <tr>
+                    <td colSpan={3} style={s.tdEmpty}>Tidak ada data pada rentang ini</td>
+                    </tr>
+                ) : (
+                    detailRows.slice(0, 10).map((row, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+                        <td style={s.td}>{row.tanggal}</td>
+                        <td style={s.td}>{row.menu}</td>
+                        <td style={{ ...s.td, fontWeight: 700, color: "#e53e3e" }}>{row.terjual}</td>
+                    </tr>
+                    ))
+                )}
+                </tbody>
+            </table>
+            </div>
+
+            <div style={s.tableWrap}>
+            <div style={s.panelTitle}>Laporan per Kategori</div>
+            <table style={s.table}>
+                <thead>
+                <tr style={{ background: "#d97706" }}>
+                    {["Kategori", "Item Terjual", "Pendapatan"].map((h) => (
+                    <th key={h} style={s.th}>{h}</th>
+                    ))}
                 </tr>
-              ) : (
-                detailRows.map((row, i) => (
-                  <tr key={i}
-                    onClick={() => {
-                      setSelectedRow(i === selectedRow ? null : i);
-                      showToast(`${row.menu} — ${row.terjual} terjual`, "#374151");
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedRow !== i)
-                        e.currentTarget.style.background = "#fff7f7";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedRow !== i)
-                        e.currentTarget.style.background =
-                          i % 2 === 0 ? "#fff" : "#fafafa";
-                    }}
-                    style={{
-                      background: selectedRow === i
-                        ? "#fef2f2"
-                        : i % 2 === 0 ? "#fff" : "#fafafa",
-                      cursor: "pointer",
-                      borderLeft: selectedRow === i
-                        ? "3px solid #e53e3e"
-                        : "3px solid transparent",
-                    }}>
-                    <td style={{ ...s.td, fontWeight: selectedRow === i ? 700 : 400 }}>
-                      {row.tanggal}
-                    </td>
-                    <td style={s.td}>{row.menu}</td>
-                    <td style={{ ...s.td, fontWeight: 700, color: "#e53e3e" }}>
-                      {row.terjual}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-            {/* ── Footer: total keseluruhan ── */}
-            {detailRows.length > 0 && (
-              <tfoot>
-                <tr style={{ background: "#fef2f2", borderTop: "2px solid #fca5a5" }}>
-                  <td style={s.tfootTd} colSpan={2}>TOTAL KESELURUHAN</td>
-                  <td style={{ ...s.tfootTd, color: "#e53e3e", fontSize: 14 }}>
-                    {totalTerjualAll}
-                  </td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
+                </thead>
+                <tbody>
+                {categoryRows.length === 0 ? (
+                    <tr>
+                    <td colSpan={3} style={s.tdEmpty}>Tidak ada data</td>
+                    </tr>
+                ) : (
+                    categoryRows.map((row, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+                        <td style={s.td}>{row.name}</td>
+                        <td style={s.td}>{row.qty}</td>
+                        <td style={{ ...s.td, fontWeight: 700, color: "#d97706" }}>
+                            Rp {(row.revenue || 0).toLocaleString('id-ID')}
+                        </td>
+                    </tr>
+                    ))
+                )}
+                </tbody>
+            </table>
+            </div>
         </div>
 
         {/* ── Export ── */}

@@ -13,21 +13,20 @@ const getStatus = (stok) => {
 };
 
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
-const KATEGORI_LIST = ['Semua Kategori', 'Dimsum', 'Goreng', 'Dessert', 'Minuman'];
-const PER_PAGE      = 10;
+const KATEGORI_LIST = ['Semua Kategori', 'Makanan', 'Minuman', 'Snack', 'Penutup'];
 
 const categoryMap = {
-  'Dimsum': 1,
-  'Goreng': 4,
-  'Minuman': 5,
-  'Dessert': 6
+  'Makanan': 1,
+  'Minuman': 2,
+  'Snack': 3,
+  'Penutup': 4
 };
 
 const idToCategory = {
-  1: 'Dimsum',
-  4: 'Goreng',
-  5: 'Minuman',
-  6: 'Dessert'
+  1: 'Makanan',
+  2: 'Minuman',
+  3: 'Snack',
+  4: 'Penutup'
 };
 
 const statusColor = {
@@ -72,7 +71,7 @@ const Dropdown = ({ value, onChange, options }) => {
   );
 };
 
-const BLANK_FORM = { nama_menu: '', stok: '', id_kategori: 1 };
+const BLANK_FORM = { nama_menu: '', stok: '', id_kategori: 1, harga: '' };
 const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 const ALLOWED_EXTS  = ['.jpg', '.jpeg', '.png'];
 const MAX_SIZE_MB   = 2;
@@ -94,7 +93,8 @@ const Modal = ({ open, onClose, onSave, editData }) => {
         ? { 
             nama_menu: editData.nama || editData.nama_menu, 
             stok: String(editData.stok ?? ''),
-            id_kategori: editData.id_kategori || editData.kategori_id || 1
+            id_kategori: editData.id_kategori || editData.kategori_id || 1,
+            harga: String(editData.harga ?? '')
           }
         : { ...BLANK_FORM }
       );
@@ -152,12 +152,17 @@ const Modal = ({ open, onClose, onSave, editData }) => {
       alert('Nama menu harus diisi!');
       return;
     }
+    if (!form.harga || isNaN(parseFloat(form.harga))) {
+      alert('Harga harus diisi dengan angka!');
+      return;
+    }
 
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('nama_menu', form.nama_menu);
     formData.append('stok', form.stok);
     formData.append('id_kategori', form.id_kategori);
+    formData.append('harga', form.harga);
     if (file) {
       formData.append('gambar', file);
     }
@@ -188,7 +193,7 @@ const Modal = ({ open, onClose, onSave, editData }) => {
           {/* Upload Foto */}
           <div
             onClick={() => !preview && fileRef.current.click()}
-            className="relative w-full h-64 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-gray-200 hover:border-red-200 transition-all group"
+            className="relative w-full h-48 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-gray-200 hover:border-red-200 transition-all group"
           >
             {preview ? (
               <>
@@ -213,8 +218,8 @@ const Modal = ({ open, onClose, onSave, editData }) => {
             ) : (
               <div className="text-center">
                 <div className="flex justify-center mb-3">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                    <Plus className="w-8 h-8 text-gray-400" />
+                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                    <Plus className="w-6 h-6 text-gray-400" />
                   </div>
                 </div>
                 <p className="text-gray-400 text-sm font-medium">Klik untuk unggah foto</p>
@@ -244,42 +249,17 @@ const Modal = ({ open, onClose, onSave, editData }) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Kategori Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsCatOpen(!isCatOpen)}
-                className="w-full p-4 border border-gray-200 rounded-xl flex items-center justify-between text-sm text-gray-700 outline-none focus:border-[#B34949] transition-colors"
-              >
-                <span className={form.id_kategori ? 'text-gray-700' : 'text-gray-400'}>
-                  {idToCategory[form.id_kategori] || 'Kategori'}
-                </span>
-                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCatOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isCatOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsCatOpen(false)} />
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                    {categories.map(cat => (
-                      <div
-                        key={cat.id}
-                        onClick={() => {
-                          setForm({ ...form, id_kategori: cat.id });
-                          setIsCatOpen(false);
-                        }}
-                        className={`px-4 py-3 text-sm cursor-pointer transition-colors ${
-                          form.id_kategori == cat.id ? 'bg-red-50 text-[#B34949] font-bold' : 'text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {cat.name}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
+            {/* Harga */}
+            <div>
+              <input
+                type="number"
+                value={form.harga}
+                onChange={e => setForm({ ...form, harga: e.target.value })}
+                placeholder="Harga (Rp)"
+                min={0}
+                className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] transition-colors text-sm"
+              />
             </div>
-
             {/* Stok */}
             <div>
               <input
@@ -292,10 +272,46 @@ const Modal = ({ open, onClose, onSave, editData }) => {
               />
             </div>
           </div>
+
+          {/* Kategori Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCatOpen(!isCatOpen)}
+              className="w-full p-4 border border-gray-200 rounded-xl flex items-center justify-between text-sm text-gray-700 outline-none focus:border-[#B34949] transition-colors"
+            >
+              <span className={form.id_kategori ? 'text-gray-700' : 'text-gray-400'}>
+                {idToCategory[form.id_kategori] || 'Kategori'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCatOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isCatOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsCatOpen(false)} />
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                  {categories.map(cat => (
+                    <div
+                      key={cat.id}
+                      onClick={() => {
+                        setForm({ ...form, id_kategori: cat.id });
+                        setIsCatOpen(false);
+                      }}
+                      className={`px-4 py-3 text-sm cursor-pointer transition-colors ${
+                        form.id_kategori == cat.id ? 'bg-red-50 text-[#B34949] font-bold' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {cat.name}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Tombol */}
-        <div className="mt-10 flex gap-4">
+        <div className="mt-8 flex gap-4">
           <button
             onClick={onClose}
             className="flex-1 py-3 text-sm font-bold text-gray-500 bg-gray-200 hover:bg-gray-300 rounded-xl transition-all"
@@ -327,13 +343,6 @@ const Menu = () => {
   const [modal,        setModal]    = useState(false);
   const [editData,     setEditData] = useState(null);
   const [deleteId,     setDeleteId] = useState(null);
-
-  // ── Auto-refresh data jika kosong ──────────────────────────────────────────
-  // React.useEffect(() => {
-  //   if ((!categories || categories.length === 0) && !loading) {
-  //     if (refreshData) refreshData();
-  //   }
-  // }, [categories, loading]);
 
   // ── Filter & Pagination ───────────────────────────────────────────────────────
   const filtered = menuItems.filter(m =>
@@ -426,7 +435,7 @@ const Menu = () => {
         <table className="min-w-full">
           <thead>
             <tr className="bg-[#C0392B]">
-              {['No', 'Gambar', 'Nama Menu', 'Kategori', 'Stok', 'Status', 'Aksi'].map(h => (
+              {['No', 'Gambar', 'Nama Menu', 'Kategori', 'Harga', 'Stok', 'Status', 'Aksi'].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-bold text-white tracking-wide">{h}</th>
               ))}
             </tr>
@@ -434,7 +443,7 @@ const Menu = () => {
           <tbody>
             {paginated.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
+                <td colSpan={8} className="text-center py-12 text-gray-400 text-sm">
                   Tidak ada menu ditemukan
                 </td>
               </tr>
@@ -453,6 +462,9 @@ const Menu = () => {
                   <td className="px-5 py-3 text-sm text-gray-800">{item.nama || item.nama_menu}</td>
                   <td className="px-5 py-3 text-sm text-gray-600">
                     {idToCategory[item.id_kategori || item.kategori_id] || '-'}
+                  </td>
+                  <td className="px-5 py-3 text-sm font-bold text-gray-900">
+                    Rp {(item.harga || 0).toLocaleString('id-ID')}
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-700">{item.stok}</td>
                   <td className={`px-5 py-3 text-sm font-semibold ${statusColor[status]}`}>{status}</td>

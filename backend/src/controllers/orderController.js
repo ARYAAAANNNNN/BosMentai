@@ -114,29 +114,43 @@ exports.createOrder = async (req, res) => {
   if (!Array.isArray(items) || items.length === 0)
     return res.status(422).json({ success: false, message: 'items tidak boleh kosong.' });
 
-  for (let i = 0; i < items.length; i++) {
-    const { id_menu, jumlah } = items[i];
-    if (!Number.isInteger(id_menu) || id_menu <= 0)
-      return res.status(422).json({ success: false, message: `items[${i}].id_menu harus integer positif.` });
-    if (!Number.isInteger(jumlah) || jumlah <= 0 || jumlah > 255)
-      return res.status(422).json({ success: false, message: `items[${i}].jumlah harus 1–255.` });
-  }
-
   const conn = await pool.connect();
   try {
     await conn.query('BEGIN');
 
-    const { rows: orderResult } = await conn.query(
-      `INSERT INTO pesanan (no_meja, catatan, status_pesanan) VALUES ($1, $2, 'Menunggu') RETURNING id_pesanan`,
-      [parsedMeja, catatan || null]
+    // Single Receipt Logic: Look for an existing 'unpaid' order for this table
+    const { rows: existingOrders } = await conn.query(
+      `SELECT id_pesanan FROM pesanan 
+       WHERE no_meja = $1 AND (status_pesanan != 'Selesai' AND status_pesanan != 'Batal')
+       ORDER BY waktu_pesan DESC LIMIT 1`,
+      [parsedMeja]
     );
-    const id_pesanan   = orderResult[0].id_pesanan;
+
+    let id_pesanan;
+    if (existingOrders.length > 0) {
+      id_pesanan = existingOrders[0].id_pesanan;
+      // Update catatan if provided
+      if (catatan) {
+        await conn.query(
+          `UPDATE pesanan SET catatan = COALESCE(catatan, '') || ' | ' || $1 WHERE id_pesanan = $2`,
+          [catatan, id_pesanan]
+        );
+      }
+    } else {
+      const { rows: orderResult } = await conn.query(
+        `INSERT INTO pesanan (no_meja, catatan, status_pesanan) VALUES ($1, $2, 'Menunggu') RETURNING id_pesanan`,
+        [parsedMeja, catatan || null]
+      );
+      id_pesanan = orderResult[0].id_pesanan;
+    }
+
     const successItems = [];
     const failedItems  = [];
+    let addedTotal = 0;
 
     for (const { id_menu, jumlah } of items) {
       const { rows: menuRows } = await conn.query(
-        'SELECT id_menu, nama_menu, stok FROM menu WHERE id_menu = $1 AND is_active = 1 FOR UPDATE',
+        'SELECT id_menu, nama_menu, stok, harga FROM menu WHERE id_menu = $1 AND is_active = 1 FOR UPDATE',
         [id_menu]
       );
 
@@ -155,15 +169,31 @@ exports.createOrder = async (req, res) => {
         continue;
       }
 
-      await conn.query(
-        `INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah) VALUES ($1, $2, $3)`,
-        [id_pesanan, id_menu, jumlah]
+      const subtotal = menu.harga * jumlah;
+      addedTotal += subtotal;
+
+      // Check if item already exists in this order
+      const { rows: existingDetail } = await conn.query(
+        `SELECT id_detail, jumlah FROM detail_pesanan WHERE id_pesanan = $1 AND id_menu = $2`,
+        [id_pesanan, id_menu]
       );
+
+      if (existingDetail.length > 0) {
+        await conn.query(
+          `UPDATE detail_pesanan SET jumlah = jumlah + $1, subtotal = subtotal + $2 WHERE id_detail = $3`,
+          [jumlah, subtotal, existingDetail[0].id_detail]
+        );
+      } else {
+        await conn.query(
+          `INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan, subtotal) VALUES ($1, $2, $3, $4, $5)`,
+          [id_pesanan, id_menu, jumlah, menu.harga, subtotal]
+        );
+      }
 
       const sisaStok   = menu.stok - jumlah;
       const statusBaru = resolveStatus(sisaStok);
       await conn.query(
-        `UPDATE menu SET stok = stok - $1, status = $2 WHERE id_menu = $3 AND stok >= $1`,
+        `UPDATE menu SET stok = stok - $1, status = $2, total_dipesan = total_dipesan + $1 WHERE id_menu = $3`,
         [jumlah, statusBaru, id_menu]
       );
 
@@ -176,6 +206,12 @@ exports.createOrder = async (req, res) => {
         success: false, message: 'Semua item gagal diproses.', gagal: failedItems,
       });
     }
+
+    // Update total_harga in pesanan
+    await conn.query(
+      `UPDATE pesanan SET total_harga = total_harga + $1 WHERE id_pesanan = $2`,
+      [addedTotal, id_pesanan]
+    );
 
     await conn.query('COMMIT');
     return res.status(201).json({

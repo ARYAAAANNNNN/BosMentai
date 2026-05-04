@@ -15,6 +15,21 @@
 
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/api';
 export const STORAGE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000');
+const SUPABASE_STORAGE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://ydndrkxchypzaywhbywg.supabase.co') + '/storage/v1/object/public/menu-images/';
+
+export const getImageUrl = (path) => {
+  if (!path) return null;
+  // Jika path mulai dengan '/', anggap local storage (backward compatibility)
+  if (path.startsWith('/')) {
+    return `${STORAGE_URL}${path}`;
+  }
+  // Jika path adalah URL lengkap, return langsung
+  if (path.startsWith('http')) {
+    return path;
+  }
+  // Selain itu anggap path di Supabase Bucket
+  return `${SUPABASE_STORAGE_URL}${path}`;
+};
 
 // ── Helper fetch dengan error handling ───────────────────────────
 const apiFetch = async (url, options = {}) => {
