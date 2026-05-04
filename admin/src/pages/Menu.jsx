@@ -86,11 +86,13 @@ const Modal = ({ open, onClose, onSave, editData }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileRef = React.useRef();
 
+  const [isCatOpen, setIsCatOpen] = useState(false);
+
   React.useEffect(() => {
     if (open) {
       setForm(editData
         ? { 
-            nama_menu: editData.nama, 
+            nama_menu: editData.nama || editData.nama_menu, 
             stok: String(editData.stok ?? ''),
             id_kategori: editData.id_kategori || editData.kategori_id || 1
           }
@@ -168,129 +170,145 @@ const Modal = ({ open, onClose, onSave, editData }) => {
     }
   };
 
+  const categories = Object.entries(categoryMap).map(([name, id]) => ({ name, id }));
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
         <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
           <X className="w-5 h-5" />
         </button>
-        <h2 className="text-xl font-bold text-gray-900 mb-1">
-          {editData ? 'Edit Menu' : 'Tambah Menu'}
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">
+          {editData ? 'Edit menu' : 'Tambah Menu'}
         </h2>
-        <p className="text-xs text-gray-400 mb-6 italic">Pastikan data menu sudah benar</p>
+        <p className="text-sm text-gray-400 mb-6">Pastikan data menu sudah benar</p>
 
         <div className="space-y-4">
 
           {/* Upload Foto */}
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Foto Menu</label>
-            <div
-              onClick={() => !preview && fileRef.current.click()}
-              className="relative mt-1 w-full h-40 rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-gray-300 hover:border-red-300 transition-all"
-            >
-              {preview ? (
-                <>
-                  <img src={preview} alt="preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); fileRef.current.click(); }}
-                      className="bg-white text-gray-700 rounded-full p-2 shadow hover:bg-gray-100"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={e => { e.stopPropagation(); handleRemove(); }}
-                      className="bg-white text-red-500 rounded-full p-2 shadow hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center text-gray-400">
-                  <div className="text-3xl mb-1">📷</div>
-                  <p className="text-xs">Klik untuk unggah foto</p>
+          <div
+            onClick={() => !preview && fileRef.current.click()}
+            className="relative w-full h-64 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-gray-200 hover:border-red-200 transition-all group"
+          >
+            {preview ? (
+              <>
+                <img src={preview} alt="preview" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); fileRef.current.click(); }}
+                    className="bg-white text-gray-700 rounded-full p-2.5 shadow-lg hover:bg-gray-100"
+                  >
+                    <Pencil className="w-5 h-5 text-orange-500" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); handleRemove(); }}
+                    className="bg-white text-red-500 rounded-full p-2.5 shadow-lg hover:bg-red-50"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
-              )}
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-              onChange={handleFile}
-              className="hidden"
-            />
-            {/* Pesan Error Format File */}
-            {fileError && (
-              <div className="mt-2 p-2.5 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-xs text-red-600 font-medium">{fileError}</p>
+              </>
+            ) : (
+              <div className="text-center">
+                <div className="flex justify-center mb-3">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                    <Plus className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <p className="text-gray-400 text-sm font-medium">Klik untuk unggah foto</p>
               </div>
             )}
-            {/* Info format yang didukung */}
-            {!fileError && (
-              <p className="mt-1.5 text-[10px] text-gray-400 text-center">
-                PNG, JPG, JPEG • Maks. 2MB
-              </p>
-            )}
           </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+            onChange={handleFile}
+            className="hidden"
+          />
+          {fileError && (
+            <p className="text-xs text-red-500 font-medium text-center">{fileError}</p>
+          )}
 
           {/* Nama Menu */}
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Nama Menu</label>
             <input
               type="text"
               value={form.nama_menu}
               onChange={e => setForm({ ...form, nama_menu: e.target.value })}
-              placeholder="Masukkan nama menu"
-              className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm"
+              placeholder="Nama Menu"
+              className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] transition-colors text-sm"
             />
           </div>
 
-          {/* Stok */}
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Stok</label>
-            <input
-              type="number"
-              value={form.stok}
-              onChange={e => setForm({ ...form, stok: e.target.value })}
-              placeholder="0"
-              min={0}
-              className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm"
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Kategori Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsCatOpen(!isCatOpen)}
+                className="w-full p-4 border border-gray-200 rounded-xl flex items-center justify-between text-sm text-gray-700 outline-none focus:border-[#B34949] transition-colors"
+              >
+                <span className={form.id_kategori ? 'text-gray-700' : 'text-gray-400'}>
+                  {idToCategory[form.id_kategori] || 'Kategori'}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCatOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isCatOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsCatOpen(false)} />
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                    {categories.map(cat => (
+                      <div
+                        key={cat.id}
+                        onClick={() => {
+                          setForm({ ...form, id_kategori: cat.id });
+                          setIsCatOpen(false);
+                        }}
+                        className={`px-4 py-3 text-sm cursor-pointer transition-colors ${
+                          form.id_kategori == cat.id ? 'bg-red-50 text-[#B34949] font-bold' : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {cat.name}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
-          {/* Kategori */}
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kategori</label>
-            <select
-              value={form.id_kategori}
-              onChange={e => setForm({ ...form, id_kategori: e.target.value })}
-              className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm appearance-none cursor-pointer"
-            >
-              {Object.entries(categoryMap).map(([name, id]) => (
-                <option key={id} value={id}>{name}</option>
-              ))}
-            </select>
+            {/* Stok */}
+            <div>
+              <input
+                type="number"
+                value={form.stok}
+                onChange={e => setForm({ ...form, stok: e.target.value })}
+                placeholder="Stok"
+                min={0}
+                className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] transition-colors text-sm"
+              />
+            </div>
           </div>
         </div>
 
         {/* Tombol */}
-        <div className="mt-8 flex gap-3">
+        <div className="mt-10 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 text-sm font-bold text-gray-400 hover:bg-gray-50 rounded-full border border-gray-200 transition-all"
+            className="flex-1 py-3 text-sm font-bold text-gray-500 bg-gray-200 hover:bg-gray-300 rounded-xl transition-all"
             disabled={isSubmitting}
           >
-            BATAL
+            Batal
           </button>
           <button
             onClick={handleSave}
             disabled={isSubmitting}
-            className={`flex-1 py-3 bg-[#B34949] hover:bg-[#8B2323] text-white text-sm font-bold rounded-full shadow-lg shadow-red-100 transition-all active:scale-95 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex-1 py-3 bg-[#B34949] hover:bg-[#8B2323] text-white text-sm font-bold rounded-xl transition-all active:scale-95 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN MENU'}
+            {isSubmitting ? 'Menyimpan...' : (editData ? 'Simpan' : 'Simpan menu')}
           </button>
         </div>
       </div>
