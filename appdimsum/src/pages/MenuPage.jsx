@@ -160,12 +160,29 @@ const MenuPage = () => {
   const [orderPlaced,    setOrderPlaced]    = useState(false);
   const [search,         setSearch]         = useState('');
   const [searchFocused,  setSearchFocused]  = useState(false);
+  const [activeCategory, setActiveCategory] = useState('Semua');
+
+  const categories = ['Semua', 'Dimsum', 'Goreng', 'Dessert', 'Minuman'];
+  
+  // Mapping kategori ke ID di database
+  const categoryMap = {
+    'Dimsum': 1,
+    'Goreng': 4,
+    'Minuman': 5,
+    'Dessert': 6
+  };
 
   // ── Filter & mapping ──────────────────────────────────────────────────────
   const filteredMenu = menuItems
     .filter(item => {
       const nama = (item.nama || item.nama_menu || '').toLowerCase();
-      return nama.includes(search.toLowerCase());
+      const matchSearch = nama.includes(search.toLowerCase());
+      
+      if (activeCategory === 'Semua') return matchSearch;
+      
+      const categoryId = categoryMap[activeCategory];
+      const itemCategoryId = item.id_kategori || item.kategori_id;
+      return matchSearch && itemCategoryId === categoryId;
     })
     .map(item => ({
       id:      item.id,
@@ -265,11 +282,45 @@ const MenuPage = () => {
 
 
 
+      {/* ── Category Selector ──────────────────────────────────── */}
+      <div style={{ 
+        maxWidth: 960, margin: '20px auto 10px', padding: '0 20px',
+        display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 10,
+        msOverflowStyle: 'none', scrollbarWidth: 'none'
+      }}>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            style={{
+              padding: '10px 24px',
+              borderRadius: 14,
+              border: 'none',
+              fontSize: 14,
+              fontWeight: 800,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.3s ease',
+              background: activeCategory === cat 
+                ? 'linear-gradient(135deg,#dc2626,#b91c1c)' 
+                : 'white',
+              color: activeCategory === cat ? 'white' : '#1f2937',
+              boxShadow: activeCategory === cat 
+                ? '0 6px 15px rgba(220,38,38,0.3)' 
+                : '0 2px 6px rgba(0,0,0,0.06)',
+              transform: activeCategory === cat ? 'scale(1.05)' : 'scale(1)'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       {/* ── Menu Container ──────────────────────────────────────── */}
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '0 20px 40px' }}>
         <div style={{ marginBottom: 16 }}>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1f2937', letterSpacing: '-0.3px' }}>
-            Semua Menu
+            {activeCategory === 'Semua' ? 'Semua Menu' : activeCategory}
           </h2>
           <p style={{ fontSize: 13, color: '#9ca3af', marginTop: 3 }}>
             {filteredMenu.length} menu tersedia &bull; AYCE — Gratis!

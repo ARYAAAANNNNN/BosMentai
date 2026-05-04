@@ -23,6 +23,7 @@ exports.getAllMenus = async (req, res) => {
          m.gambar,
          m.stok,
          m.status,
+         m.id_kategori,
          m.total_dipesan  AS pesanan,
          m.is_active
        FROM menu m
@@ -61,7 +62,7 @@ exports.getMenuById = async (req, res) => {
 
 // ── POST /api/menus ───────────────────────────────────────────────
 exports.createMenu = async (req, res) => {
-  const { nama_menu, stok } = req.body;
+  const { nama_menu, stok, id_kategori } = req.body;
 
   const errors = [];
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
@@ -81,9 +82,9 @@ exports.createMenu = async (req, res) => {
     const status     = resolveStatus(parsedStok);
 
     const { rows } = await pool.query(
-      `INSERT INTO menu (nama_menu, gambar, stok, status)
-        VALUES ($1, $2, $3, $4) RETURNING id_menu`,
-      [nama_menu.trim(), gambarPath, parsedStok, status]
+      `INSERT INTO menu (nama_menu, gambar, stok, status, id_kategori)
+        VALUES ($1, $2, $3, $4, $5) RETURNING id_menu`,
+      [nama_menu.trim(), gambarPath, parsedStok, status, id_kategori || 1]
     );
 
     return res.status(201).json({
@@ -104,7 +105,7 @@ exports.createMenu = async (req, res) => {
 
 // ── PUT /api/menus/:id ────────────────────────────────────────────
 exports.updateMenu = async (req, res) => {
-  const { nama_menu, stok } = req.body;
+  const { nama_menu, stok, id_kategori } = req.body;
   const id = req.params.id;
 
   try {
@@ -128,13 +129,15 @@ exports.updateMenu = async (req, res) => {
          nama_menu    = COALESCE($1, nama_menu),
          gambar       = COALESCE($2, gambar),
          stok         = COALESCE($3, stok),
-         status       = COALESCE($4, status)
-       WHERE id_menu = $5`,
+         status       = COALESCE($4, status),
+         id_kategori  = COALESCE($5, id_kategori)
+       WHERE id_menu = $6`,
       [
         nama_menu?.trim() || null,
         gambarPath || null,
         parsedStok !== undefined ? parsedStok : null,
         newStatus  || null,
+        id_kategori || null,
         id,
       ]
     );

@@ -13,7 +13,22 @@ const getStatus = (stok) => {
 };
 
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
+const KATEGORI_LIST = ['Semua Kategori', 'Dimsum', 'Goreng', 'Dessert', 'Minuman'];
 const PER_PAGE      = 10;
+
+const categoryMap = {
+  'Dimsum': 1,
+  'Goreng': 4,
+  'Minuman': 5,
+  'Dessert': 6
+};
+
+const idToCategory = {
+  1: 'Dimsum',
+  4: 'Goreng',
+  5: 'Minuman',
+  6: 'Dessert'
+};
 
 const statusColor = {
   Tersedia:       'text-green-600',
@@ -57,7 +72,7 @@ const Dropdown = ({ value, onChange, options }) => {
   );
 };
 
-const BLANK_FORM = { nama_menu: '', stok: '' };
+const BLANK_FORM = { nama_menu: '', stok: '', id_kategori: 1 };
 const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 const ALLOWED_EXTS  = ['.jpg', '.jpeg', '.png'];
 const MAX_SIZE_MB   = 2;
@@ -76,7 +91,8 @@ const Modal = ({ open, onClose, onSave, editData }) => {
       setForm(editData
         ? { 
             nama_menu: editData.nama, 
-            stok: String(editData.stok ?? '')
+            stok: String(editData.stok ?? ''),
+            id_kategori: editData.id_kategori || editData.kategori_id || 1
           }
         : { ...BLANK_FORM }
       );
@@ -139,6 +155,7 @@ const Modal = ({ open, onClose, onSave, editData }) => {
     const formData = new FormData();
     formData.append('nama_menu', form.nama_menu);
     formData.append('stok', form.stok);
+    formData.append('id_kategori', form.id_kategori);
     if (file) {
       formData.append('gambar', file);
     }
@@ -243,6 +260,20 @@ const Modal = ({ open, onClose, onSave, editData }) => {
               className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm"
             />
           </div>
+
+          {/* Kategori */}
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Kategori</label>
+            <select
+              value={form.id_kategori}
+              onChange={e => setForm({ ...form, id_kategori: e.target.value })}
+              className="w-full mt-1 p-3 bg-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-red-200 text-sm appearance-none cursor-pointer"
+            >
+              {Object.entries(categoryMap).map(([name, id]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Tombol */}
@@ -273,6 +304,7 @@ const Menu = () => {
 
   const [search,       setSearch]   = useState('');
   const [statusFilter, setStatus]   = useState('Semua Status');
+  const [kategoriFilter, setKategori] = useState('Semua Kategori');
   const [page,         setPage]     = useState(1);
   const [modal,        setModal]    = useState(false);
   const [editData,     setEditData] = useState(null);
@@ -288,7 +320,8 @@ const Menu = () => {
   // ── Filter & Pagination ───────────────────────────────────────────────────────
   const filtered = menuItems.filter(m =>
     (m.nama?.toLowerCase().includes(search.toLowerCase()) || m.nama_menu?.toLowerCase().includes(search.toLowerCase())) &&
-    (statusFilter === 'Semua Status'   || getStatus(m.stok) === statusFilter)
+    (statusFilter === 'Semua Status'   || getStatus(m.stok) === statusFilter) &&
+    (kategoriFilter === 'Semua Kategori' || idToCategory[m.id_kategori || m.kategori_id] === kategoriFilter)
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
@@ -356,6 +389,11 @@ const Menu = () => {
           onChange={v => { setStatus(v); setPage(1); }}
           options={STATUS_LIST}
         />
+        <Dropdown
+          value={kategoriFilter}
+          onChange={v => { setKategori(v); setPage(1); }}
+          options={KATEGORI_LIST}
+        />
         <div className="flex-1" />
         <button
           onClick={() => { setEditData(null); setModal(true); }}
@@ -370,7 +408,7 @@ const Menu = () => {
         <table className="min-w-full">
           <thead>
             <tr className="bg-[#C0392B]">
-              {['No', 'Gambar', 'Nama Menu', 'Stok', 'Status', 'Aksi'].map(h => (
+              {['No', 'Gambar', 'Nama Menu', 'Kategori', 'Stok', 'Status', 'Aksi'].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-bold text-white tracking-wide">{h}</th>
               ))}
             </tr>
@@ -395,6 +433,9 @@ const Menu = () => {
                     }
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-800">{item.nama || item.nama_menu}</td>
+                  <td className="px-5 py-3 text-sm text-gray-600">
+                    {idToCategory[item.id_kategori || item.kategori_id] || '-'}
+                  </td>
                   <td className="px-5 py-3 text-sm text-gray-700">{item.stok}</td>
                   <td className={`px-5 py-3 text-sm font-semibold ${statusColor[status]}`}>{status}</td>
                   <td className="px-5 py-3">
