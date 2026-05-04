@@ -12,7 +12,7 @@ const MenuCard = ({ item, onAdd, isAdded }) => {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered]   = useState(false);
   const isHabis = item.stok === 0;
-  const emoji   = '🥟';
+  const emoji   = '';
 
   return (
     <div
