@@ -34,7 +34,7 @@ const saveOrdersToStorage = (orders) => {
   }
 };
 
-const OrderContext = createContext();
+const OrderContext = createContext({});
 
 export const OrderProvider = ({ children }) => {
   const [orders, setOrders] = useState(getStoredOrders);
@@ -119,4 +119,8 @@ export const OrderProvider = ({ children }) => {
   );
 };
 
-export const useOrderContext = () => useContext(OrderContext);
+export const useOrderContext = () => {
+  const context = useContext(OrderContext);
+  if (!context) return {};
+  return context;
+};

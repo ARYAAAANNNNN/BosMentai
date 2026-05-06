@@ -11,9 +11,9 @@ const MenuCard = ({ item }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="w-full max-w-[180px] h-full sm:h-[260px] mx-auto bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col">
       {/* Gambar Menu */}
-      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="relative aspect-square sm:aspect-auto sm:h-[140px] w-full shrink-0 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
         <img 
           src={item.image} 
           alt={item.name}
@@ -39,25 +39,26 @@ const MenuCard = ({ item }) => {
       </div>
       
       {/* Info Menu */}
-      <div className="p-4">
-        <h3 className="font-bold text-gray-800 text-base mb-3 line-clamp-2 min-h-[3rem]">
+      <div className="p-2 sm:p-3 flex flex-col flex-1">
+        <h3 className="font-extrabold text-gray-900 text-[12px] sm:text-[13px] leading-tight line-clamp-2">
           {item.name}
         </h3>
 
         {/* Tombol Pesan */}
-        <button
-          onClick={handleAddToCart}
-          disabled={isDisabled}
-          className={`
-            w-full font-semibold py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2
-            ${isDisabled 
-              ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-              : isAdded 
-                ? 'bg-green-500 text-white' 
-                : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white shadow-md hover:shadow-lg'
-            }
-          `}
-        >
+        <div className="mt-auto w-full flex justify-center pb-3 sm:pb-4">
+          <button
+            onClick={handleAddToCart}
+            disabled={isDisabled}
+            className={`
+              w-[90%] sm:w-[130px] h-[30px] sm:h-[34px] rounded-lg sm:rounded-[8px] font-bold text-[11px] sm:text-[12px] transition-all duration-200 flex items-center justify-center gap-2
+              ${isDisabled 
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                : isAdded 
+                  ? 'bg-green-500 text-white' 
+                  : 'bg-[#D34848] text-white hover:bg-red-700 hover:shadow-lg shadow-red-100'
+              }
+            `}
+          >
           {isDisabled ? (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,6 +82,7 @@ const MenuCard = ({ item }) => {
             </>
           )}
         </button>
+        </div>
       </div>
     </div>
   );

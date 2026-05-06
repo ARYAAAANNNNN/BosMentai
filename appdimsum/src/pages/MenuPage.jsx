@@ -2,117 +2,149 @@ import { useState, useEffect } from 'react';
 import { useOrderContext } from '../context/OrderContext';
 import { useNavigate } from 'react-router-dom';
 import { orderAPI, getImageUrl } from '../services/api';
-import { Search, ShoppingCart, X, Minus, Plus, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, X, Minus, Plus, CheckCircle2, Search, UtensilsCrossed, ArrowRight } from 'lucide-react';
 
-// ─── MenuCard ────────────────────────────────────
-const MenuCard = ({ item, onAdd, isAdded }) => {
+// Data demo dihapus agar hanya menggunakan data asli dari database.
+
+// ── Warna placeholder per kategori ────────────────────────────────
+const PLACEHOLDER_COLORS = {
+  1: 'from-red-50 to-orange-100',
+  2: 'from-blue-50 to-cyan-100',
+  3: 'from-yellow-50 to-amber-100',
+  4: 'from-pink-50 to-purple-100',
+};
+// Ikon emoji dihapus.
+
+// ── Kartu Menu ────────────────────────────────────────────────────
+const MenuCard = ({ item, onAdd, cartQty }) => {
   const [imgError, setImgError] = useState(false);
   const isHabis = item.stok === 0;
+  const imgSrc = item.image ? getImageUrl(item.image) : null;
+  const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col">
-      <div className="relative h-28 sm:h-36 overflow-hidden bg-gray-50">
-        {item.image && !imgError ? (
+    <div className={`w-full max-w-[200px] h-full sm:h-[280px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+      {/* Container Gambar */}
+      <div className="relative aspect-square sm:aspect-auto sm:h-[160px] w-full shrink-0 overflow-hidden bg-gray-50">
+        {imgSrc && !imgError ? (
           <img
-            src={getImageUrl(item.image)}
+            src={imgSrc}
             alt={item.name}
             onError={() => setImgError(true)}
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-red-50 text-red-200">
-            <ShoppingCart size={32} />
+          <div className={`w-full h-full bg-gradient-to-br ${catColor} flex items-center justify-center`}>
+            <UtensilsCrossed size={40} className="text-gray-300 opacity-50" />
           </div>
         )}
 
+        {/* Badge HABIS */}
         {isHabis && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-            <span className="bg-white text-red-600 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-lg">
-              HABIS
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="bg-white/90 text-red-600 font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">
+              STOK HABIS
             </span>
           </div>
         )}
 
-        {isAdded && !isHabis && (
-          <div className="absolute inset-0 bg-[#22c55e]/80 flex flex-col items-center justify-center text-white backdrop-blur-[1px] animate-in fade-in duration-200">
-            <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center mb-1">
-                <CheckCircle2 size={16} />
-            </div>
-            <span className="font-bold text-[10px]">DITAMBAHKAN</span>
+        {/* Badge Qty Keranjang */}
+        {cartQty > 0 && !isHabis && (
+          <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
+            {cartQty}
           </div>
         )}
+
+        {/* Harga Badge Overlay */}
+        <div className="absolute bottom-2 left-2 bg-white px-3 py-1 rounded-full shadow-sm">
+          <span className="font-extrabold text-red-600 text-[10px] sm:text-[11px]">
+            Rp {(item.harga || 0).toLocaleString('id-ID')}
+          </span>
+        </div>
       </div>
 
-      <div className="p-3 flex flex-col flex-1">
-        <h3 className="font-bold text-gray-900 text-[13px] sm:text-sm line-clamp-1 mb-0.5">
+      {/* Konten Info */}
+      <div className="p-2 sm:p-3 flex flex-col flex-1">
+        <h3 className="font-extrabold text-gray-900 text-[12px] sm:text-[13px] leading-tight line-clamp-2">
           {item.name}
         </h3>
         
-        {/* Stok */}
-        <p className="text-[10px] sm:text-xs text-gray-500 mb-1">
-          Tersedia : {item.stok}
-        </p>
+        <div className="mt-1">
+          <p className="text-[9px] sm:text-[11px] text-gray-400 font-bold">
+            Tersedia : {item.stok}
+          </p>
+        </div>
 
-        {/* Harga */}
-        <p className="text-[#cb3831] font-extrabold text-[13px] sm:text-sm mb-2 mt-auto">
-          Rp {(item.harga || 0).toLocaleString('id-ID')}
-        </p>
-        
-        <button
-          onClick={() => !isHabis && onAdd(item)}
-          disabled={isHabis}
-          className={`w-full py-2 rounded-lg font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1 ${
-            isHabis 
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-              : 'bg-[#cb3831] text-white hover:bg-[#a92b25] shadow-sm'
-          }`}
-        >
-          {isAdded ? <CheckCircle2 size={14} /> : '+ Pesan'}
-        </button>
+        {/* Tombol Aksi */}
+        <div className="mt-auto pt-4 w-full flex justify-center pb-5 sm:pb-6">
+          <button
+            onClick={() => !isHabis && onAdd(item)}
+            disabled={isHabis}
+            className={`w-[90%] sm:w-[130px] h-[30px] sm:h-[34px] rounded-lg sm:rounded-[8px] font-bold text-[11px] sm:text-[12px] transition-all flex items-center justify-center gap-2 ${
+              isHabis
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-[#D34848] text-white hover:bg-red-700 active:bg-red-800'
+            }`}
+          >
+            {!isHabis && <Plus size={14} strokeWidth={3} />}
+            {isHabis ? 'Habis' : 'Pesan'}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-// ─── Halaman Utama ────────────────────────────────────────────────────────────
+// ── Halaman Utama ─────────────────────────────────────────────────
 const MenuPage = () => {
   const navigate = useNavigate();
-  const { menuItems } = useOrderContext();
+  const context = useOrderContext();
+  const menuItems = context?.menuItems || [];
+
   const [cart, setCart] = useState([]);
-  const [addedItems, setAddedItems] = useState({});
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Semua');
-  
-  // Modals state
   const [showCart, setShowCart] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [catatan, setCatatan] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const categories = ['Semua', 'Makanan', 'Minuman', 'Snack', 'Penutup'];
   const noMeja = localStorage.getItem('no_meja') || '12';
 
-  const categoryMap = {
-    'Makanan': 1,
-    'Minuman': 2,
-    'Snack': 3,
-    'Penutup': 4
-  };
+  // Category Configuration
+  const categories = ["Semua", "Dimsum", "Minuman"];
+  const categoryMap = { "Dimsum": 1, "Minuman": 2 };
 
-  const filteredMenu = menuItems
-    .filter(item => {
-      const nama = (item.nama || item.nama_menu || '').toLowerCase();
-      const matchSearch = nama.includes(search.toLowerCase());
-      if (activeCategory === 'Semua') return matchSearch;
-      return matchSearch && (item.id_kategori || item.kategori_id) === categoryMap[activeCategory];
-    })
-    .map(item => ({
-      ...item,
-      id: item.id || item.id_menu,
-      name: item.nama || item.nama_menu,
-      image: item.image || item.gambar,
-      harga: item.harga || 0,
-    }));
+  // Sync Loading state
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Normalize API items
+  const normalized = (menuItems.length > 0 ? menuItems : []).map(item => ({
+    ...item,
+    id:    item.id || item.id_menu,
+    name:  item.name || item.nama || item.nama_menu || '',
+    image: item.image || item.gambar || null,
+    harga: item.harga || 0,
+    stok:  item.stok ?? 99,
+    id_kategori: item.id_kategori || item.kategori_id || 1
+  }));
+
+  const filtered = normalized.filter(item => {
+    const nama = (item.name || '').toLowerCase();
+    const matchSearch = nama.includes(search.toLowerCase());
+    if (activeCategory === 'Semua') return matchSearch;
+    const catId = item.id_kategori || item.kategori_id;
+    return matchSearch && catId === categoryMap[activeCategory];
+  });
+
+  const cartMap = cart.reduce((acc, i) => { acc[i.id] = i.qty; return acc; }, {});
+  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
+  const totalPrice = cart.reduce((s, i) => s + i.harga * i.qty, 0);
 
   const handleAdd = (item) => {
     setCart(prev => {
@@ -121,19 +153,13 @@ const MenuPage = () => {
         ? prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
         : [...prev, { ...item, qty: 1 }];
     });
-    setAddedItems(prev => ({ ...prev, [item.id]: true }));
-    setTimeout(() => setAddedItems(prev => ({ ...prev, [item.id]: false })), 800);
   };
 
   const handleQty = (id, delta) => {
     setCart(prev =>
-      prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i)
-          .filter(i => i.qty > 0)
+      prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)
     );
   };
-
-  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
-  const totalPrice = cart.reduce((s, i) => s + (i.harga * i.qty), 0);
 
   const submitOrder = async () => {
     if (cart.length === 0) return;
@@ -141,21 +167,15 @@ const MenuPage = () => {
     try {
       const payload = {
         no_meja: parseInt(noMeja, 10),
-        catatan: catatan,
-        items: cart.map(i => ({
-          id_menu: i.id,
-          jumlah: i.qty
-        }))
+        catatan,
+        items: cart.map(i => ({ id_menu: i.id, jumlah: i.qty })),
       };
-
       const res = await orderAPI.create(payload);
       if (res.success) {
         setShowCart(false);
         setShowSuccess(true);
         setCart([]);
         setCatatan('');
-        
-        // Auto close success modal & redirect to tracking
         setTimeout(() => {
           setShowSuccess(false);
           navigate(`/tracking/${res.order_id || res.data?.id_pesanan || res.data?.id}`);
@@ -163,8 +183,8 @@ const MenuPage = () => {
       } else {
         alert(res.message || 'Gagal membuat pesanan');
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert('Terjadi kesalahan koneksi.');
     } finally {
       setIsSubmitting(false);
@@ -172,195 +192,320 @@ const MenuPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] pb-24 font-sans relative">
-      {/* Flat Header (Matches Reference) */}
-      <div className="bg-[#cb3831] px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#cb3831] shadow-sm">
-            {/* Logo circle */}
-          </div>
-          <div>
-            <h1 className="text-white text-[15px] sm:text-lg font-black tracking-tight leading-tight">Bos Mentai</h1>
-            <p className="text-white/80 text-[10px] font-medium">Ala Carte Modern</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="bg-white/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-white rounded-full opacity-80"></div>
-            <span className="text-white font-bold text-xs sm:text-sm">Meja {noMeja}</span>
-          </div>
-          <button onClick={() => setShowCart(true)} className="p-1.5 sm:p-2 bg-white/20 rounded-lg text-white hover:bg-white/30 relative">
-            <ShoppingCart size={18} />
-            {totalItems > 0 && (
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-red-900 text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full">
-                {totalItems}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 mt-5 relative z-20">
+    <div className="min-h-screen bg-gray-50 flex justify-center">
+      <div className="w-full max-w-7xl bg-white relative flex flex-col min-h-screen shadow-xl">
         
-        {/* Categories (Pills with Shadow) */}
-        <div className="flex gap-2.5 overflow-x-auto pb-4 scrollbar-hide no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-                activeCategory === cat 
-                  ? 'bg-[#cb3831] text-white shadow-md shadow-red-200/50' 
-                  : 'bg-white text-gray-800 shadow-sm border border-gray-100 hover:bg-gray-50'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Title & Search Area */}
-        <div className="mt-2 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">{activeCategory === 'Semua' ? 'Semua Menu' : activeCategory}</h2>
-            <p className="text-xs sm:text-sm text-gray-500 font-medium">
-              {filteredMenu.length} menu tersedia
-            </p>
-          </div>
-          
-          <div className="bg-white rounded-full shadow-sm p-1.5 flex items-center border border-gray-100 sm:w-64 w-full">
-            <div className="p-2 text-gray-400">
-              <Search size={16} />
-            </div>
-            <input
-              type="text"
-              placeholder="Cari menu favorit..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm font-medium text-gray-700 placeholder-gray-400 pr-3"
-            />
-          </div>
-        </div>
-
-        {/* Menu Grid - 2 columns on mobile, 4-5 on larger screens */}
-        <div>
-          {filteredMenu.length === 0 ? (
-            <div className="py-16 text-center bg-white rounded-3xl border border-gray-100">
-              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Search size={20} className="text-gray-300" />
+        {/* ══ HEADER ══════════════════════════════════════════════ */}
+        <header className="bg-[#7A1B1B] sticky top-0 z-40 h-[60px] flex items-center">
+          <div className="w-full px-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {/* Circle Logo Placeholder */}
+              <div className="w-8 h-8 bg-gray-400/50 rounded-full flex items-center justify-center shrink-0">
+                <div className="w-[26px] h-[26px] bg-gray-300 rounded-full"></div>
               </div>
-              <p className="text-gray-400 font-bold text-sm">Menu tidak ditemukan</p>
+              <div>
+                <h1 className="text-white font-bold text-base tracking-tight leading-tight">QR SmartOrder</h1>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Small Search Bar in Header */}
+              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 flex items-center gap-2 px-3 border border-white/5 focus-within:bg-white/20 transition-all w-28 sm:w-40">
+                <Search size={14} className="text-white/40 shrink-0" />
+                <input
+                  id="search-header"
+                  type="text"
+                  placeholder="Cari..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="bg-transparent outline-none text-xs text-white placeholder-white/30 font-medium w-full"
+                />
+              </div>
+
+              {/* Table Info / Special Action Button */}
+              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 px-3 flex items-center gap-1.5 border border-white/5 cursor-pointer hover:bg-white/15 transition-all">
+                <UtensilsCrossed size={13} className="text-white/60" />
+                <span className="text-white/40 text-[11px] font-medium tracking-wide">MEJA {noMeja}</span>
+              </div>
+              
+              <button
+                id="btn-open-cart"
+                onClick={() => setShowCart(true)}
+                className="bg-white/10 backdrop-blur-md rounded-lg w-8 h-8 flex items-center justify-center relative border border-white/5 shadow-lg active:scale-95 transition-all hover:bg-white/15"
+              >
+                <ShoppingCart size={15} className="text-white/60" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#7A1B1B]">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+        </header>
+
+        {/* Sticky Container for Categories */}
+        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[60px] z-30 h-[50px] flex items-center">
+          {/* Category Tabs */}
+          <div className="px-4 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+            {categories.map(cat => (
+              <button
+                key={cat}
+                id={`cat-${cat.toLowerCase()}`}
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 w-[100px] h-[30px] flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  activeCategory === cat
+                    ? 'bg-red-500 text-white shadow-md shadow-red-200'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ══ BODY ════════════════════════════════════════════════ */}
+        <main className="flex-1 px-4 py-5 bg-gray-50/50 pb-28">
+          
+          <div className="flex items-center justify-between h-[40px] mb-4">
+            <h2 className="font-black text-gray-800 text-lg tracking-tight">
+              {activeCategory === 'Semua' ? 'Pilihan Menu' : activeCategory}
+            </h2>
+            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-[10px] text-gray-500 font-bold">{filtered.length} Tersedia</span>
+            </div>
+          </div>
+
+          {/* Grid Layout */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+              <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
+              <p className="text-gray-400 font-bold text-sm">Memuat menu...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                <UtensilsCrossed size={48} />
+              </div>
+              <h3 className="font-black text-gray-800 mb-1">Menu tidak ditemukan</h3>
+              <p className="text-gray-400 text-xs px-10">Coba ganti kategori atau cari dengan kata kunci lain.</p>
+              <button 
+                onClick={() => {setSearch(''); setActiveCategory('Semua');}}
+                className="mt-6 text-red-600 font-black text-xs uppercase tracking-widest border-b-2 border-red-600"
+              >
+                Reset Filter
+              </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-              {filteredMenu.map(item => (
+            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 sm:gap-6 justify-items-center">
+              {filtered.map(item => (
                 <MenuCard
                   key={item.id}
                   item={item}
                   onAdd={handleAdd}
-                  isAdded={!!addedItems[item.id]}
+                  cartQty={cartMap[item.id] || 0}
                 />
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </main>
 
-      {/* OVERLAYS & MODALS */}
-
-      {/* Background Dimmer */}
-      {(showCart || showSuccess) && (
-        <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => !isSubmitting && !showSuccess && setShowCart(false)}></div>
-      )}
-
-      {/* Cart Bottom Sheet */}
-      <div className={`fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 transition-transform duration-300 shadow-2xl max-h-[85vh] flex flex-col ${showCart ? 'translate-y-0' : 'translate-y-full'}`}>
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-          <h3 className="font-extrabold text-gray-900 text-lg">Keranjang Pesanan</h3>
-          <button onClick={() => !isSubmitting && setShowCart(false)} className="p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full">
-            <X size={20} />
-          </button>
-        </div>
-        
-        {cart.length === 0 ? (
-           <div className="p-8 text-center flex-1 flex flex-col items-center justify-center">
-             <ShoppingCart size={48} className="text-gray-200 mb-3" />
-             <p className="text-gray-400 font-bold">Keranjang Anda kosong</p>
-           </div>
-        ) : (
-          <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
-            {cart.map(item => (
-              <div key={item.id} className="flex items-center gap-3 mb-4 bg-gray-50 p-2 rounded-2xl">
-                <img src={getImageUrl(item.image)} alt={item.name} className="w-16 h-16 rounded-xl object-cover" />
-                <div className="flex-1">
-                  <h4 className="font-bold text-xs text-gray-800 line-clamp-1">{item.name}</h4>
-                  <p className="text-[#cb3831] font-extrabold text-xs mt-1">Rp {(item.harga || 0).toLocaleString('id-ID')}</p>
+        {/* ══ CART BOTTOM BAR ══════════════════════════════════════ */}
+        {totalItems > 0 && !showCart && (
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 pb-6 z-40 pointer-events-none">
+            <button
+              onClick={() => setShowCart(true)}
+              className="w-full bg-red-600 h-14 rounded-2xl shadow-2xl shadow-red-200 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center text-white relative">
+                  <ShoppingCart size={18} />
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">
+                    {totalItems}
+                  </span>
                 </div>
-                <div className="flex items-center bg-white rounded-xl shadow-sm border border-gray-100">
-                  <button onClick={() => handleQty(item.id, -1)} className="p-2 text-gray-500 active:bg-gray-100 rounded-l-xl">
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-6 text-center font-bold text-xs">{item.qty}</span>
-                  <button onClick={() => handleQty(item.id, 1)} className="p-2 text-gray-500 active:bg-gray-100 rounded-r-xl">
-                    <Plus size={14} />
-                  </button>
+                <div>
+                  <p className="text-[10px] text-red-100 font-bold uppercase leading-none opacity-80">Total Pesanan</p>
+                  <p className="text-white font-black text-sm">Rp {totalPrice.toLocaleString('id-ID')}</p>
                 </div>
               </div>
-            ))}
-
-            <div className="mt-4">
-              <textarea
-                placeholder="Catatan pesanan (opsional)..."
-                value={catatan}
-                onChange={e => setCatatan(e.target.value)}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#cb3831] resize-none h-20"
-              ></textarea>
-            </div>
+              <div className="flex items-center gap-1 text-white font-black text-xs uppercase tracking-widest">
+                Lihat Keranjang
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </div>
+            </button>
           </div>
         )}
 
-        {cart.length > 0 && (
-          <div className="p-4 border-t border-gray-100 shrink-0 bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <span className="font-bold text-sm text-gray-500">Total Pembayaran</span>
-              <span className="font-black text-lg text-gray-900">Rp {totalPrice.toLocaleString('id-ID')}</span>
+        {/* ══ OVERLAY DIM ═════════════════════════════════════════ */}
+        {(showCart || showSuccess) && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 animate-in fade-in duration-300"
+            onClick={() => !isSubmitting && !showSuccess && setShowCart(false)}
+          />
+        )}
+
+        {/* ══ CART BOTTOM SHEET ═══════════════════════════════════ */}
+        <div
+          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl bg-white rounded-t-[32px] z-[60] shadow-2xl max-h-[90vh] flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+            showCart ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          {/* Sheet Handle */}
+          <div className="w-full flex justify-center py-3">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+          </div>
+
+          <div className="px-6 py-2 border-b border-gray-50 flex items-center justify-between shrink-0">
+            <div>
+              <h3 className="font-black text-gray-900 text-lg tracking-tight">Keranjang Anda</h3>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{totalItems} Item terpilih</p>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => !isSubmitting && setShowCart(false)}
-                className="flex-1 py-3 text-xs sm:text-sm font-bold text-[#cb3831] border-2 border-[#cb3831] rounded-xl hover:bg-red-50 transition-colors"
-                disabled={isSubmitting}
-              >
-                Batal
-              </button>
-              <button
-                onClick={submitOrder}
-                disabled={isSubmitting}
-                className="flex-[2] py-3 text-xs sm:text-sm font-bold text-white bg-[#22c55e] rounded-xl hover:bg-green-600 shadow-lg shadow-green-200 transition-colors flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? 'Memproses...' : 'Buat Pesanan'}
-              </button>
+            <button
+              onClick={() => !isSubmitting && setShowCart(false)}
+              className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 active:scale-90 transition-transform"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {cart.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-10">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-200">
+                <ShoppingCart size={40} />
+              </div>
+              <p className="font-black text-gray-800">Keranjang masih kosong</p>
+              <p className="text-gray-400 text-xs mt-1">Isi dengan menu favoritmu sebelum melakukan pemesanan.</p>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 no-scrollbar">
+              {cart.map(item => (
+                <div key={item.id} className="flex items-center gap-4 group">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
+                    {item.image ? (
+                      <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl">
+                        {PLACEHOLDER_ICONS[item.id_kategori] || '🍽️'}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-black text-sm text-gray-800 line-clamp-1">{item.name}</h4>
+                    <p className="text-red-600 font-black text-sm mt-0.5">
+                      Rp {(item.harga * item.qty).toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                      @Rp {item.harga.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl shrink-0">
+                    <button 
+                      onClick={() => handleQty(item.id, -1)}
+                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-500 hover:text-red-600 active:scale-90 transition-all"
+                    >
+                      <Minus size={14} strokeWidth={3} />
+                    </button>
+                    <span className="w-6 text-center font-black text-sm text-gray-800">{item.qty}</span>
+                    <button 
+                      onClick={() => handleQty(item.id, 1)}
+                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-500 hover:text-red-600 active:scale-90 transition-all"
+                    >
+                      <Plus size={14} strokeWidth={3} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-2">
+                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest block mb-2 px-1">Catatan Pesanan</label>
+                <textarea
+                  id="catatan-pesanan"
+                  placeholder="Contoh: Jangan terlalu pedas, ya!"
+                  value={catatan}
+                  onChange={e => setCatatan(e.target.value)}
+                  rows={3}
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm text-gray-700 placeholder-gray-300 outline-none focus:bg-white focus:ring-2 focus:ring-red-500/10 focus:border-red-200 transition-all resize-none font-medium"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Footer Sheet */}
+          {cart.length > 0 && (
+            <div className="px-6 pt-4 pb-8 border-t border-gray-50 bg-white shrink-0">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] block">Total Pembayaran</span>
+                  <span className="font-black text-gray-900 text-2xl tracking-tighter">
+                    Rp {totalPrice.toLocaleString('id-ID')}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-green-500 font-black uppercase tracking-widest block">Metode Bayar</span>
+                  <span className="text-xs font-bold text-gray-700">Bayar di Kasir</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  id="btn-batal"
+                  onClick={() => !isSubmitting && setShowCart(false)}
+                  disabled={isSubmitting}
+                  className="px-6 py-4 rounded-2xl text-xs font-black text-gray-400 bg-gray-100 hover:bg-gray-200 transition-colors uppercase tracking-widest"
+                >
+                  Nanti
+                </button>
+                <button
+                  id="btn-konfirmasi-pesanan"
+                  onClick={submitOrder}
+                  disabled={isSubmitting}
+                  className="flex-1 py-4 rounded-2xl text-xs font-black text-white bg-red-600 hover:bg-red-700 shadow-xl shadow-red-200 transition-all flex items-center justify-center gap-2 uppercase tracking-[0.15em]"
+                >
+                  {isSubmitting ? (
+                    <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} strokeWidth={3} />
+                      Pesan Sekarang
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ══ SUCCESS POP-UP ══════════════════════════════════════ */}
+        {showSuccess && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in zoom-in duration-300">
+            <div className="bg-white rounded-[40px] p-10 max-w-[320px] w-full text-center shadow-[0_32px_64px_-12px_rgba(0,0,0,0.2)]">
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-20" />
+                <div className="relative w-24 h-24 bg-green-500 rounded-full flex items-center justify-center border-8 border-green-50 shadow-lg">
+                  <CheckCircle2 size={48} className="text-white" />
+                </div>
+              </div>
+              <h3 className="font-black text-gray-900 text-2xl mb-2 tracking-tight">Diterima!</h3>
+              <p className="text-sm text-gray-500 font-medium leading-relaxed px-2">
+                Pesanan Anda sedang kami teruskan ke bagian dapur. Mohon ditunggu ya! 🥟
+              </p>
+              <div className="mt-8 flex justify-center">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Success Modal */}
-      {showSuccess && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-[280px] w-full text-center shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 size={32} className="text-[#22c55e]" />
-            </div>
-            <h3 className="font-black text-gray-900 text-lg mb-1">Pesanan Berhasil!</h3>
-            <p className="text-xs text-gray-500 mb-4">Dapur kami sedang menyiapkan pesanan Anda.</p>
-            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-              <div className="h-full bg-[#22c55e] animate-[progress_2.5s_ease-in-out_1]"></div>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
