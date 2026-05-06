@@ -106,11 +106,11 @@ exports.createMenu = async (req, res) => {
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
     errors.push('nama_menu wajib diisi.');
 
-  const parsedStok = parseInt(stok, 10);
+  const parsedStok = (stok === undefined || stok === '') ? 0 : parseInt(stok, 10);
   if (isNaN(parsedStok) || parsedStok < 0)
     errors.push('stok tidak boleh negatif.');
 
-  const parsedHarga = parseFloat(harga);
+  const parsedHarga = (harga === undefined || harga === '') ? 0 : parseFloat(harga);
   if (isNaN(parsedHarga) || parsedHarga < 0)
     errors.push('harga tidak valid.');
 
@@ -158,8 +158,8 @@ exports.updateMenu = async (req, res) => {
     if (!existing.length)
       return res.status(404).json({ success: false, message: 'Menu tidak ditemukan.' });
 
-    const parsedStok  = stok !== undefined ? parseInt(stok, 10) : undefined;
-    const parsedHarga = harga !== undefined ? parseFloat(harga) : undefined;
+    const parsedStok  = (stok !== undefined && stok !== '') ? parseInt(stok, 10) : (stok === '' ? 0 : undefined);
+    const parsedHarga = (harga !== undefined && harga !== '') ? parseFloat(harga) : (harga === '' ? 0 : undefined);
     const newStatus   = parsedStok !== undefined ? resolveStatus(parsedStok) : undefined;
     
     let gambarPath = undefined;

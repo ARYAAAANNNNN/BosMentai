@@ -13,9 +13,9 @@ const getStatus = (stok) => {
 };
 
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
-const KATEGORI_LIST = ['Semua Kategori', 'Dimsum', 'Minuman'];
-const categoryMap = { 'Dimsum': 1, 'Minuman': 2 };
-const idToCategory = { 1: 'Dimsum', 2: 'Minuman' };
+const KATEGORI_LIST = ['Semua Kategori', 'Dimsum', 'Goreng', 'Minuman', 'Dessert'];
+const categoryMap = { 'Dimsum': 1, 'Goreng': 2, 'Minuman': 3, 'Dessert': 4 };
+const idToCategory = { 1: 'Dimsum', 2: 'Goreng', 3: 'Minuman', 4: 'Dessert' };
 
 const statusColor = {
   Tersedia:       'text-green-600',

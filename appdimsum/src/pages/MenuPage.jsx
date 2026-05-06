@@ -9,11 +9,17 @@ import { ShoppingCart, X, Minus, Plus, CheckCircle2, Search, UtensilsCrossed, Ar
 // ── Warna placeholder per kategori ────────────────────────────────
 const PLACEHOLDER_COLORS = {
   1: 'from-red-50 to-orange-100',
-  2: 'from-blue-50 to-cyan-100',
-  3: 'from-yellow-50 to-amber-100',
+  2: 'from-orange-50 to-amber-100',
+  3: 'from-blue-50 to-cyan-100',
   4: 'from-pink-50 to-purple-100',
 };
-// Ikon emoji dihapus.
+
+const PLACEHOLDER_ICONS = {
+  1: '🥟',
+  2: '🍤',
+  3: '🥤',
+  4: '🍮',
+};
 
 // ── Kartu Menu ────────────────────────────────────────────────────
 const MenuCard = ({ item, onAdd, cartQty }) => {
@@ -114,8 +120,8 @@ const MenuPage = () => {
   const noMeja = localStorage.getItem('no_meja') || '12';
 
   // Category Configuration
-  const categories = ["Semua", "Dimsum", "Minuman"];
-  const categoryMap = { "Dimsum": 1, "Minuman": 2 };
+  const categories = ["Semua", "Dimsum", "Goreng", "Minuman", "Dessert"];
+  const categoryMap = { "Dimsum": 1, "Goreng": 2, "Minuman": 3, "Dessert": 4 };
 
   // Sync Loading state
   useEffect(() => {
