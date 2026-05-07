@@ -117,11 +117,12 @@ exports.createOrder = async (req, res) => {
   const conn = await pool.connect();
   try {
     await conn.query('BEGIN');
+    console.log(`[orderController.createOrder] Starting for table ${parsedMeja}...`);
 
     // Single Receipt Logic: Look for an existing 'unpaid' order for this table
     const { rows: existingOrders } = await conn.query(
       `SELECT id_pesanan FROM pesanan 
-       WHERE no_meja = $1 AND (status_pesanan != 'Selesai' AND status_pesanan != 'Batal')
+       WHERE no_meja = $1 AND status_pesanan NOT IN ('Selesai')
        ORDER BY waktu_pesan DESC LIMIT 1`,
       [parsedMeja]
     );
@@ -129,6 +130,7 @@ exports.createOrder = async (req, res) => {
     let id_pesanan;
     if (existingOrders.length > 0) {
       id_pesanan = existingOrders[0].id_pesanan;
+      console.log(`[orderController.createOrder] Found existing order: ${id_pesanan}`);
       // Update catatan if provided
       if (catatan) {
         await conn.query(
@@ -137,24 +139,30 @@ exports.createOrder = async (req, res) => {
         );
       }
     } else {
+      console.log(`[orderController.createOrder] Creating new order...`);
       const { rows: orderResult } = await conn.query(
         `INSERT INTO pesanan (no_meja, catatan, status_pesanan) VALUES ($1, $2, 'Menunggu') RETURNING id_pesanan`,
         [parsedMeja, catatan || null]
       );
       id_pesanan = orderResult[0].id_pesanan;
+      console.log(`[orderController.createOrder] New order ID: ${id_pesanan}`);
     }
 
     const successItems = [];
     const failedItems  = [];
     let addedTotal = 0;
 
+    console.log(`[orderController.createOrder] Processing ${items.length} items...`);
+
     for (const { id_menu, jumlah } of items) {
+      console.log(`[orderController.createOrder] Checking menu ${id_menu} (qty: ${jumlah})...`);
       const { rows: menuRows } = await conn.query(
         'SELECT id_menu, nama_menu, stok, harga FROM menu WHERE id_menu = $1 AND is_active = 1 FOR UPDATE',
         [id_menu]
       );
 
       if (!menuRows.length) {
+        console.warn(`[orderController.createOrder] Menu ${id_menu} not found or inactive.`);
         failedItems.push({ id_menu, alasan: 'Menu tidak ditemukan.' });
         continue;
       }
@@ -179,11 +187,13 @@ exports.createOrder = async (req, res) => {
       );
 
       if (existingDetail.length > 0) {
+        console.log(`[orderController.createOrder] Updating existing detail ${existingDetail[0].id_detail}`);
         await conn.query(
           `UPDATE detail_pesanan SET jumlah = jumlah + $1, subtotal = subtotal + $2 WHERE id_detail = $3`,
           [jumlah, subtotal, existingDetail[0].id_detail]
         );
       } else {
+        console.log(`[orderController.createOrder] Inserting new detail for menu ${id_menu}`);
         await conn.query(
           `INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan, subtotal) VALUES ($1, $2, $3, $4, $5)`,
           [id_pesanan, id_menu, jumlah, menu.harga, subtotal]
@@ -192,6 +202,7 @@ exports.createOrder = async (req, res) => {
 
       const sisaStok   = menu.stok - jumlah;
       const statusBaru = resolveStatus(sisaStok);
+      console.log(`[orderController.createOrder] Updating stock for ${menu.nama_menu} to ${sisaStok}`);
       await conn.query(
         `UPDATE menu SET stok = stok - $1, status = $2, total_dipesan = total_dipesan + $1 WHERE id_menu = $3`,
         [jumlah, statusBaru, id_menu]
@@ -214,6 +225,7 @@ exports.createOrder = async (req, res) => {
     );
 
     await conn.query('COMMIT');
+    console.log(`[orderController.createOrder] Success! ID: ${id_pesanan}`);
     return res.status(201).json({
       success:   true,
       message:   failedItems.length > 0 ? 'Pesanan disimpan, sebagian item dilewati.' : 'Pesanan berhasil dibuat.',
@@ -221,11 +233,16 @@ exports.createOrder = async (req, res) => {
       berhasil: successItems, gagal: failedItems,
     });
   } catch (err) {
-    await conn.query('ROLLBACK');
-    console.error('[orderController.createOrder]', err);
-    return res.status(500).json({ success: false, message: 'Gagal memproses pesanan.' });
+    if (conn) await conn.query('ROLLBACK');
+    console.error('[orderController.createOrder] Fatal Error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Gagal memproses pesanan: ' + err.message,
+      debug: err.message,
+      stack: err.stack
+    });
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
 };
 
