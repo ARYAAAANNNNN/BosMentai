@@ -121,12 +121,13 @@ exports.createMenu = async (req, res) => {
 
   try {
     const gambarPath = req.file ? await uploadToSupabase(req.file) : null;
-    const status     = resolveStatus(parsedStok);
+    const status        = resolveStatus(parsedStok);
+    const finalKategori = (id_kategori && id_kategori !== '') ? parseInt(id_kategori, 10) : 1;
 
     const { rows } = await pool.query(
       `INSERT INTO menu (nama_menu, gambar, stok, status, id_kategori, harga)
         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_menu`,
-      [nama_menu.trim(), gambarPath, parsedStok, status, id_kategori || 1, parsedHarga]
+      [nama_menu.trim(), gambarPath, parsedStok, status, finalKategori, parsedHarga]
     );
 
     return res.status(201).json({
