@@ -142,7 +142,7 @@ exports.createMenu = async (req, res) => {
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
     console.error('[menuController.createMenu]', err);
-    return res.status(500).json({ success: false, message: 'Gagal menyimpan menu.' });
+    return res.status(500).json({ success: false, message: 'Gagal menyimpan menu.', debug: err.message });
   }
 };
 
@@ -195,7 +195,7 @@ exports.updateMenu = async (req, res) => {
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
     console.error('[menuController.updateMenu]', err);
-    return res.status(500).json({ success: false, message: 'Gagal update menu.' });
+    return res.status(500).json({ success: false, message: 'Gagal update menu.', debug: err.message });
   }
 };
 
