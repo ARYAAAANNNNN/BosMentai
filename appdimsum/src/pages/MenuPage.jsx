@@ -29,9 +29,9 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className={`w-full max-w-[240px] h-full sm:h-[300px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+    <div className={`w-full max-w-[180px] h-full sm:h-[270px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
       {/* Container Gambar */}
-      <div className="relative aspect-square sm:aspect-auto sm:h-[160px] w-full shrink-0 overflow-hidden bg-gray-50">
+      <div className="relative aspect-square sm:aspect-auto sm:h-[130px] w-full shrink-0 overflow-hidden bg-gray-50">
         {imgSrc && !imgError ? (
           <img
             src={imgSrc}
@@ -83,14 +83,14 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
         </div>
 
         {/* Tombol Aksi */}
-        <div className="mt-auto pt-4 w-full flex justify-center pb-5 sm:pb-6">
+        <div className="mt-auto pt-6 w-full flex justify-center pb-8 sm:pb-10">
           <button
             onClick={() => !isHabis && onAdd(item)}
             disabled={isHabis}
-            className={`w-[90%] sm:w-[130px] h-[30px] sm:h-[34px] rounded-lg sm:rounded-[8px] font-bold text-[11px] sm:text-[12px] transition-all flex items-center justify-center gap-2 ${
+            className={`w-[90%] sm:w-[140px] h-[38px] sm:h-[42px] rounded-lg sm:rounded-[10px] font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
               isHabis
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#D34848] text-white hover:bg-red-700 active:bg-red-800'
+                : 'bg-[#7A1B1B] text-white hover:bg-[#912424] active:bg-[#631414]'
             }`}
           >
             {!isHabis && <Plus size={14} strokeWidth={3} />}
@@ -262,7 +262,7 @@ const MenuPage = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`shrink-0 w-[100px] h-[30px] flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                   activeCategory === cat
-                    ? 'bg-red-500 text-white shadow-md shadow-red-200'
+                    ? 'bg-[#7A1B1B] text-white shadow-md shadow-red-900/20'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
@@ -306,7 +306,7 @@ const MenuPage = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 sm:gap-8 justify-items-center">
+            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-4 sm:gap-6 justify-items-center">
               {filtered.map(item => (
                 <MenuCard
                   key={item.id}
@@ -324,7 +324,7 @@ const MenuPage = () => {
           <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
             <button
               onClick={() => setShowCart(true)}
-              className="w-full bg-red-600 h-14 rounded-2xl shadow-2xl shadow-red-200 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
+              className="w-full bg-[#7A1B1B] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
             >
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center text-white relative">
@@ -471,7 +471,7 @@ const MenuPage = () => {
                   id="btn-konfirmasi-pesanan"
                   onClick={submitOrder}
                   disabled={isSubmitting}
-                  className="flex-1 py-4 rounded-2xl text-xs font-black text-white bg-red-600 hover:bg-red-700 shadow-xl shadow-red-200 transition-all flex items-center justify-center gap-2 uppercase tracking-[0.15em]"
+                  className="flex-1 py-4 rounded-2xl text-xs font-black text-white bg-[#7A1B1B] hover:bg-[#912424] shadow-xl shadow-red-900/20 transition-all flex items-center justify-center gap-2 uppercase tracking-[0.15em]"
                 >
                   {isSubmitting ? (
                     <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
