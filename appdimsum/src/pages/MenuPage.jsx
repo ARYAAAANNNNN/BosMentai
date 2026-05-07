@@ -29,7 +29,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className={`w-full max-w-[200px] h-full sm:h-[280px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+    <div className={`w-full max-w-[240px] h-full sm:h-[300px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
       {/* Container Gambar */}
       <div className="relative aspect-square sm:aspect-auto sm:h-[160px] w-full shrink-0 overflow-hidden bg-gray-50">
         {imgSrc && !imgError ? (
@@ -198,12 +198,12 @@ const MenuPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center">
-      <div className="w-full max-w-7xl bg-white relative flex flex-col min-h-screen shadow-xl">
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="w-full relative flex flex-col min-h-screen">
         
         {/* ══ HEADER ══════════════════════════════════════════════ */}
         <header className="bg-[#7A1B1B] sticky top-0 z-40 h-[60px] flex items-center">
-          <div className="w-full px-5 flex items-center justify-between">
+          <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Circle Logo Placeholder */}
               <div className="w-8 h-8 bg-gray-400/50 rounded-full flex items-center justify-center shrink-0">
@@ -254,7 +254,7 @@ const MenuPage = () => {
         {/* Sticky Container for Categories */}
         <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[60px] z-30 h-[50px] flex items-center">
           {/* Category Tabs */}
-          <div className="px-4 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+          <div className="px-4 md:px-10 lg:px-16 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
             {categories.map(cat => (
               <button
                 key={cat}
@@ -273,7 +273,7 @@ const MenuPage = () => {
         </div>
 
         {/* ══ BODY ════════════════════════════════════════════════ */}
-        <main className="flex-1 px-4 py-5 bg-gray-50/50 pb-28">
+        <main className="flex-1 px-4 md:px-10 lg:px-16 py-5 bg-gray-50/50 pb-28">
           
           <div className="flex items-center justify-between h-[40px] mb-4">
             <h2 className="font-black text-gray-800 text-lg tracking-tight">
@@ -306,7 +306,7 @@ const MenuPage = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3 sm:gap-6 justify-items-center">
+            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 sm:gap-8 justify-items-center">
               {filtered.map(item => (
                 <MenuCard
                   key={item.id}
@@ -321,7 +321,7 @@ const MenuPage = () => {
 
         {/* ══ CART BOTTOM BAR ══════════════════════════════════════ */}
         {totalItems > 0 && !showCart && (
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 pb-6 z-40 pointer-events-none">
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
             <button
               onClick={() => setShowCart(true)}
               className="w-full bg-red-600 h-14 rounded-2xl shadow-2xl shadow-red-200 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
@@ -356,7 +356,7 @@ const MenuPage = () => {
 
         {/* ══ CART BOTTOM SHEET ═══════════════════════════════════ */}
         <div
-          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-3xl bg-white rounded-t-[32px] z-[60] shadow-2xl max-h-[90vh] flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
+          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl bg-white rounded-t-[32px] z-[60] shadow-2xl max-h-[90vh] flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
             showCart ? 'translate-y-0' : 'translate-y-full'
           }`}
         >
