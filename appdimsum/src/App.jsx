@@ -7,6 +7,9 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ReviewPage from './pages/ReviewPage'
 import TrackingPage from './pages/TrackingPage'
+import CheckoutPage from './pages/CheckoutPage'
+import PaymentPage from './pages/PaymentPage'
+import MonitoringPage from './pages/MonitoringPage'
 
 function App() {
   return (
@@ -17,6 +20,9 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/review" element={<ReviewPage />} />
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/monitoring/:orderId" element={<MonitoringPage />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/menu/:tableId" element={<MenuPage />} />
