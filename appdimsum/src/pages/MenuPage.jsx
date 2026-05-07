@@ -29,7 +29,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className={`w-full max-w-[180px] h-full sm:h-[270px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+    <div className={`w-full max-w-[180px] h-full sm:h-[320px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
       {/* Container Gambar */}
       <div className="relative aspect-square sm:aspect-auto sm:h-[130px] w-full shrink-0 overflow-hidden bg-gray-50">
         {imgSrc && !imgError ? (
@@ -63,8 +63,8 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
         )}
 
         {/* Harga Badge Overlay */}
-        <div className="absolute bottom-2 left-2 bg-white px-3 py-1 rounded-full shadow-sm">
-          <span className="font-extrabold text-red-600 text-[10px] sm:text-[11px]">
+        <div className="absolute bottom-2 left-2 bg-white px-2 py-0.5 rounded-full shadow-sm">
+          <span className="font-extrabold text-red-600 text-[9px] sm:text-[10px]">
             Rp {(item.harga || 0).toLocaleString('id-ID')}
           </span>
         </div>
@@ -83,7 +83,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
         </div>
 
         {/* Tombol Aksi */}
-        <div className="mt-auto pt-6 w-full flex justify-center pb-8 sm:pb-10">
+        <div className="mt-auto pt-6 w-full flex justify-center pb-4 sm:pb-6">
           <button
             onClick={() => !isHabis && onAdd(item)}
             disabled={isHabis}
