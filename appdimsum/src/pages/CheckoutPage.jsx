@@ -1,39 +1,86 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeft, MapPin, ClipboardList, ChevronRight, Wallet, Info, Edit2 } from 'lucide-react';
+import { UseCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
+import { orderAPI, getImageUrl } from '../services/api';
 
 /**
  * CheckoutPage - Desain Modern & Clean (Laptop & Mobile)
- * @param {Object} props
- * @param {Array} props.items - Daftar item pesanan [{ id, name, price, qty, image, notes }]
- * @param {String} props.tableNumber - Nomor meja aktif
- * @param {Function} props.onConfirm - Callback saat tombol konfirmasi & bayar diklik
- * @param {Function} props.onCancel - Callback saat tombol ubah pesanan/batal diklik
  */
-const CheckoutPage = ({ 
-  items = [], 
-  tableNumber = "12", 
-  onConfirm, 
-  onCancel 
-}) => {
-  const subtotal = items.reduce((acc, item) => acc + (item.price * item.qty), 0);
+const CheckoutPage = () => {
+  const navigate = useNavigate();
+  const { cart, tableNumber, getTotalPrice, clearCart } = UseCart();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Map CartContext items to the format expected by CheckoutPage
+  const items = cart.map(item => ({
+    id: item.id,
+    name: item.name || item.nama_menu,
+    price: item.price || item.harga,
+    qty: item.quantity || item.qty,
+    image: item.image || item.gambar,
+    notes: item.notes || ""
+  }));
+
+  const subtotal = getTotalPrice();
   const serviceFee = 5000;
   const total = subtotal + serviceFee;
 
+  const onConfirm = async () => {
+    if (items.length === 0) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        no_meja: parseInt(tableNumber, 10),
+        catatan: "", // Bisa ditambah input catatan di UI jika perlu
+        items: items.map(i => ({ id_menu: i.id, jumlah: i.qty })),
+      };
+      const res = await orderAPI.create(payload);
+      if (res.success) {
+        const orderId = res.order_id || res.data?.id_pesanan || res.data?.id;
+        clearCart();
+        // Beri jeda sedikit agar user merasa ada proses
+        setTimeout(() => {
+          navigate(`/monitoring/${orderId}`);
+        }, 800);
+      } else {
+        alert(res.message || 'Gagal membuat pesanan');
+      }
+    } catch (err) {
+      console.error('[CheckoutPage.onConfirm]', err);
+      alert('Terjadi kesalahan koneksi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onCancel = () => {
+    navigate('/menu');
+  };
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] font-['Plus_Jakarta_Sans',sans-serif] text-gray-900 pb-32 lg:pb-12">
-      {/* Import Font di dalam komponen jika belum ada di index.html */}
+      {/* Import Font */}
       <style>
         {`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');`}
       </style>
 
       {/* Header - Mobile Only (Simple) */}
-      <header className="lg:hidden p-4 mb-2">
-        <h1 className="text-xl font-extrabold text-gray-900">Konfirmasi Pesanan Anda</h1>
+      <header className="lg:hidden p-4 mb-2 flex items-center gap-4">
+        <button onClick={onCancel} className="p-2 -ml-2 text-gray-500">
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-xl font-extrabold text-gray-900">Konfirmasi Pesanan</h1>
       </header>
 
       <main className="max-w-7xl mx-auto p-4 lg:p-8">
         {/* Desktop Header */}
-        <h1 className="hidden lg:block text-3xl font-extrabold text-gray-900 mb-8">Konfirmasi Pesanan Anda</h1>
+        <div className="hidden lg:flex items-center gap-4 mb-8">
+          <button onClick={onCancel} className="p-2 bg-white rounded-full shadow-sm text-gray-400 hover:text-gray-600 transition-colors">
+            <ArrowLeft size={24} />
+          </button>
+          <h1 className="text-3xl font-extrabold text-gray-900">Konfirmasi Pesanan Anda</h1>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           
@@ -53,10 +100,10 @@ const CheckoutPage = ({
 
             {/* List Pesanan (Desktop Table Style) */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="hidden lg:grid grid-cols-5 p-4 border-b border-gray-50 text-[11px] font-black text-gray-400 uppercase tracking-widest">
-                <div className="col-span-2">Item</div>
-                <div className="text-center">Jumlah</div>
-                <div className="text-center">Catatan</div>
+              <div className="hidden lg:grid grid-cols-5 p-4 border-b border-gray-50 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">
+                <div className="col-span-2 text-left">Item</div>
+                <div className="">Jumlah</div>
+                <div className="">Catatan</div>
                 <div className="text-right">Harga</div>
               </div>
 
@@ -67,7 +114,7 @@ const CheckoutPage = ({
                     <div className="col-span-2 flex items-center gap-4 w-full">
                       <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-2xl">🍽️</div>
                         )}
@@ -81,7 +128,7 @@ const CheckoutPage = ({
                         )}
                         <p className="text-sm font-bold text-gray-900 mt-1 lg:hidden">Rp {item.price.toLocaleString('id-ID')}</p>
                       </div>
-                      <button onClick={onCancel} className="lg:hidden px-4 py-1.5 border border-red-100 text-red-600 text-xs font-bold rounded-lg bg-red-50/30">
+                      <button onClick={onCancel} className="lg:hidden px-4 py-1.5 border border-red-100 text-[#D32F2F] text-xs font-bold rounded-lg bg-red-50/30">
                         Ubah
                       </button>
                     </div>
@@ -121,10 +168,11 @@ const CheckoutPage = ({
               {/* Desktop Buttons */}
               <div className="hidden lg:flex flex-col gap-3 pt-4">
                 <button 
-                  onClick={() => onConfirm({ items, total })}
-                  className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all"
+                  onClick={onConfirm}
+                  disabled={isSubmitting || items.length === 0}
+                  className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                 >
-                  Konfirmasi & Bayar
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Konfirmasi & Bayar'}
                 </button>
                 <button 
                   onClick={onCancel}
@@ -142,10 +190,11 @@ const CheckoutPage = ({
       {/* Fixed Bottom Bar (Mobile Only) */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white p-4 pb-8 border-t border-gray-100 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50 space-y-3">
         <button 
-          onClick={() => onConfirm({ items, total })}
-          className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all"
+          onClick={onConfirm}
+          disabled={isSubmitting || items.length === 0}
+          className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
         >
-          Konfirmasi & Bayar
+          {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Konfirmasi & Bayar'}
         </button>
         <button 
           onClick={onCancel}

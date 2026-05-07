@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOrderContext } from '../context/OrderContext';
-import { useNavigate } from 'react-router-dom';
+import { UseCart } from '../context/CartContext';
+import { useNavigate, useParams } from 'react-router-dom';
 import { orderAPI, getImageUrl } from '../services/api';
 import { ShoppingCart, X, Minus, Plus, CheckCircle2, Search, UtensilsCrossed, ArrowRight } from 'lucide-react';
 
@@ -105,19 +106,28 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
 // ── Halaman Utama ─────────────────────────────────────────────────
 const MenuPage = () => {
   const navigate = useNavigate();
+  const { tableId } = useParams();
   const context = useOrderContext();
+  const { 
+    cart, 
+    addToCart, 
+    decrementQuantity, 
+    getTotalPrice, 
+    getTotalItems, 
+    setShowCart, 
+    showCart 
+  } = UseCart();
+
   const menuItems = context?.menuItems || [];
 
-  const [cart, setCart] = useState([]);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Semua');
-  const [showCart, setShowCart] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [catatan, setCatatan] = useState('');
   const [loading, setLoading] = useState(true);
 
-  const noMeja = localStorage.getItem('no_meja') || '12';
+  const noMeja = tableId || localStorage.getItem('no_meja') || '12';
 
   // Category Configuration
   const categories = ["Semua", "Dimsum", "Goreng", "Minuman", "Dessert"];
@@ -148,53 +158,29 @@ const MenuPage = () => {
     return matchSearch && catId === categoryMap[activeCategory];
   });
 
-  const cartMap = cart.reduce((acc, i) => { acc[i.id] = i.qty; return acc; }, {});
-  const totalItems = cart.reduce((s, i) => s + i.qty, 0);
-  const totalPrice = cart.reduce((s, i) => s + i.harga * i.qty, 0);
+  const cartMap = cart.reduce((acc, i) => { acc[i.id] = i.quantity || i.qty; return acc; }, {});
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
 
   const handleAdd = (item) => {
-    setCart(prev => {
-      const ex = prev.find(i => i.id === item.id);
-      return ex
-        ? prev.map(i => i.id === item.id ? { ...i, qty: i.qty + 1 } : i)
-        : [...prev, { ...item, qty: 1 }];
+    addToCart({
+      ...item,
+      price: item.harga
     });
   };
 
   const handleQty = (id, delta) => {
-    setCart(prev =>
-      prev.map(i => i.id === id ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)
-    );
+    if (delta > 0) {
+      const item = normalized.find(i => i.id === id);
+      if (item) handleAdd(item);
+    } else {
+      decrementQuantity(id);
+    }
   };
 
-  const submitOrder = async () => {
-    if (cart.length === 0) return;
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        no_meja: parseInt(noMeja, 10),
-        catatan,
-        items: cart.map(i => ({ id_menu: i.id, jumlah: i.qty })),
-      };
-      const res = await orderAPI.create(payload);
-      if (res.success) {
-        setShowCart(false);
-        setShowSuccess(true);
-        setCart([]);
-        setCatatan('');
-        setTimeout(() => {
-          setShowSuccess(false);
-          navigate(`/tracking/${res.order_id || res.data?.id_pesanan || res.data?.id}`);
-        }, 2500);
-      } else {
-        alert(res.message || 'Gagal membuat pesanan');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Terjadi kesalahan koneksi.');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleGoToCheckout = () => {
+    setShowCart(false);
+    navigate('/checkout');
   };
 
   return (
@@ -479,7 +465,7 @@ const MenuPage = () => {
                   </button>
                   <button
                     id="btn-konfirmasi-pesanan"
-                    onClick={submitOrder}
+                    onClick={handleGoToCheckout}
                     disabled={isSubmitting}
                     className="flex-1 py-5 rounded-[22px] text-xs font-black text-white bg-[#7A1B1B] hover:bg-[#912424] shadow-2xl shadow-[#7A1B1B]/30 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em]"
                   >

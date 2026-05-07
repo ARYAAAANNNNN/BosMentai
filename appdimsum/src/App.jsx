@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { OrderProvider } from './context/OrderContext'
+import { CartProvider } from './context/CartContext'
 import Dashboard from './pages/Dashboard'
 import MenuPage from './pages/MenuPage'
 import KitchenPage from './pages/KitchenPage'
@@ -14,7 +15,8 @@ import MonitoringPage from './pages/MonitoringPage'
 function App() {
   return (
     <OrderProvider>
-      <BrowserRouter>
+      <CartProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -29,7 +31,8 @@ function App() {
           <Route path="/kitchen" element={<KitchenPage />} />
           <Route path="*" element={<Navigate to="/menu" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </CartProvider>
     </OrderProvider>
   )
 }
