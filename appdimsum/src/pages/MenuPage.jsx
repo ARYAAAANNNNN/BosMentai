@@ -30,9 +30,9 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className={`w-full max-w-[180px] h-full sm:h-[320px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+    <div className={`w-full max-w-[210px] h-full sm:h-[340px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
       {/* Container Gambar */}
-      <div className="relative aspect-square sm:aspect-auto sm:h-[130px] w-full shrink-0 overflow-hidden bg-gray-50">
+      <div className="relative aspect-square sm:aspect-auto sm:h-[150px] w-full shrink-0 overflow-hidden bg-gray-50">
         {imgSrc && !imgError ? (
           <img
             src={imgSrc}
@@ -43,7 +43,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
           />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${catColor} flex items-center justify-center`}>
-            <UtensilsCrossed size={40} className="text-gray-300 opacity-50" />
+            <UtensilsCrossed size={48} className="text-gray-300 opacity-50" />
           </div>
         )}
 
@@ -62,36 +62,33 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
             {cartQty}
           </div>
         )}
-
-        {/* Harga Badge Overlay */}
-        <div className="absolute bottom-2 left-2 bg-white px-2 py-0.5 rounded-full shadow-sm">
-          <span className="font-extrabold text-red-600 text-[9px] sm:text-[10px]">
-            Rp {(item.harga || 0).toLocaleString('id-ID')}
-          </span>
-        </div>
       </div>
 
       {/* Konten Info */}
-      <div className="p-2 sm:p-3 flex flex-col flex-1">
-        <h3 className="font-extrabold text-gray-900 text-[12px] sm:text-[13px] leading-tight line-clamp-2">
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
+        <h3 className="font-extrabold text-gray-900 text-[13px] sm:text-[15px] leading-tight line-clamp-2 mb-1">
           {item.name}
         </h3>
         
-        <div className="mt-1">
-          <p className="text-[9px] sm:text-[11px] text-gray-400 font-bold">
-            Tersedia : {item.stok}
-          </p>
+        {/* Harga Terintegrasi (Bukan Label Melayang) */}
+        <div className="mb-2">
+          <span className="font-black text-[#D32F2F] text-[14px] sm:text-[16px]">
+            Rp {(item.harga || 0).toLocaleString('id-ID')}
+          </span>
         </div>
 
-        {/* Tombol Aksi */}
-        <div className="mt-auto pt-6 w-full flex justify-center pb-4 sm:pb-6">
+        <div className="mt-auto">
+          <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold mb-3">
+            Tersedia : {item.stok}
+          </p>
+
           <button
             onClick={() => !isHabis && onAdd(item)}
             disabled={isHabis}
-            className={`w-[90%] sm:w-[140px] h-[38px] sm:h-[42px] rounded-lg sm:rounded-[10px] font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
+            className={`w-full h-[38px] sm:h-[42px] rounded-xl font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
               isHabis
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#7A1B1B] text-white hover:bg-[#912424] active:bg-[#631414]'
+                : 'bg-[#7A1B1B] text-white hover:bg-[#912424] active:bg-[#631414] shadow-sm'
             }`}
           >
             {!isHabis && <Plus size={14} strokeWidth={3} />}
