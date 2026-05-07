@@ -20,7 +20,7 @@ const uploadToSupabase = async (file) => {
   const fileData = fs.readFileSync(file.path);
   
   const { data, error } = await supabase.storage
-    .from('menu-images')
+    .from('menus')
     .upload(filePath, fileData, {
       contentType: file.mimetype,
       upsert: true
@@ -28,7 +28,7 @@ const uploadToSupabase = async (file) => {
 
   if (error) {
     console.error('Error uploading to Supabase:', error);
-    throw new Error('Gagal unggah gambar ke Supabase Storage.');
+    throw new Error('Gagal unggah gambar ke Supabase Storage: ' + (error.message || 'Error tidak diketahui'));
   }
 
   // Hapus file sementara dari server
@@ -41,7 +41,7 @@ const uploadToSupabase = async (file) => {
 const deleteFromSupabase = async (path) => {
   if (!path) return;
   const { error } = await supabase.storage
-    .from('menu-images')
+    .from('menus')
     .remove([path]);
   
   if (error) {
