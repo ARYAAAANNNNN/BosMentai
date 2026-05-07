@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOrderContext } from '../context/OrderContext';
-import { STORAGE_URL } from '../services/api';
+import { STORAGE_URL, getImageUrl } from '../services/api';
 
 const getStatus = (stok) => {
   const n = parseInt(stok) || 0;
@@ -91,7 +91,7 @@ const RestaurantMenu = ({ searchTerm = '' }) => {
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                   {item.image ? (
                     <img
-                      src={`${STORAGE_URL}${item.image}`}
+                      src={getImageUrl(item.image)}
                       alt={item.nama}
                       className="w-full h-full object-cover"
                     />

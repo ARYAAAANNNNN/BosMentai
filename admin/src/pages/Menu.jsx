@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Pencil, Trash2, X, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { useOrderContext } from '../context/OrderContext';
-import { STORAGE_URL } from '../services/api';
+import { STORAGE_URL, getImageUrl } from '../services/api';
 
 // ─── Status stok ──────────────────────────────────────────────────────────────
 const getStatus = (stok) => {
@@ -86,7 +86,7 @@ const Modal = ({ open, onClose, onSave, editData }) => {
           }
         : { ...BLANK_FORM }
       );
-      setPreview(editData?.image ? `${STORAGE_URL}${editData.image}` : null);
+      setPreview(editData?.image ? getImageUrl(editData.image) : null);
       setFile(null);
       setFileError('');
     } else {
@@ -445,7 +445,7 @@ const Menu = () => {
                   <td className="px-5 py-3 text-sm text-gray-700">{(curPage - 1) * PER_PAGE + i + 1}</td>
                   <td className="px-5 py-3">
                     {item.image
-                      ? <img src={`${STORAGE_URL}${item.image}`} alt={item.nama} className="w-10 h-10 rounded object-cover" />
+                      ? <img src={getImageUrl(item.image)} alt={item.nama} className="w-10 h-10 rounded object-cover" />
                       : <div className="w-10 h-10 rounded bg-gray-200 flex-shrink-0" />
                     }
                   </td>

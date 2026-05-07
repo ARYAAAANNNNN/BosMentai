@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Armchair } from "lucide-react";
-import { STORAGE_URL, statsAPI } from "../services/api";
+import { STORAGE_URL, statsAPI, getImageUrl } from "../services/api";
 
 /**
  * RecentOrders
@@ -100,7 +100,7 @@ export default function RecentOrders({ orders: customOrders }) {
                   {order.imgValue ? (
                     hasUrl ? (
                       <img
-                        src={order.imgValue.startsWith("http") ? order.imgValue : `${STORAGE_URL}${order.imgValue}`}
+                        src={getImageUrl(order.imgValue)}
                         alt={order.subtitle || order.title}
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       />

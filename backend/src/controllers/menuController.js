@@ -102,6 +102,9 @@ exports.getMenuById = async (req, res) => {
 exports.createMenu = async (req, res) => {
   const { nama_menu, stok, id_kategori, harga } = req.body;
 
+  console.log('[menuController.createMenu] Body:', req.body);
+  console.log('[menuController.createMenu] File:', req.file ? req.file.originalname : 'No file');
+
   const errors = [];
   if (!nama_menu || typeof nama_menu !== 'string' || !nama_menu.trim())
     errors.push('nama_menu wajib diisi.');
@@ -116,11 +119,21 @@ exports.createMenu = async (req, res) => {
 
   if (errors.length > 0) {
     if (req.file) fs.unlink(req.file.path, () => {});
-    return res.status(422).json({ success: false, errors });
+    return res.status(422).json({ 
+      success: false, 
+      message: errors.join(' '), 
+      errors 
+    });
   }
 
   try {
-    const gambarPath = req.file ? await uploadToSupabase(req.file) : null;
+    let gambarPath = null;
+    if (req.file) {
+      console.log('[menuController.createMenu] Uploading to Supabase...');
+      gambarPath = await uploadToSupabase(req.file);
+      console.log('[menuController.createMenu] Upload success:', gambarPath);
+    }
+
     const status        = resolveStatus(parsedStok);
     const finalKategori = (id_kategori && id_kategori !== '') ? parseInt(id_kategori, 10) : 1;
 
@@ -142,8 +155,12 @@ exports.createMenu = async (req, res) => {
     });
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
-    console.error('[menuController.createMenu]', err);
-    return res.status(500).json({ success: false, message: 'Gagal menyimpan menu.', debug: err.message });
+    console.error('[menuController.createMenu] Fatal Error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Gagal menyimpan menu: ' + err.message, 
+      debug: err.message 
+    });
   }
 };
 
@@ -151,6 +168,8 @@ exports.createMenu = async (req, res) => {
 exports.updateMenu = async (req, res) => {
   const { nama_menu, stok, id_kategori, harga } = req.body;
   const id = req.params.id;
+
+  console.log(`[menuController.updateMenu] ID: ${id}, Body:`, req.body);
 
   try {
     const { rows: existing } = await pool.query(
@@ -165,7 +184,9 @@ exports.updateMenu = async (req, res) => {
     
     let gambarPath = undefined;
     if (req.file) {
+      console.log('[menuController.updateMenu] Uploading new image...');
       gambarPath = await uploadToSupabase(req.file);
+      console.log('[menuController.updateMenu] New image success:', gambarPath);
       // Hapus gambar lama dari Supabase
       if (existing[0].gambar) {
         await deleteFromSupabase(existing[0].gambar);
@@ -195,8 +216,8 @@ exports.updateMenu = async (req, res) => {
     return res.status(200).json({ success: true, message: 'Menu berhasil diperbarui.' });
   } catch (err) {
     if (req.file) fs.unlink(req.file.path, () => {});
-    console.error('[menuController.updateMenu]', err);
-    return res.status(500).json({ success: false, message: 'Gagal update menu.', debug: err.message });
+    console.error('[menuController.updateMenu] Fatal Error:', err);
+    return res.status(500).json({ success: false, message: 'Gagal update menu: ' + err.message, debug: err.message });
   }
 };
 
