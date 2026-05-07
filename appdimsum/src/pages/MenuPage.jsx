@@ -306,10 +306,10 @@ const MenuPage = () => {
         </main>
 
         {/* ══ CART BOTTOM BAR ══════════════════════════════════════ */}
-        {totalItems > 0 && !showCart && (
+        {totalItems > 0 && (
           <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
             <button
-              onClick={() => setShowCart(true)}
+              onClick={() => navigate('/checkout')}
               className="w-full bg-[#7A1B1B] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
             >
               <div className="flex items-center gap-3">
@@ -325,7 +325,7 @@ const MenuPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-1 text-white font-black text-xs uppercase tracking-widest">
-                Lihat Keranjang
+                Konfirmasi Pesanan
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
@@ -333,156 +333,11 @@ const MenuPage = () => {
         )}
 
         {/* ══ OVERLAY DIM ═════════════════════════════════════════ */}
-        {(showCart || showSuccess) && (
+        {showSuccess && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 animate-in fade-in duration-300"
-            onClick={() => !isSubmitting && !showSuccess && setShowCart(false)}
           />
         )}
-
-        {/* ══ CART BOTTOM SHEET ═══════════════════════════════════ */}
-        <div
-          className={`fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl bg-white rounded-t-[32px] z-[60] shadow-[0_-20px_50px_rgba(0,0,0,0.1)] max-h-[90vh] flex flex-col transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${
-            showCart ? 'translate-y-0' : 'translate-y-full'
-          }`}
-        >
-          {/* Sheet Handle */}
-          <div className="w-full flex justify-center py-4 shrink-0">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
-          </div>
-
-          {/* Inner Content Wrapper (Constrained on Desktop) */}
-          <div className="flex-1 flex flex-col w-full max-w-2xl mx-auto overflow-hidden">
-            
-            {/* Header */}
-            <div className="px-6 py-4 flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="font-black text-gray-900 text-xl tracking-tight">Keranjang Anda</h3>
-                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">{totalItems} Item terpilih</p>
-              </div>
-              <button
-                onClick={() => !isSubmitting && setShowCart(false)}
-                className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 active:scale-90 transition-all"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            {cart.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-10">
-                <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 text-gray-200">
-                  <ShoppingCart size={48} />
-                </div>
-                <p className="font-black text-gray-800 text-lg">Keranjang masih kosong</p>
-                <p className="text-gray-400 text-sm mt-2 max-w-xs mx-auto">Isi dengan menu favoritmu sebelum melakukan pemesanan.</p>
-              </div>
-            ) : (
-              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 no-scrollbar">
-                {cart.map(item => (
-                  <div key={item.id} className="flex items-start gap-5 group">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100 shadow-sm">
-                      {item.image ? (
-                        <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">
-                          {PLACEHOLDER_ICONS[item.id_kategori] || '🍽️'}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0 pt-1">
-                      <h4 className="font-black text-base text-gray-800 leading-tight mb-1">{item.name}</h4>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[#7A1B1B] font-black text-base">
-                          Rp {(item.harga * item.qty).toLocaleString('id-ID')}
-                        </p>
-                        <span className="text-gray-300">|</span>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">
-                          @{item.harga.toLocaleString('id-ID')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 bg-gray-50 p-1.5 rounded-2xl shrink-0 mt-1">
-                      <button 
-                        onClick={() => handleQty(item.id, -1)}
-                        className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-gray-400 hover:text-[#7A1B1B] active:scale-90 transition-all border border-gray-100"
-                      >
-                        <Minus size={14} strokeWidth={4} />
-                      </button>
-                      <span className="w-6 text-center font-black text-sm text-gray-800">{item.qty}</span>
-                      <button 
-                        onClick={() => handleQty(item.id, 1)}
-                        className="w-8 h-8 flex items-center justify-center bg-white rounded-xl shadow-sm text-gray-400 hover:text-[#7A1B1B] active:scale-90 transition-all border border-gray-100"
-                      >
-                        <Plus size={14} strokeWidth={4} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-4 border-t border-gray-50">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-3 px-1">Instruksi Tambahan</label>
-                  <textarea
-                    id="catatan-pesanan"
-                    placeholder="Contoh: Sambal dipisah, ya!"
-                    value={catatan}
-                    onChange={e => setCatatan(e.target.value)}
-                    rows={2}
-                    className="w-full p-5 bg-gray-50 border border-gray-100 rounded-[24px] text-sm text-gray-700 placeholder-gray-300 outline-none focus:bg-white focus:ring-4 focus:ring-[#7A1B1B]/5 focus:border-[#7A1B1B]/20 transition-all resize-none font-medium"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Footer Sheet */}
-            {cart.length > 0 && (
-              <div className="px-6 pt-6 pb-10 border-t border-gray-50 bg-white shrink-0">
-                <div className="bg-gray-50/80 rounded-[32px] p-6 mb-6 flex items-center justify-between border border-gray-100/50">
-                  <div>
-                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] block mb-1">Total Pembayaran</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-sm font-bold text-gray-400">Rp</span>
-                      <span className="font-black text-gray-900 text-3xl tracking-tighter">
-                        {totalPrice.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right bg-white px-4 py-2 rounded-2xl shadow-sm border border-gray-100">
-                    <span className="text-[9px] text-[#7A1B1B] font-black uppercase tracking-widest block mb-0.5">Metode Bayar</span>
-                    <span className="text-[11px] font-black text-gray-700">Kasir / Tunai</span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-4">
-                  <button
-                    id="btn-batal"
-                    onClick={() => !isSubmitting && setShowCart(false)}
-                    disabled={isSubmitting}
-                    className="px-8 py-5 rounded-[22px] text-[11px] font-black text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors uppercase tracking-[0.2em]"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    id="btn-konfirmasi-pesanan"
-                    onClick={handleGoToCheckout}
-                    disabled={isSubmitting}
-                    className="flex-1 py-5 rounded-[22px] text-xs font-black text-white bg-[#7A1B1B] hover:bg-[#912424] shadow-2xl shadow-[#7A1B1B]/30 transition-all flex items-center justify-center gap-3 uppercase tracking-[0.2em]"
-                  >
-                    {isSubmitting ? (
-                      <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 size={20} strokeWidth={3} />
-                        Konfirmasi Pesanan
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* ══ SUCCESS POP-UP ══════════════════════════════════════ */}
         {showSuccess && (
