@@ -10,12 +10,16 @@ const Header = () => {
       <div className="w-full px-4 py-3 flex items-center justify-between max-w-7xl mx-auto">
         {/* Logo dan Nama Restoran */}
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md">
-            <span className="text-2xl">🥟</span>
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden border-2 border-white">
+            <img 
+              src="/images/logo-bosmentai.jpg" 
+              alt="Bos Mentai Logo" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
-            <h1 className="text-xl font-bold leading-tight">QR SmartOrder</h1>
-            <p className="text-xs opacity-90 font-medium">AYCE Dimsum Restaurant</p>
+            <h1 className="text-xl font-black leading-tight tracking-tight">BOS MENTAI</h1>
+            <p className="text-[10px] opacity-80 font-bold tracking-widest">SMART ORDER SYSTEM</p>
           </div>
         </div>
 

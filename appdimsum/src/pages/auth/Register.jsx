@@ -38,8 +38,17 @@ const Register = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
       <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden relative pb-10">
         {/* Red Gradient Header with Wave */}
-        <div className="relative h-32 bg-gradient-to-b from-[#C0392B] to-[#E74C3C] flex items-center justify-center overflow-hidden">
-          <div className="absolute bottom-0 left-0 w-full">
+        <div className="relative h-40 bg-gradient-to-b from-[#C0392B] to-[#E74C3C] flex items-center justify-center overflow-hidden">
+          {/* Logo Container */}
+          <div className="relative z-20 w-20 h-20 bg-white rounded-full p-1 shadow-xl border-4 border-white/20 overflow-hidden">
+            <img 
+              src="/images/logo-bosmentai.jpg" 
+              alt="Bos Mentai Logo" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {/* Subtle Wave Effect */}
+          <div className="absolute bottom-0 left-0 w-full z-10">
             <svg viewBox="0 0 500 150" preserveAspectRatio="none" className="h-16 w-full">
                 <path d="M0.00,49.98 C149.99,150.00 349.82,-49.98 500.00,49.98 L500.00,150.00 L0.00,150.00 Z" style={{ stroke: 'none', fill: '#ffffff' }}></path>
             </svg>

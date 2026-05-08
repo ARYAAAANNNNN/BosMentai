@@ -188,12 +188,17 @@ const MenuPage = () => {
         <header className="bg-[#7A1B1B] sticky top-0 z-40 h-[60px] flex items-center">
           <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Circle Logo Placeholder */}
-              <div className="w-8 h-8 bg-gray-400/50 rounded-full flex items-center justify-center shrink-0">
-                <div className="w-[26px] h-[26px] bg-gray-300 rounded-full"></div>
+              {/* Logo Bos Mentai */}
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/20">
+                <img 
+                  src="/images/logo-bosmentai.jpg" 
+                  alt="Bos Mentai Logo" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
-                <h1 className="text-white font-bold text-base tracking-tight leading-tight">QR SmartOrder</h1>
+                <h1 className="text-white font-black text-lg tracking-tight leading-tight">BOS MENTAI</h1>
+                <p className="text-white/40 text-[9px] font-bold tracking-widest -mt-0.5">SMART ORDER</p>
               </div>
             </div>
 
