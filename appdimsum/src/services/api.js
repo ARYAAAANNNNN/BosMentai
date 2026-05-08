@@ -221,3 +221,19 @@ export const authAPI = {
     });
   },
 };
+
+// ── paymentAPI ────────────────────────────────────────────────────
+// Dipakai: MenuPage.jsx — Payment flow dengan Midtrans QRIS
+export const paymentAPI = {
+  // POST /api/payment/create-transaction
+  // data: { no_meja, catatan, items: [{ id_menu, jumlah }] }
+  createTransaction: (data) =>
+    apiFetch(`${BASE_URL}/payment/create-transaction`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // GET /api/payment/status/:orderId — polling status pembayaran
+  getStatus: (orderId) =>
+    apiFetch(`${BASE_URL}/payment/status/${orderId}`),
+};

@@ -1,332 +1,366 @@
-import { useState } from 'react';
-import { menuData, categories } from '../data/menuData';
-import MenuCard from"../components/MenuCard";
+import { useState, useEffect, useCallback } from 'react';
+import { useOrderContext } from '../context/OrderContext';
+import { UseCart } from '../context/CartContext';
+import { useParams } from 'react-router-dom';
+import { paymentAPI, getImageUrl } from '../services/api';
+import { ShoppingCart, Plus, Search, UtensilsCrossed, ArrowRight } from 'lucide-react';
 
-const MenuPage = () => {
-  const [activeCategory, setActiveCategory] = useState('Semua');
-  const [cart, setCart] = useState([]);
-  const [addedItems, setAddedItems] = useState({});
-  const [showCart, setShowCart] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+// Sub-components
+import CartSheet from '../components/CartSheet';
+import PaymentView from '../components/PaymentView';
+import StatusView from '../components/StatusView';
 
-  const filteredMenu = activeCategory === 'Semua' 
-    ? menuData 
-    : menuData.filter(item => item.category === activeCategory);
+// ── Warna placeholder per kategori ────────────────────────────────
+const PLACEHOLDER_COLORS = {
+  1: 'from-red-50 to-orange-100',
+  2: 'from-orange-50 to-amber-100',
+  3: 'from-blue-50 to-cyan-100',
+  4: 'from-pink-50 to-purple-100',
+};
 
-  const handleAddToCart = (item) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === item.id);
-      if (existing) {
-        return prev.map(i => i.id === item.id ? {...i, quantity: i.quantity + 1} : i);
-      }
-      return [...prev, {...item, quantity: 1}];
-    });
-    
-    setAddedItems(prev => ({...prev, [item.id]: true}));
-    setTimeout(() => {
-      setAddedItems(prev => ({...prev, [item.id]: false}));
-    }, 1000);
-  };
-
-  const handleRemoveFromCart = (itemId) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.id === itemId);
-      if (existing && existing.quantity > 1) {
-        return prev.map(i => i.id === itemId ? {...i, quantity: i.quantity - 1} : i);
-      }
-      return prev.filter(i => i.id !== itemId);
-    });
-  };
-
-  const handleDeleteItem = (itemId) => {
-    setCart(prev => prev.filter(i => i.id !== itemId));
-  };
-
-  const HandleClearCart = () => {
-    setCart([]);
-  };
-
-  const handleConfirmOrder = () => {
-    if (cart.length === 0) return;
-    
-    // Simpan pesanan ke localStorage (bisa dilihat di kitchen page)
-    const orderId = Date.now();
-    const orderData = {
-      id: orderId,
-      tableNumber: 12,
-      items: cart,
-      totalItems: cart.reduce((total, item) => total + item.quantity, 0),
-      timestamp: new Date().toISOString(),
-      status: 'pending'
-    };
-    
-    const existingOrders = JSON.parse(localStorage.getItem('kitchenOrders') || '[]');
-    existingOrders.push(orderData);
-    localStorage.setItem('kitchenOrders', JSON.stringify(existingOrders));
-    
-    // Tampilkan pesan sukses
-    setOrderPlaced(true);
-    setCart([]);
-    
-    // Tutup modal setelah 2 detik dan kembali ke menu
-    setTimeout(() => {
-      setShowCart(false);
-      setOrderPlaced(false);
-      setActiveCategory('Semua');
-    }, 2500);
-  };
-
-  const handleCancelOrder = () => {
-    setShowCart(false);
-    setCart([]);
-  };
-
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
+// ── MenuCard Sub-Component ────────────────────────────────────────
+const MenuCard = ({ item, onAdd, cartQty }) => {
+  const [imgError, setImgError] = useState(false);
+  const isHabis = item.stok === 0;
+  const imgSrc = item.image ? getImageUrl(item.image) : null;
+  const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div style={{minHeight: '100vh', background: 'linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%)'}}>
-      {/* Header */}
-      <header className="header">
-        <div className="header-content">
-          <div className="logo">
-            <div className="logo-icon">🥟</div>
-            <div className="logo-text">
-              <h1>QR SmartOrder</h1>
-              <p>AYCE Dimsum Restaurant</p>
-            </div>
+    <div className={`w-full max-w-[210px] h-full sm:h-[340px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
+      {/* Image */}
+      <div className="relative aspect-square sm:aspect-auto sm:h-[150px] w-full shrink-0 overflow-hidden bg-gray-50">
+        {imgSrc && !imgError ? (
+          <img src={imgSrc} alt={item.name} onError={() => setImgError(true)} className="w-full h-full object-cover" loading="lazy" />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${catColor} flex items-center justify-center`}>
+            <UtensilsCrossed size={48} className="text-gray-300 opacity-50" />
           </div>
-          <div className="header-actions">
-            <div className="table-badge">🍽️ Meja 12</div>
-            <button className="cart-button" onClick={() => setShowCart(true)}>
-              🛒
-              {getTotalItems() > 0 ? (
-                <span className="cart-badge">{getTotalItems()}</span>
-              ) : null}
-            </button>
+        )}
+        {isHabis && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="bg-white/90 text-[#D04040] font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">STOK HABIS</span>
           </div>
+        )}
+        {cartQty > 0 && !isHabis && (
+          <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
+            {cartQty}
+          </div>
+        )}
+      </div>
+      {/* Info */}
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
+        <div className="mb-0.5">
+          <span className="font-black text-gray-900 text-[16px] sm:text-[18px]">
+            Rp {(item.harga || 0).toLocaleString('id-ID')}
+          </span>
         </div>
-      </header>
-
-      {/* Categories */}
-      <div className="categories">
-        {categories.map(cat => (
+        <h3 className="font-extrabold text-gray-900 text-[11px] sm:text-[13px] leading-tight line-clamp-2 mb-2">{item.name}</h3>
+        <div className="mt-auto">
+          <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold mb-3">Tersedia : {item.stok}</p>
           <button
-            key={cat}
-            className={`category-tab ${activeCategory === cat ? 'active' : ''}`}
-            onClick={() => setActiveCategory(cat)}
+            onClick={() => !isHabis && onAdd(item)}
+            disabled={isHabis}
+            className={`w-full h-[38px] sm:h-[42px] rounded-xl font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
+              isHabis ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#D04040] text-white hover:bg-[#B03030] active:bg-[#902020] shadow-sm'
+            }`}
           >
-            {cat === 'Semua' ? ' Semua' : cat}
+            {!isHabis && <Plus size={14} strokeWidth={3} />}
+            {isHabis ? 'Habis' : 'Pesan'}
           </button>
-        ))}
+        </div>
       </div>
+    </div>
+  );
+};
 
-      {/* Menu Grid */}
-      <div className="menu-container">
-        <h2 className="menu-title">
-          {activeCategory === 'Semua' ? ' Semua Menu' : ` ${activeCategory}`}
-        </h2>
-        <p className="menu-subtitle">
-          {filteredMenu.length} menu tersedia • Semua gratis (AYCE)
-        </p>
+// ══════════════════════════════════════════════════════════════════
+// MenuPage — Main Component
+// ══════════════════════════════════════════════════════════════════
+const MenuPage = () => {
+  const { tableId } = useParams();
+  const context = useOrderContext();
+  const {
+    cart, addToCart, incrementQuantity, decrementQuantity, clearCart,
+    getTotalPrice, getTotalItems, showCart, setShowCart
+  } = UseCart();
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredMenu.map((item) => (
-            <div key={item.id} className="menu-card" style={{position: 'relative'}}>
-              <div className="menu-image">
-                <img 
-                  src={item.image} 
-                  alt={item.name}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:48px;">🥟</div>';
-                  }}
-                ></img>
+  const menuItems = context?.menuItems || [];
+
+  // ── UI State ────────────────────────────────────────────────────
+  const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState('Semua');
+  const [loading, setLoading] = useState(true);
+
+  // ── Payment Flow State ──────────────────────────────────────────
+  // currentView: 'menu' | 'cart' | 'payment' | 'success' | 'failed'
+  const [currentView, setCurrentView] = useState('menu');
+  const [paymentData, setPaymentData] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const noMeja = tableId || localStorage.getItem('no_meja') || '12';
+  const categories = ["Semua", "Dimsum", "Goreng", "Minuman", "Dessert"];
+  const categoryMap = { "Dimsum": 1, "Goreng": 2, "Minuman": 3, "Dessert": 4 };
+
+  // ── Loading Timer ───────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── Normalize & Filter Menu Items ───────────────────────────────
+  const normalized = menuItems.map(item => ({
+    ...item,
+    id: item.id || item.id_menu,
+    name: item.name || item.nama || item.nama_menu || '',
+    image: item.image || item.gambar || null,
+    harga: item.harga || 0,
+    stok: item.stok ?? 99,
+    id_kategori: item.id_kategori || item.kategori_id || 1
+  }));
+
+  const filtered = normalized.filter(item => {
+    const nama = (item.name || '').toLowerCase();
+    const matchSearch = nama.includes(search.toLowerCase());
+    if (activeCategory === 'Semua') return matchSearch;
+    return matchSearch && (item.id_kategori || item.kategori_id) === categoryMap[activeCategory];
+  });
+
+  const cartMap = cart.reduce((acc, i) => { acc[i.id] = i.quantity || i.qty; return acc; }, {});
+  const totalItems = getTotalItems();
+  const totalPrice = getTotalPrice();
+
+  const handleAdd = (item) => addToCart({ ...item, price: item.harga });
+
+  // ── Payment Polling ─────────────────────────────────────────────
+  useEffect(() => {
+    if (currentView !== 'payment' || !paymentData?.order_id) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await paymentAPI.getStatus(paymentData.order_id);
+        const status = res?.data?.transaction_status;
+        console.log('[MenuPage] Poll status:', status);
+
+        if (status === 'settlement') {
+          clearInterval(pollInterval);
+          setCurrentView('success');
+          clearCart();
+        } else if (['deny', 'cancel', 'expire'].includes(status)) {
+          clearInterval(pollInterval);
+          setCurrentView('failed');
+        }
+      } catch (err) {
+        console.error('[MenuPage] Poll error:', err);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [currentView, paymentData?.order_id, clearCart]);
+
+  // ── Handlers ────────────────────────────────────────────────────
+  const handleOpenCart = () => {
+    setShowCart(false);
+    setCurrentView('cart');
+  };
+
+  const handleCloseCart = () => setCurrentView('menu');
+
+  const handleCheckout = useCallback(async () => {
+    if (cart.length === 0 || isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const items = cart.map(item => ({
+        id_menu: item.id,
+        jumlah: item.quantity,
+      }));
+
+      const res = await paymentAPI.createTransaction({
+        no_meja: parseInt(noMeja, 10),
+        catatan: '',
+        items,
+      });
+
+      if (res?.success && res?.data) {
+        setPaymentData(res.data);
+        setCurrentView('payment');
+      } else {
+        alert(res?.message || 'Gagal membuat transaksi');
+      }
+    } catch (err) {
+      console.error('[MenuPage] Checkout error:', err);
+      alert('Gagal membuat transaksi: ' + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [cart, noMeja, isSubmitting]);
+
+  const handleConfirmPaid = async () => {
+    if (!paymentData?.order_id) return;
+    try {
+      const res = await paymentAPI.getStatus(paymentData.order_id);
+      const status = res?.data?.transaction_status;
+      if (status === 'settlement') {
+        setCurrentView('success');
+        clearCart();
+      }
+      // If still pending, the polling will handle it
+    } catch (err) {
+      console.error('[MenuPage] Check paid error:', err);
+    }
+  };
+
+  const handleStatusClose = () => {
+    setCurrentView('menu');
+    setPaymentData(null);
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // RENDER
+  // ══════════════════════════════════════════════════════════════
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="w-full relative flex flex-col min-h-screen">
+
+        {/* ══ HEADER ═══════════════════════════════════════════════ */}
+        <header className="bg-[#D04040] sticky top-0 z-40 h-[60px] flex items-center">
+          <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/20">
+                <img src="/images/logo-bosmentai.jpg" alt="Bos Mentai Logo" className="w-full h-full object-cover" />
               </div>
-             
-              <div className="menu-info">
-                <h3 className="menu-name">{item.name}</h3>
-                <button 
-                  className={`add-button ${addedItems[item.id] ? 'added' : ''}`}
-                  onClick={() => handleAddToCart(item)}
-                >
-                  {addedItems[item.id] ? '✓ Ditambahkan' : '+ Pesan'}
-                </button>
+              <div>
+                <h1 className="text-white font-black text-lg tracking-tight leading-tight">BOS MENTAI</h1>
+                <p className="text-white/40 text-[9px] font-bold tracking-widest -mt-0.5">SMART ORDER</p>
               </div>
             </div>
-          ))}
+            <div className="flex items-center gap-2">
+              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 flex items-center gap-2 px-3 border border-white/5 focus-within:bg-white/20 transition-all w-28 sm:w-40">
+                <Search size={14} className="text-white/40 shrink-0" />
+                <input id="search-header" type="text" placeholder="Cari..." value={search} onChange={e => setSearch(e.target.value)}
+                  className="bg-transparent outline-none text-xs text-white placeholder-white/30 font-medium w-full" />
+              </div>
+              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 px-3 flex items-center gap-1.5 border border-white/5">
+                <UtensilsCrossed size={13} className="text-white/60" />
+                <span className="text-white/40 text-[11px] font-medium tracking-wide">MEJA {noMeja}</span>
+              </div>
+              <button id="btn-open-cart" onClick={handleOpenCart}
+                className="bg-white/10 backdrop-blur-md rounded-lg w-8 h-8 flex items-center justify-center relative border border-white/5 shadow-lg active:scale-95 transition-all hover:bg-white/15">
+                <ShoppingCart size={15} className="text-white/60" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#D04040] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040]">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* ══ CATEGORIES ═══════════════════════════════════════════ */}
+        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[60px] z-30 h-[50px] flex items-center">
+          <div className="px-4 md:px-10 lg:px-16 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+            {categories.map(cat => (
+              <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 w-[100px] h-[30px] flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-md shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}>
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {filteredMenu.length === 0 ? (
-          <div style={{textAlign: 'center', padding: '48px'}}>
-            <div style={{fontSize: '48px', marginBottom: '16px'}}>😔</div>
-            <p style={{color: '#6b7280'}}>Menu tidak ditemukan</p>
-            <button 
-              onClick={() => setActiveCategory('Semua')}
-              style={{marginTop: '16px', color: '#dc2626', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline'}}
-            >
-              Lihat semua menu →
+        {/* ══ MENU GRID ════════════════════════════════════════════ */}
+        <main className="flex-1 px-4 md:px-10 lg:px-16 py-5 bg-gray-50/50 pb-28">
+          <div className="flex items-center justify-between h-[40px] mb-4">
+            <h2 className="font-black text-gray-800 text-lg tracking-tight">
+              {activeCategory === 'Semua' ? 'Pilihan Menu' : activeCategory}
+            </h2>
+            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[10px] text-gray-500 font-bold">{filtered.length} Tersedia</span>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+              <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
+              <p className="text-gray-400 font-bold text-sm">Memuat menu...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center">
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                <UtensilsCrossed size={48} />
+              </div>
+              <h3 className="font-black text-gray-800 mb-1">Menu tidak ditemukan</h3>
+              <p className="text-gray-400 text-xs px-10">Coba ganti kategori atau cari dengan kata kunci lain.</p>
+              <button onClick={() => { setSearch(''); setActiveCategory('Semua'); }}
+                className="mt-6 text-red-600 font-black text-xs uppercase tracking-widest border-b-2 border-red-600">
+                Reset Filter
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-4 sm:gap-6 justify-items-center">
+              {filtered.map(item => (
+                <MenuCard key={item.id} item={item} onAdd={handleAdd} cartQty={cartMap[item.id] || 0} />
+              ))}
+            </div>
+          )}
+        </main>
+
+        {/* ══ CART BOTTOM BAR ══════════════════════════════════════ */}
+        {totalItems > 0 && currentView === 'menu' && (
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
+            <button onClick={handleOpenCart}
+              className="w-full bg-[#D04040] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center text-white relative">
+                  <ShoppingCart size={18} />
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-[#D04040] text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{totalItems}</span>
+                </div>
+                <div>
+                  <p className="text-[10px] text-red-100 font-bold uppercase leading-none opacity-80">Total Pesanan</p>
+                  <p className="text-white font-black text-sm">Rp {totalPrice.toLocaleString('id-ID')}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-white font-black text-xs uppercase tracking-widest">
+                Lihat Keranjang
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </div>
             </button>
           </div>
-        ) : null}
+        )}
+
+        {/* ══ OVERLAY MODALS ══════════════════════════════════════= */}
+        {currentView === 'cart' && (
+          <CartSheet
+            cart={cart}
+            totalPrice={totalPrice}
+            onClose={handleCloseCart}
+            onIncrement={incrementQuantity}
+            onDecrement={decrementQuantity}
+            onCheckout={handleCheckout}
+            isSubmitting={isSubmitting}
+          />
+        )}
+
+        {currentView === 'payment' && paymentData && (
+          <PaymentView
+            paymentData={paymentData}
+            onPaid={handleConfirmPaid}
+            onClose={() => { setCurrentView('menu'); setPaymentData(null); }}
+          />
+        )}
+
+        {(currentView === 'success' || currentView === 'failed') && (
+          <StatusView
+            status={currentView}
+            orderId={paymentData?.order_id}
+            onClose={handleStatusClose}
+          />
+        )}
       </div>
-
-      {/* Cart Modal - Success State */}
-      {orderPlaced ? (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '24px',
-            padding: '40px',
-            textAlign: 'center',
-            maxWidth: '300px',
-            margin: '20px'
-          }}>
-            <div style={{fontSize: '64px', marginBottom: '20px'}}>✅</div>
-            <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '12px', color: '#22c55e'}}>Pesanan Dikirim!</h2>
-            <p style={{color: '#6b7280'}}>Pesanan Anda sedang diproses di dapur</p>
-            <div style={{marginTop: '20px', color: '#9ca3af', fontSize: '14px'}}>Kembali ke menu...</div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Cart Modal */}
-      {showCart && !orderPlaced ? (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'flex-end',
-          zIndex: 1000
-        }} onClick={() => setShowCart(false)}>
-          <div style={{
-            background: 'white',
-            width: '100%',
-            maxHeight: '85vh',
-            borderRadius: '24px 24px 0 0',
-            padding: '24px',
-            overflow: 'auto'
-          }} onClick={e => e.stopPropagation()}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-              <h2 style={{fontSize: '20px', fontWeight: 'bold'}}>🛒 Keranjang Pesanan</h2>
-              <button onClick={() => setShowCart(false)} style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer'}}>✕</button>
-            </div>
-
-            {cart.length === 0 ? (
-              <div style={{textAlign: 'center', padding: '40px'}}>
-                <div style={{fontSize: '48px', marginBottom: '16px'}}>🛒</div>
-                <p style={{color: '#6b7280'}}>Keranjang masih kosong</p>
-                <p style={{color: '#9ca3af', fontSize: '14px', marginTop: '8px'}}>Pilih menu untuk memesan</p>
-              </div>
-            ) : (
-              <>
-                <div style={{marginBottom: '16px'}}>
-                  {cart.map(item => (
-                    <div key={item.id} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '12px',
-                      background: '#f9fafb',
-                      borderRadius: '12px',
-                      marginBottom: '8px'
-                    }}>
-                      <img src={item.image} alt={item.name} style={{width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover', marginRight: '12px'}}></img>
-                      <div style={{flex: 1}}>
-                        <p style={{fontWeight: '600', fontSize: '14px'}}>{item.name}</p>
-                        <p style={{color: '#6b7280', fontSize: '12px'}}>{item.category}</p>
-                      </div>
-                      <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                        <button 
-                          onClick={() => handleRemoveFromCart(item.id)}
-                          style={{width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer'}}
-                        >-</button>
-                        <span style={{fontWeight: '600', minWidth: '20px', textAlign: 'center'}}>{item.quantity}</span>
-                        <button 
-                          onClick={() => handleAddToCart(item)}
-                          style={{width: '28px', height: '28px', borderRadius: '8px', border: '1px solid #e5e7eb', background: 'white', cursor: 'pointer'}}
-                        >+</button>
-                        <button 
-                          onClick={() => handleDeleteItem(item.id)}
-                          style={{marginLeft: '4px', width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#fee2e2', color: '#dc2626', cursor: 'pointer', fontSize: '14px'}}
-                        >🗑️</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{borderTop: '1px solid #e5e7eb', paddingTop: '16px', marginBottom: '16px'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-                    <span style={{color: '#6b7280'}}>Total Item:</span>
-                    <span style={{fontWeight: '600'}}>{getTotalItems()} items</span>
-                  </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                    <span style={{color: '#6b7280'}}>Status:</span>
-                    <span style={{fontWeight: '600', color: '#22c55e'}}>AYCE - Gratis</span>
-                  </div>
-                </div>
-
-                {/* Tombol Batal */}
-                <button 
-                  onClick={handleCancelOrder}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    border: '2px solid #dc2626',
-                    borderRadius: '12px',
-                    background: 'white',
-                    color: '#dc2626',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    marginBottom: '12px',
-                    fontSize: '16px'
-                  }}
-                >
-                   Batal & Hapus Semua
-                </button>
-
-                {/* Tombol Konfirmasi */}
-                <button 
-                  onClick={handleConfirmOrder}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    border: 'none',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    fontSize: '16px'
-                  }}
-                >
-                   Konfirmasi Pesanan
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Footer */}
-      <footer className="footer">
-        <p>📱 Scan QR Code di meja Anda untuk memesan • AYCE Dimsum SmartOrder System</p>
-      </footer>
     </div>
   );
 };
