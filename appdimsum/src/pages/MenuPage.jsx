@@ -66,16 +66,16 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
 
       {/* Konten Info */}
       <div className="p-3 sm:p-4 flex flex-col flex-1">
-        <h3 className="font-extrabold text-gray-900 text-[13px] sm:text-[15px] leading-tight line-clamp-2 mb-1">
-          {item.name}
-        </h3>
-        
-        {/* Harga Terintegrasi (Bukan Label Melayang) */}
-        <div className="mb-2">
-          <span className="font-black text-[#D32F2F] text-[14px] sm:text-[16px]">
+        {/* Harga Terintegrasi (Di atas Nama Menu) */}
+        <div className="mb-0.5">
+          <span className="font-black text-gray-900 text-[16px] sm:text-[18px]">
             Rp {(item.harga || 0).toLocaleString('id-ID')}
           </span>
         </div>
+
+        <h3 className="font-extrabold text-gray-900 text-[11px] sm:text-[13px] leading-tight line-clamp-2 mb-2">
+          {item.name}
+        </h3>
 
         <div className="mt-auto">
           <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold mb-3">
