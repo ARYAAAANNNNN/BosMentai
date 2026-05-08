@@ -50,7 +50,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
         {/* Badge HABIS */}
         {isHabis && (
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="bg-white/90 text-red-600 font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">
+            <span className="bg-white/90 text-[#D04040] font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">
               STOK HABIS
             </span>
           </div>
@@ -58,7 +58,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
 
         {/* Badge Qty Keranjang */}
         {cartQty > 0 && !isHabis && (
-          <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
+          <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
             {cartQty}
           </div>
         )}
@@ -88,7 +88,7 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
             className={`w-full h-[38px] sm:h-[42px] rounded-xl font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
               isHabis
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#7A1B1B] text-white hover:bg-[#912424] active:bg-[#631414] shadow-sm'
+                : 'bg-[#D04040] text-white hover:bg-[#B03030] active:bg-[#902020] shadow-sm'
             }`}
           >
             {!isHabis && <Plus size={14} strokeWidth={3} />}
@@ -185,7 +185,7 @@ const MenuPage = () => {
       <div className="w-full relative flex flex-col min-h-screen">
         
         {/* ══ HEADER ══════════════════════════════════════════════ */}
-        <header className="bg-[#7A1B1B] sticky top-0 z-40 h-[60px] flex items-center">
+        <header className="bg-[#D04040] sticky top-0 z-40 h-[60px] flex items-center">
           <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Logo Bos Mentai */}
@@ -229,7 +229,7 @@ const MenuPage = () => {
               >
                 <ShoppingCart size={15} className="text-white/60" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#7A1B1B]">
+                  <span className="absolute -top-1 -right-1 bg-[#D04040] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040]">
                     {totalItems}
                   </span>
                 )}
@@ -250,7 +250,7 @@ const MenuPage = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`shrink-0 w-[100px] h-[30px] flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                   activeCategory === cat
-                    ? 'bg-[#7A1B1B] text-white shadow-md shadow-red-900/20'
+                    ? 'bg-[#D04040] text-white shadow-md shadow-red-900/20'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
@@ -312,12 +312,12 @@ const MenuPage = () => {
           <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
             <button
               onClick={() => navigate('/checkout')}
-              className="w-full bg-[#7A1B1B] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
+              className="w-full bg-[#D04040] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group"
             >
               <div className="flex items-center gap-3">
                 <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center text-white relative">
                   <ShoppingCart size={18} />
-                  <span className="absolute -top-1.5 -right-1.5 bg-white text-red-600 text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-[#D04040] text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">
                     {totalItems}
                   </span>
                 </div>

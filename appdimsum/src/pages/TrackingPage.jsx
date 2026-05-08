@@ -53,7 +53,7 @@ const TrackingPage = () => {
             </button>
             <h1 className="text-lg font-black text-gray-900">Status Pesanan</h1>
         </div>
-        <button onClick={fetchStatus} className={`p-2 text-[#C0392B] ${loading ? 'animate-spin' : ''}`}>
+        <button onClick={fetchStatus} className={`p-2 text-[#D04040] ${loading ? 'animate-spin' : ''}`}>
             <RefreshCcw size={20} />
         </button>
       </div>
@@ -63,7 +63,7 @@ const TrackingPage = () => {
         <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm mb-8 flex justify-between items-center">
             <div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ID PESANAN</p>
-                <h3 className="text-lg font-black text-[#C0392B]">#ORD-{orderId?.toString().padStart(5, '0')}</h3>
+                <h3 className="text-lg font-black text-[#D04040]">#ORD-{orderId?.toString().padStart(5, '0')}</h3>
             </div>
             <div className="text-right">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ESTIMASI</p>
@@ -73,7 +73,7 @@ const TrackingPage = () => {
 
         {/* Tracking Steps */}
         <div className="bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C0392B]/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#D04040]/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
             
             <div className="relative z-10 space-y-8">
                 {steps.map((step, idx) => {
@@ -91,7 +91,7 @@ const TrackingPage = () => {
                             {/* Icon Circle */}
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
                                 isCompleted ? 'bg-green-100 text-green-600' : 
-                                isActive ? 'bg-[#C0392B] text-white shadow-xl shadow-red-200 scale-110' : 
+                                isActive ? 'bg-[#D04040] text-white shadow-xl shadow-red-200 scale-110' : 
                                 'bg-gray-50 text-gray-300'
                             }`}>
                                 {isCompleted ? <CheckCircle size={24} /> : step.icon}
@@ -105,7 +105,7 @@ const TrackingPage = () => {
                                     {step.label}
                                 </h4>
                                 {isActive && (
-                                    <p className="text-[10px] font-bold text-[#C0392B] mt-1 animate-pulse uppercase tracking-widest">
+                                    <p className="text-[10px] font-bold text-[#D04040] mt-1 animate-pulse uppercase tracking-widest">
                                         SEDANG DIPROSES
                                     </p>
                                 )}
@@ -121,7 +121,7 @@ const TrackingPage = () => {
             {currentIdx === 3 ? (
                 <button 
                     onClick={() => navigate('/menu')}
-                    className="w-full bg-[#C0392B] text-white py-5 rounded-[28px] font-black shadow-xl shadow-red-100 active:scale-95 transition-all"
+                    className="w-full bg-[#D04040] text-white py-5 rounded-[28px] font-black shadow-xl shadow-red-100 active:scale-95 transition-all"
                 >
                     PESAN LAGI?
                 </button>

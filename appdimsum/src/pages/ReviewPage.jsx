@@ -75,19 +75,19 @@ const ReviewPage = () => {
                             className="w-full h-auto rounded-xl shadow-sm"
                         />
                     </div>
-                    <div className="absolute inset-0 bg-[#C0392B]/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <QrCode className="text-[#C0392B] opacity-20" size={100} />
+                    <div className="absolute inset-0 bg-[#D04040]/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <QrCode className="text-[#D04040] opacity-20" size={100} />
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center bg-red-50 p-4 rounded-2xl mb-8">
-                    <span className="text-xs font-bold text-[#C0392B] uppercase tracking-wider">Total Bayar</span>
-                    <span className="text-lg font-black text-[#C0392B]">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                <div className="flex flex-col mb-8">
+                    <span className="text-xs font-bold text-[#D04040] uppercase tracking-wider">Total Bayar</span>
+                    <span className="text-lg font-black text-[#D04040]">Rp {grandTotal.toLocaleString('id-ID')}</span>
                 </div>
 
                 <button 
                     onClick={handlePaymentSimulated}
-                    className="w-full bg-[#C0392B] text-white py-4 rounded-2xl font-black shadow-xl shadow-red-200 active:scale-95 transition-all"
+                    className="w-full bg-[#D04040] text-white py-4 rounded-2xl font-black shadow-xl shadow-red-200 active:scale-95 transition-all"
                 >
                     SAYA SUDAH BAYAR
                 </button>
@@ -109,7 +109,7 @@ const ReviewPage = () => {
 
       <div className="max-w-2xl mx-auto p-6 space-y-6">
         {/* Table Info */}
-        <div className="bg-[#C0392B] p-6 rounded-[32px] shadow-lg shadow-red-200 flex justify-between items-center text-white relative overflow-hidden">
+        <div className="bg-[#D04040] p-6 rounded-[32px] shadow-lg shadow-red-200 flex justify-between items-center text-white relative overflow-hidden">
             <div className="relative z-10">
                 <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">Nomor Meja</p>
                 <h3 className="text-2xl font-black italic">Meja {noMeja}</h3>
@@ -153,7 +153,7 @@ const ReviewPage = () => {
             </div>
             <textarea 
                 placeholder="Tulis catatan (misal: jangan pedas, perbanyak saus)..."
-                className="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#C0392B]/10 min-h-[100px] resize-none"
+                className="w-full bg-gray-50 border-none rounded-2xl p-4 text-xs font-medium text-gray-700 outline-none focus:ring-2 focus:ring-[#D04040]/10 min-h-[100px] resize-none"
             ></textarea>
         </div>
 
@@ -171,7 +171,7 @@ const ReviewPage = () => {
                 </div>
                 <div className="pt-4 border-t border-gray-50 flex justify-between items-center">
                     <span className="text-base text-gray-900 font-black">Total Akhir</span>
-                    <span className="text-xl text-[#C0392B] font-black italic">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                    <span className="text-xl text-[#D04040] font-black italic">Rp {grandTotal.toLocaleString('id-ID')}</span>
                 </div>
             </div>
         </div>
@@ -182,7 +182,7 @@ const ReviewPage = () => {
         <button
           onClick={handleConfirmOrder}
           disabled={loading}
-          className={`max-w-2xl mx-auto w-full bg-[#C0392B] text-white py-5 rounded-[28px] font-black shadow-2xl shadow-red-200 active:scale-95 transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className={`max-w-2xl mx-auto w-full bg-[#D04040] text-white py-5 rounded-[28px] font-black shadow-2xl shadow-red-200 active:scale-95 transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
           {loading ? 'MEMPROSES...' : 'PESAN & BAYAR SEKARANG'}
         </button>

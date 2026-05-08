@@ -128,7 +128,7 @@ const CheckoutPage = () => {
                         )}
                         <p className="text-sm font-bold text-gray-900 mt-1 lg:hidden">Rp {item.price.toLocaleString('id-ID')}</p>
                       </div>
-                      <button onClick={onCancel} className="lg:hidden px-4 py-1.5 border border-red-100 text-[#D32F2F] text-xs font-bold rounded-lg bg-red-50/30">
+                      <button onClick={onCancel} className="lg:hidden px-4 py-1.5 border border-red-100 text-[#D04040] text-xs font-bold rounded-lg bg-red-50/30">
                         Ubah
                       </button>
                     </div>
@@ -161,7 +161,7 @@ const CheckoutPage = () => {
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
                   <span className="text-xs font-black text-gray-900 uppercase tracking-widest">Total Estimasi:</span>
-                  <span className="text-2xl font-black text-[#D32F2F]">Rp {total.toLocaleString('id-ID')}</span>
+                  <span className="text-2xl font-black text-[#D04040]">Rp {total.toLocaleString('id-ID')}</span>
                 </div>
               </div>
 
@@ -170,13 +170,13 @@ const CheckoutPage = () => {
                 <button 
                   onClick={onConfirm}
                   disabled={isSubmitting || items.length === 0}
-                  className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#D04040] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Konfirmasi & Bayar'}
                 </button>
                 <button 
                   onClick={onCancel}
-                  className="w-full py-4 border-2 border-red-100 text-[#D32F2F] font-bold text-lg rounded-xl hover:bg-red-50 transition-all"
+                  className="w-full py-4 border-2 border-red-100 text-[#D04040] font-bold text-lg rounded-xl hover:bg-red-50 transition-all"
                 >
                   Ubah Pesanan
                 </button>
@@ -192,7 +192,7 @@ const CheckoutPage = () => {
         <button 
           onClick={onConfirm}
           disabled={isSubmitting || items.length === 0}
-          className="w-full py-4 bg-[#D32F2F] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
+          className="w-full py-4 bg-[#D04040] text-white font-bold text-lg rounded-xl shadow-lg shadow-red-200 active:scale-95 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
         >
           {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Konfirmasi & Bayar'}
         </button>

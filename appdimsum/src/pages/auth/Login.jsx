@@ -36,7 +36,7 @@ const Login = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 font-sans">
       <div className="bg-white w-full max-w-md rounded-[40px] shadow-2xl overflow-hidden relative pb-12">
         {/* Red Gradient Header with Wave */}
-        <div className="relative h-48 bg-gradient-to-b from-[#C0392B] to-[#E74C3C] flex items-center justify-center overflow-hidden">
+        <div className="relative h-48 bg-gradient-to-b from-[#D04040] to-[#E55050] flex items-center justify-center overflow-hidden">
           {/* Logo Container */}
           <div className="relative z-20 w-24 h-24 bg-white rounded-full p-1 shadow-xl border-4 border-white/20 overflow-hidden">
             <img 
@@ -73,7 +73,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="masukkan username"
-                className="w-full bg-gray-100 border-none rounded-2xl py-4 px-6 text-sm outline-none focus:ring-2 focus:ring-[#C0392B]/20 transition-all"
+                className="w-full bg-gray-100 border-none rounded-2xl py-4 px-6 text-sm outline-none focus:ring-2 focus:ring-[#D04040]/20 transition-all"
                 required
               />
             </div>
@@ -85,7 +85,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="............"
-                className="w-full bg-gray-100 border-none rounded-2xl py-4 px-6 text-sm outline-none focus:ring-2 focus:ring-[#C0392B]/20 transition-all"
+                className="w-full bg-gray-100 border-none rounded-2xl py-4 px-6 text-sm outline-none focus:ring-2 focus:ring-[#D04040]/20 transition-all"
                 required
               />
               <div className="text-right mt-2">
@@ -98,7 +98,7 @@ const Login = () => {
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full bg-[#C0392B] hover:bg-[#A93226] text-white font-bold py-4 rounded-2xl shadow-lg shadow-red-200 transition-all active:scale-[0.98]"
+                className="w-full bg-[#D04040] hover:bg-[#B03030] text-white font-bold py-4 rounded-2xl shadow-lg shadow-red-200 transition-all active:scale-[0.98]"
               >
                 MASUK
               </button>
@@ -106,7 +106,7 @@ const Login = () => {
             
             <div className="text-center mt-6">
                 <p className="text-xs text-gray-500">
-                    Belum punya akun? <Link to="/register" className="text-[#C0392B] font-bold hover:underline">Daftar Sekarang</Link>
+                    Belum punya akun? <Link to="/register" className="text-[#D04040] font-bold hover:underline">Daftar Sekarang</Link>
                 </p>
             </div>
           </form>
