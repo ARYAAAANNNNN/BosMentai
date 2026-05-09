@@ -21,6 +21,7 @@ const PLACEHOLDER_COLORS = {
 // ── MenuCard Sub-Component ────────────────────────────────────────
 const MenuCard = ({ item, onAdd, cartQty }) => {
   const [imgError, setImgError] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
   const isHabis = item.stok === 0;
   const imgSrc = item.image ? getImageUrl(item.image) : null;
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
@@ -41,7 +42,14 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
             <span className="bg-white/90 text-[#D04040] font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">STOK HABIS</span>
           </div>
         )}
-        {cartQty > 0 && !isHabis && (
+        {isAdded && !isHabis && (
+          <div className="absolute inset-0 bg-green-500/60 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-300">
+            <div className="bg-white/90 p-2 rounded-full shadow-xl">
+              <Plus size={24} className="text-green-600 animate-bounce" strokeWidth={4} />
+            </div>
+          </div>
+        )}
+        {cartQty > 0 && !isHabis && !isAdded && (
           <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
             {cartQty}
           </div>
@@ -58,14 +66,30 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
         <div className="mt-auto">
           <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold mb-3">Tersedia : {item.stok}</p>
           <button
-            onClick={() => !isHabis && onAdd(item)}
+            onClick={() => {
+              if (!isHabis) {
+                onAdd(item);
+                setIsAdded(true);
+                setTimeout(() => setIsAdded(false), 1500);
+              }
+            }}
             disabled={isHabis}
             className={`w-full h-[38px] sm:h-[42px] rounded-xl font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
-              isHabis ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#D04040] text-white hover:bg-[#B03030] active:bg-[#902020] shadow-sm'
+              isHabis 
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                : isAdded 
+                  ? 'bg-green-500 text-white shadow-lg shadow-green-200' 
+                  : 'bg-[#D04040] text-white hover:bg-[#B03030] active:bg-[#902020] shadow-sm'
             }`}
           >
-            {!isHabis && <Plus size={14} strokeWidth={3} />}
-            {isHabis ? 'Habis' : 'Pesan'}
+            {isHabis ? null : isAdded ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 animate-in zoom-in" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <Plus size={14} strokeWidth={3} />
+            )}
+            {isHabis ? 'Habis' : isAdded ? 'Ditambahkan' : 'Pesan'}
           </button>
         </div>
       </div>
@@ -248,7 +272,7 @@ const MenuPage = () => {
                 className="bg-white/10 backdrop-blur-md rounded-lg w-8 h-8 flex items-center justify-center relative border border-white/5 shadow-lg active:scale-95 transition-all hover:bg-white/15">
                 <ShoppingCart size={15} className="text-white/60" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#D04040] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040]">
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#FFB800] text-white text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full border-2 border-[#D04040] shadow-sm animate-in zoom-in duration-300">
                     {totalItems}
                   </span>
                 )}
