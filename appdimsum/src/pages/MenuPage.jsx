@@ -27,44 +27,49 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
   const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
 
   return (
-    <div className={`w-full max-w-[210px] h-full sm:h-[340px] mx-auto bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all active:scale-[0.98] ${isHabis ? 'grayscale' : 'hover:shadow-md'}`}>
-      {/* Image */}
-      <div className="relative aspect-square sm:aspect-auto sm:h-[150px] w-full shrink-0 overflow-hidden bg-gray-50">
+    <div className={`w-full bg-white rounded-xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all ${isHabis ? 'grayscale opacity-70' : 'hover:shadow-md'}`}>
+      {/* Image — square */}
+      <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
         {imgSrc && !imgError ? (
-          <img src={imgSrc} alt={item.name} onError={() => setImgError(true)} className="w-full h-full object-cover" loading="lazy" />
+          <img src={imgSrc} alt={item.name} onError={() => setImgError(true)} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
           <div className={`w-full h-full bg-gradient-to-br ${catColor} flex items-center justify-center`}>
-            <UtensilsCrossed size={48} className="text-gray-300 opacity-50" />
+            <UtensilsCrossed size={40} className="text-gray-300 opacity-50" />
           </div>
         )}
         {isHabis && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="bg-white/90 text-[#D04040] font-black text-[10px] px-3 py-1 rounded-full shadow-lg border border-red-100">STOK HABIS</span>
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <span className="text-white font-bold text-xs bg-black/50 px-3 py-1 rounded-full">Stok Habis</span>
           </div>
         )}
         {isAdded && !isHabis && (
-          <div className="absolute inset-0 bg-green-500/60 backdrop-blur-[2px] flex items-center justify-center animate-in fade-in duration-300">
-            <div className="bg-white/90 p-2 rounded-full shadow-xl">
-              <Plus size={24} className="text-green-600 animate-bounce" strokeWidth={4} />
-            </div>
+          <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
         )}
         {cartQty > 0 && !isHabis && !isAdded && (
-          <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-white animate-in zoom-in duration-300">
+          <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md border-2 border-white">
             {cartQty}
           </div>
         )}
       </div>
+
       {/* Info */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1">
-        <div className="mb-0.5">
-          <span className="font-black text-gray-900 text-[16px] sm:text-[18px]">
-            Rp {(item.harga || 0).toLocaleString('id-ID')}
-          </span>
-        </div>
-        <h3 className="font-extrabold text-gray-900 text-[11px] sm:text-[13px] leading-tight line-clamp-2 mb-2">{item.name}</h3>
-        <div className="mt-auto">
-          <p className="text-[10px] sm:text-[11px] text-gray-400 font-bold mb-3">Tersedia : {item.stok}</p>
+      <div className="px-3 pt-3 pb-4 flex flex-col gap-0.5">
+        <p className="text-[15px] font-bold text-gray-900 leading-tight">
+          Rp {(item.harga || 0).toLocaleString('id-ID')}
+        </p>
+        <p className="text-[12px] font-medium text-gray-600 leading-tight line-clamp-2">
+          {item.name}
+        </p>
+        <p className="text-[10px] text-gray-400 font-medium">
+          Tersedia: {item.stok}
+        </p>
+
+        {/* Button */}
+        <div className="mt-2 flex justify-center">
           <button
             onClick={() => {
               if (!isHabis) {
@@ -74,22 +79,15 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
               }
             }}
             disabled={isHabis}
-            className={`w-full h-[38px] sm:h-[42px] rounded-xl font-bold text-[11px] sm:text-[13px] transition-all flex items-center justify-center gap-2 ${
-              isHabis 
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                : isAdded 
-                  ? 'bg-green-500 text-white shadow-lg shadow-green-200' 
-                  : 'bg-[#D04040] text-white hover:bg-[#B03030] active:bg-[#902020] shadow-sm'
+            className={`px-5 h-[30px] rounded-lg font-bold text-[11px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 ${
+              isHabis
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : isAdded
+                  ? 'bg-green-500 text-white shadow-md'
+                  : 'bg-[#D04040] text-white hover:bg-red-700 active:scale-95 shadow-sm'
             }`}
           >
-            {isHabis ? null : isAdded ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 animate-in zoom-in" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <Plus size={14} strokeWidth={3} />
-            )}
-            {isHabis ? 'Habis' : isAdded ? 'Ditambahkan' : 'Pesan'}
+            {isHabis ? 'Habis' : isAdded ? '✓ Ditambahkan' : '+ Pesan'}
           </button>
         </div>
       </div>
@@ -243,127 +241,138 @@ const MenuPage = () => {
   // RENDER
   // ══════════════════════════════════════════════════════════════
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="w-full relative flex flex-col min-h-screen">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
 
-        {/* ══ HEADER ═══════════════════════════════════════════════ */}
-        <header className="bg-[#D04040] sticky top-0 z-40 h-[65px] flex items-center shadow-md">
-          <div className="w-full px-8 md:px-12 lg:px-20 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/20">
-                <img src="/images/logo-bosmentai.jpg" alt="Bos Mentai Logo" className="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h1 className="text-white font-black text-lg tracking-tight leading-tight">BOS MENTAI</h1>
-                <p className="text-white/40 text-[9px] font-bold tracking-widest -mt-0.5">SMART ORDER</p>
-              </div>
+      {/* ══ HEADER — full width red bar, content centered ══════════ */}
+      <header className="bg-[#D04040] sticky top-0 z-40 shadow-md">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 h-16 flex items-center justify-between">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+              <img src="/images/logo-bosmentai.jpg" alt="Bos Mentai Logo" className="w-full h-full object-cover" />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl h-10 flex items-center gap-2 px-4 border border-white/10 focus-within:bg-white/20 transition-all w-32 sm:w-56">
-                <Search size={16} className="text-white/40 shrink-0" />
-                <input id="search-header" type="text" placeholder="Cari makanan..." value={search} onChange={e => setSearch(e.target.value)}
-                  className="bg-transparent outline-none text-sm text-white placeholder-white/30 font-medium w-full" />
-              </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-xl h-10 px-4 flex items-center gap-2 border border-white/10">
-                <UtensilsCrossed size={14} className="text-white/60" />
-                <span className="text-white/60 text-[12px] font-bold tracking-wide">MEJA {noMeja}</span>
-              </div>
-              <button id="btn-open-cart" onClick={handleOpenCart}
-                className="bg-white/10 backdrop-blur-md rounded-xl w-10 h-10 flex items-center justify-center relative border border-white/10 shadow-lg active:scale-95 transition-all hover:bg-white/15">
-                <ShoppingCart size={18} className="text-white/60" />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#FFB800] text-white text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full border-2 border-[#D04040] shadow-sm animate-in zoom-in duration-300">
-                    {totalItems}
-                  </span>
-                )}
-              </button>
+            <div>
+              <h1 className="text-white font-bold text-sm tracking-tight leading-tight">QR SmartOrder</h1>
+              <p className="text-white/50 text-[9px] font-medium tracking-wider">PT10 Warisan Nusantara</p>
             </div>
           </div>
-        </header>
 
-        {/* ══ CATEGORIES ═══════════════════════════════════════════ */}
-        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[65px] z-30 h-[55px] flex items-center">
-          <div className="px-8 md:px-12 lg:px-20 flex gap-3 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
-            {categories.map(cat => (
-              <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 w-[110px] h-[36px] flex items-center justify-center rounded-xl text-xs font-black transition-all whitespace-nowrap ${
-                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-md shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}>
-                {cat}
-              </button>
-            ))}
+          {/* Search + Table + Cart */}
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <div className="bg-white/10 backdrop-blur-md rounded-lg h-9 flex items-center gap-2 px-3 border border-white/10 focus-within:bg-white/20 transition-all w-36 sm:w-52 lg:w-64">
+              <Search size={14} className="text-white/40 shrink-0" />
+              <input id="search-header" type="text" placeholder="mau makan apa..." value={search} onChange={e => setSearch(e.target.value)}
+                className="bg-transparent outline-none text-xs text-white placeholder-white/40 font-medium w-full" />
+            </div>
+
+            {/* Table Badge */}
+            <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-lg h-9 px-3 items-center gap-2 border border-white/10">
+              <UtensilsCrossed size={12} className="text-white/50" />
+              <span className="text-white/60 text-[11px] font-bold tracking-wide">Meja {noMeja}</span>
+            </div>
+
+            {/* Cart Button */}
+            <button id="btn-open-cart" onClick={handleOpenCart}
+              className="bg-white/10 backdrop-blur-md rounded-lg w-9 h-9 flex items-center justify-center relative border border-white/10 active:scale-95 transition-all hover:bg-white/20">
+              <ShoppingCart size={16} className="text-white/70" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#FFB800] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040] animate-in zoom-in duration-300">
+                  {totalItems}
+                </span>
+              )}
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* ══ MENU GRID ════════════════════════════════════════════ */}
-        <main className="flex-1 px-4 md:px-10 lg:px-16 py-5 bg-gray-50/50 pb-28">
-          <div className="flex items-center justify-between h-[40px] mb-4">
-            <h2 className="font-black text-gray-800 text-lg tracking-tight">
-              {activeCategory === 'Semua' ? 'Pilihan Menu' : activeCategory}
+      {/* ══ CATEGORIES — full width white bar, content centered ════ */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-30">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 h-12 flex items-center gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+          {categories.map(cat => (
+            <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
+              className={`shrink-0 px-5 h-8 flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                activeCategory === cat
+                  ? 'bg-[#D04040] text-white shadow-sm'
+                  : 'bg-transparent text-gray-500 hover:bg-gray-100'
+              }`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ══ MAIN CONTENT — centered container ═════════════════════ */}
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 py-6">
+
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="font-bold text-gray-800 text-lg">
+              {activeCategory === 'Semua' ? 'Semua Menu' : activeCategory}
             </h2>
-            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-              <span className="text-[10px] text-gray-500 font-bold">{filtered.length} Tersedia</span>
-            </div>
+            <span className="text-xs text-gray-400 font-medium">
+              › {filtered.length} menu tersedia
+            </span>
           </div>
 
+          {/* Grid / States */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-              <div className="w-12 h-12 border-4 border-red-100 border-t-red-600 rounded-full animate-spin mb-4" />
-              <p className="text-gray-400 font-bold text-sm">Memuat menu...</p>
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="w-10 h-10 border-3 border-red-100 border-t-red-600 rounded-full animate-spin mb-3" />
+              <p className="text-gray-400 font-medium text-sm">Memuat menu...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-20 text-center flex flex-col items-center">
-              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
-                <UtensilsCrossed size={48} />
+            <div className="py-24 text-center flex flex-col items-center">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
+                <UtensilsCrossed size={40} />
               </div>
-              <h3 className="font-black text-gray-800 mb-1">Menu tidak ditemukan</h3>
-              <p className="text-gray-400 text-xs px-10">Coba ganti kategori atau cari dengan kata kunci lain.</p>
+              <h3 className="font-bold text-gray-700 mb-1">Menu tidak ditemukan</h3>
+              <p className="text-gray-400 text-xs">Coba ganti kategori atau kata kunci lain.</p>
               <button onClick={() => { setSearch(''); setActiveCategory('Semua'); }}
-                className="mt-6 text-red-600 font-black text-xs uppercase tracking-widest border-b-2 border-red-600">
+                className="mt-4 text-red-500 font-bold text-xs underline">
                 Reset Filter
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-5">
               {filtered.map(item => (
                 <MenuCard key={item.id} item={item} onAdd={handleAdd} cartQty={cartMap[item.id] || 0} />
               ))}
             </div>
           )}
-        </main>
+        </div>
+      </main>
 
+      {/* ══ OVERLAY MODALS ══════════════════════════════════════════ */}
+      {currentView === 'cart' && (
+        <CartSheet
+          cart={cart}
+          totalPrice={totalPrice}
+          onClose={handleCloseCart}
+          onIncrement={incrementQuantity}
+          onDecrement={decrementQuantity}
+          onClear={clearCart}
+          onCheckout={handleCheckout}
+          isSubmitting={isSubmitting}
+        />
+      )}
 
-        {/* ══ OVERLAY MODALS ══════════════════════════════════════= */}
-        {currentView === 'cart' && (
-          <CartSheet
-            cart={cart}
-            totalPrice={totalPrice}
-            onClose={handleCloseCart}
-            onIncrement={incrementQuantity}
-            onDecrement={decrementQuantity}
-            onClear={clearCart}
-            onCheckout={handleCheckout}
-            isSubmitting={isSubmitting}
-          />
-        )}
+      {currentView === 'payment' && paymentData && (
+        <PaymentView
+          paymentData={paymentData}
+          onPaid={handleConfirmPaid}
+          onClose={() => { setCurrentView('menu'); setPaymentData(null); }}
+        />
+      )}
 
-        {currentView === 'payment' && paymentData && (
-          <PaymentView
-            paymentData={paymentData}
-            onPaid={handleConfirmPaid}
-            onClose={() => { setCurrentView('menu'); setPaymentData(null); }}
-          />
-        )}
-
-        {(currentView === 'success' || currentView === 'failed') && (
-          <StatusView
-            status={currentView}
-            orderId={paymentData?.order_id}
-            onClose={handleStatusClose}
-          />
-        )}
-      </div>
+      {(currentView === 'success' || currentView === 'failed') && (
+        <StatusView
+          status={currentView}
+          orderId={paymentData?.order_id}
+          onClose={handleStatusClose}
+        />
+      )}
     </div>
   );
 };
