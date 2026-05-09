@@ -73,6 +73,13 @@ export const menuAPI = {
   // DELETE /api/menus/:id — soft delete
   delete: (id) =>
     apiFetch(`${BASE_URL}/menus/${id}`, { method: 'DELETE' }),
+
+  // PATCH /api/menus/:id/stok — update stok
+  updateStok: (id, data) =>
+    apiFetch(`${BASE_URL}/menus/${id}/stok`, {
+      method: 'PATCH',
+      body:   JSON.stringify(data),
+    }),
 };
 
 // ── orderAPI ──────────────────────────────────────────────────────

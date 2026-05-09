@@ -11,6 +11,16 @@ const STATUS_CONFIG = {
   'Selesai':            { color: 'bg-green-100 text-green-700 border-green-200', icon: CircleCheck, label: 'Selesai' },
 };
 
+// ── Status Badge ──────────────────────────────────────────────────
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_CONFIG[status] || { color: 'bg-gray-100 text-gray-500 border-gray-200', label: status };
+  return (
+    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${cfg.color}`}>
+      {cfg.label}
+    </span>
+  );
+};
+
 const TABS = ['Semua', 'Menunggu Konfirmasi', 'Terkonfirmasi', 'Diproses', 'Selesai'];
 const PER_PAGE = 10;
 
@@ -114,16 +124,6 @@ const DetailModal = ({ order, onClose, onProcess, loadingAction }) => {
         </div>
       </div>
     </>
-  );
-};
-
-// ── Status Badge ──────────────────────────────────────────────────
-const StatusBadge = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] || { color: 'bg-gray-100 text-gray-500 border-gray-200', label: status };
-  return (
-    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${cfg.color}`}>
-      {cfg.label}
-    </span>
   );
 };
 

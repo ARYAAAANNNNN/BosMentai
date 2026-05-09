@@ -250,8 +250,10 @@ const MenuPage = () => {
         jumlah: item.quantity,
       }));
 
+      const sanitizedMeja = String(noMeja).replace(/\D/g, '');
+
       const res = await paymentAPI.createTransaction({
-        no_meja: parseInt(noMeja, 10),
+        no_meja: parseInt(sanitizedMeja, 10) || 1,
         catatan: catatan || '',
         items,
       });
