@@ -333,28 +333,6 @@ const MenuPage = () => {
           )}
         </main>
 
-        {/* ══ CART BOTTOM BAR ══════════════════════════════════════ */}
-        {totalItems > 0 && currentView === 'menu' && (
-          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 pb-6 z-40 pointer-events-none">
-            <button onClick={handleOpenCart}
-              className="w-full bg-[#D04040] h-14 rounded-2xl shadow-2xl shadow-red-900/30 pointer-events-auto flex items-center justify-between px-5 transition-transform active:scale-95 group">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center text-white relative">
-                  <ShoppingCart size={18} />
-                  <span className="absolute -top-1.5 -right-1.5 bg-white text-[#D04040] text-[10px] font-black w-4 h-4 flex items-center justify-center rounded-full">{totalItems}</span>
-                </div>
-                <div>
-                  <p className="text-[10px] text-red-100 font-bold uppercase leading-none opacity-80">Total Pesanan</p>
-                  <p className="text-white font-black text-sm">Rp {totalPrice.toLocaleString('id-ID')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-white font-black text-xs uppercase tracking-widest">
-                Lihat Keranjang
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-          </div>
-        )}
 
         {/* ══ OVERLAY MODALS ══════════════════════════════════════= */}
         {currentView === 'cart' && (
