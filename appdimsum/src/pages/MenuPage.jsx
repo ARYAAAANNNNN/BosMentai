@@ -325,7 +325,7 @@ const MenuPage = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-4 sm:gap-6 justify-items-center">
+            <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-6 justify-items-center">
               {filtered.map(item => (
                 <MenuCard key={item.id} item={item} onAdd={handleAdd} cartQty={cartMap[item.id] || 0} />
               ))}
