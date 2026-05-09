@@ -11,7 +11,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
 
       {/* Sheet */}
       <div className="fixed bottom-0 left-0 right-0 z-[60] animate-in slide-in-from-bottom duration-500 ease-out">
-        <div className="bg-gray-50 rounded-t-[40px] shadow-2xl max-h-[92vh] flex flex-col mx-auto max-w-2xl w-full border-t border-white/20">
+        <div className="bg-gray-50 rounded-t-[40px] shadow-2xl max-h-[92vh] flex flex-col w-full border-t border-white/20">
           
           {/* Handle Bar */}
           <div className="w-full flex justify-center pt-3 pb-1">
