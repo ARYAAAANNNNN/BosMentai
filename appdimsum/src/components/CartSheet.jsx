@@ -20,7 +20,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
 
           {/* Header */}
           <div className="flex justify-center w-full pt-12 pb-6">
-            <div className="w-full max-w-5xl px-20 flex items-center justify-between">
+            <div className="w-full max-w-5xl px-6 md:px-20 flex items-center justify-between">
               <h2 className="font-black text-gray-900 text-2xl tracking-tight">Keranjang Pesanan</h2>
               <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all active:scale-90">
                 <X size={20} className="text-gray-500" />
@@ -31,7 +31,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
           {/* Items List */}
           <div className="flex-1 overflow-y-auto py-2">
             <div className="flex justify-center w-full">
-              <div className="w-full max-w-5xl px-16 space-y-4">
+              <div className="w-full max-w-5xl px-4 md:px-16 space-y-4">
                 {cart.map(item => {
                   const imgSrc = item.image ? getImageUrl(item.image) : null;
                   return (
@@ -80,7 +80,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
           {/* Footer */}
           <div className="bg-white rounded-t-[40px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] pt-6 pb-10">
             <div className="flex justify-center w-full">
-              <div className="w-full max-w-5xl px-20 space-y-6">
+              <div className="w-full max-w-5xl px-6 md:px-20 space-y-6">
                 <div className="space-y-1">
                   <span className="text-sm text-gray-400 font-bold uppercase tracking-widest">Total Pembayaran</span>
                   <p className="text-2xl font-medium text-gray-900">
