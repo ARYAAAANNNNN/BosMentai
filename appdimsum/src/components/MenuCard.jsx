@@ -53,13 +53,20 @@ const MenuCard = ({ item }) => {
           </h3>
         </div>
 
-        {/* Tombol Pesan */}
-        <div className="mt-auto w-full pt-2">
+        {/* Harga & Tombol Pesan */}
+        <div className="mt-auto pt-2">
+          <div className="mb-3">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Mulai Dari</p>
+            <p className="text-lg font-black text-[#D34848]">
+              Rp {(item.price || item.harga || 0).toLocaleString('id-ID')}
+            </p>
+          </div>
+
           <button
             onClick={handleAddToCart}
             disabled={isDisabled}
             className={`
-              w-full h-[36px] sm:h-[40px] rounded-xl font-black text-[11px] sm:text-[12px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2
+              w-full h-[38px] sm:h-[42px] rounded-xl font-black text-[11px] sm:text-[12px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2
               ${isDisabled 
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                 : isAdded 
