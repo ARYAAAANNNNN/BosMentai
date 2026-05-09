@@ -79,12 +79,12 @@ const MenuCard = ({ item, onAdd, cartQty }) => {
               }
             }}
             disabled={isHabis}
-            className={`px-5 h-[30px] rounded-lg font-bold text-[11px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 ${
+            className={`w-full h-[42px] rounded-xl font-bold text-[13px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 ${
               isHabis
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : isAdded
                   ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-[#D04040] text-white hover:bg-red-700 active:scale-95 shadow-sm'
+                  : 'bg-[#D04040] text-white hover:bg-red-700 active:scale-95 shadow-sm hover:shadow-md'
             }`}
           >
             {isHabis ? 'Habis' : isAdded ? '✓ Ditambahkan' : '+ Pesan'}

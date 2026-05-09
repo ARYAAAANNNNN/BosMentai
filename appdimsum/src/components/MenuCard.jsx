@@ -61,7 +61,7 @@ const MenuCard = ({ item, onAdd }) => {
             onClick={handleAddToCart}
             disabled={isDisabled}
             className={`
-              px-5 h-[30px] rounded-lg font-bold text-[11px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5
+              w-full h-[42px] rounded-xl font-bold text-[13px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5
               ${isDisabled
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 : isAdded
