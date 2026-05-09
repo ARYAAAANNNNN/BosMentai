@@ -247,7 +247,7 @@ const MenuPage = () => {
       <div className="w-full relative flex flex-col min-h-screen">
 
         {/* ══ HEADER ═══════════════════════════════════════════════ */}
-        <header className="bg-[#D04040] sticky top-0 z-40 h-[60px] flex items-center">
+        <header className="bg-[#D04040] sticky top-0 z-40 h-[80px] flex items-center shadow-lg">
           <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/20">
@@ -258,19 +258,19 @@ const MenuPage = () => {
                 <p className="text-white/40 text-[9px] font-bold tracking-widest -mt-0.5">SMART ORDER</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 flex items-center gap-2 px-3 border border-white/5 focus-within:bg-white/20 transition-all w-28 sm:w-40">
-                <Search size={14} className="text-white/40 shrink-0" />
-                <input id="search-header" type="text" placeholder="Cari..." value={search} onChange={e => setSearch(e.target.value)}
-                  className="bg-transparent outline-none text-xs text-white placeholder-white/30 font-medium w-full" />
+            <div className="flex items-center gap-3">
+              <div className="bg-white/10 backdrop-blur-md rounded-xl h-10 flex items-center gap-2 px-4 border border-white/10 focus-within:bg-white/20 transition-all w-32 sm:w-56">
+                <Search size={16} className="text-white/40 shrink-0" />
+                <input id="search-header" type="text" placeholder="Cari makanan..." value={search} onChange={e => setSearch(e.target.value)}
+                  className="bg-transparent outline-none text-sm text-white placeholder-white/30 font-medium w-full" />
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-lg h-8 px-3 flex items-center gap-1.5 border border-white/5">
-                <UtensilsCrossed size={13} className="text-white/60" />
-                <span className="text-white/40 text-[11px] font-medium tracking-wide">MEJA {noMeja}</span>
+              <div className="bg-white/10 backdrop-blur-md rounded-xl h-10 px-4 flex items-center gap-2 border border-white/10">
+                <UtensilsCrossed size={14} className="text-white/60" />
+                <span className="text-white/60 text-[12px] font-bold tracking-wide">MEJA {noMeja}</span>
               </div>
               <button id="btn-open-cart" onClick={handleOpenCart}
-                className="bg-white/10 backdrop-blur-md rounded-lg w-8 h-8 flex items-center justify-center relative border border-white/5 shadow-lg active:scale-95 transition-all hover:bg-white/15">
-                <ShoppingCart size={15} className="text-white/60" />
+                className="bg-white/10 backdrop-blur-md rounded-xl w-10 h-10 flex items-center justify-center relative border border-white/10 shadow-lg active:scale-95 transition-all hover:bg-white/15">
+                <ShoppingCart size={18} className="text-white/60" />
                 {totalItems > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[#FFB800] text-white text-[9px] font-black w-4.5 h-4.5 flex items-center justify-center rounded-full border-2 border-[#D04040] shadow-sm animate-in zoom-in duration-300">
                     {totalItems}
@@ -282,12 +282,12 @@ const MenuPage = () => {
         </header>
 
         {/* ══ CATEGORIES ═══════════════════════════════════════════ */}
-        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[60px] z-30 h-[50px] flex items-center">
-          <div className="px-4 md:px-10 lg:px-16 flex gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[80px] z-30 h-[70px] flex items-center">
+          <div className="px-4 md:px-10 lg:px-16 flex gap-3 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
             {categories.map(cat => (
               <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 w-[100px] h-[30px] flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-md shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                className={`shrink-0 w-[120px] h-[44px] flex items-center justify-center rounded-2xl text-sm font-black transition-all whitespace-nowrap ${
+                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-lg shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}>
                 {cat}
               </button>
