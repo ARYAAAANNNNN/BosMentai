@@ -50,7 +50,7 @@ exports.createTransaction = async (req, res) => {
     // ── Step 1: Create Order ──────────────────────────────────────
     const { rows: orderResult } = await conn.query(
       `INSERT INTO pesanan (no_meja, catatan, status_pesanan, status_pembayaran)
-       VALUES ($1, $2, 'Menunggu', 'unpaid') RETURNING id_pesanan`,
+       VALUES ($1, $2, 'Menunggu Konfirmasi', 'unpaid') RETURNING id_pesanan`,
       [parsedMeja, catatan || null]
     );
     const id_pesanan = orderResult[0].id_pesanan;
@@ -262,9 +262,9 @@ exports.handleNotification = async (req, res) => {
     if (rows.length > 0) {
       const updateFields = { status_pembayaran: pembayaranStatus };
 
-      // If paid, change order status to Diproses (kitchen can start)
+      // If paid, keep status as 'Menunggu Konfirmasi' — admin will manually confirm
       if (pembayaranStatus === 'paid') {
-        updateFields.status_pesanan = 'Diproses';
+        updateFields.status_pesanan = 'Menunggu Konfirmasi';
       }
 
       await pool.query(

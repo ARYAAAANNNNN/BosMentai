@@ -18,6 +18,7 @@ exports.getAllOrders = async (req, res) => {
          p.no_meja                                 AS meja,
          p.catatan,
          p.status_pesanan                          AS status,
+         p.total_harga,
          TO_CHAR(p.waktu_pesan, 'HH24:MI')         AS waktu,
          p.waktu_pesan,
          dp.id_detail,
@@ -25,6 +26,9 @@ exports.getAllOrders = async (req, res) => {
          m.nama_menu                               AS name,
          m.nama_menu,
          m.gambar,
+         m.harga                                   AS harga,
+         dp.harga_satuan,
+         dp.subtotal,
          dp.jumlah                                 AS qty,
          dp.jumlah
        FROM pesanan p
@@ -39,15 +43,17 @@ exports.getAllOrders = async (req, res) => {
       if (!ordersMap.has(orderId)) {
         ordersMap.set(orderId, {
           id: row.id, meja: row.meja, catatan: row.catatan,
-          status: row.status, waktu: row.waktu,
-          waktu_pesan: row.waktu_pesan, items: []
+          status: row.status, total_harga: parseFloat(row.total_harga) || 0,
+          waktu: row.waktu, waktu_pesan: row.waktu_pesan, items: []
         });
       }
       if (row.id_detail) {
         ordersMap.get(orderId).items.push({
           id_detail: row.id_detail, id_menu: row.id_menu,
           name: row.name, nama_menu: row.nama_menu,
-          gambar: row.gambar, qty: row.qty, jumlah: row.jumlah
+          gambar: row.gambar, harga: parseFloat(row.harga_satuan || row.harga) || 0,
+          subtotal: parseFloat(row.subtotal) || 0,
+          qty: row.qty, jumlah: row.jumlah
         });
       }
     });
@@ -82,7 +88,8 @@ exports.getOrderById = async (req, res) => {
 
     const { rows: itemRows } = await pool.query(
       `SELECT dp.id_detail, dp.id_menu, dp.jumlah AS qty, dp.jumlah,
-              m.nama_menu AS name, m.nama_menu, m.gambar
+              dp.harga_satuan, dp.subtotal,
+              m.nama_menu AS name, m.nama_menu, m.gambar, m.harga
        FROM detail_pesanan dp
        LEFT JOIN menu m ON dp.id_menu = m.id_menu
        WHERE dp.id_pesanan = $1`,
@@ -91,8 +98,9 @@ exports.getOrderById = async (req, res) => {
 
     const order = {
       ...rows[0],
-      items:      itemRows,
+      items:      itemRows.map(i => ({ ...i, harga: parseFloat(i.harga_satuan || i.harga) || 0, subtotal: parseFloat(i.subtotal) || 0 })),
       totalItems: itemRows.reduce((s, i) => s + i.qty, 0),
+      total_harga: parseFloat(rows[0].total_harga) || 0,
       menu:       itemRows[0]?.name || '-',
     };
 
@@ -141,7 +149,7 @@ exports.createOrder = async (req, res) => {
     } else {
       console.log(`[orderController.createOrder] Creating new order...`);
       const { rows: orderResult } = await conn.query(
-        `INSERT INTO pesanan (no_meja, catatan, status_pesanan) VALUES ($1, $2, 'Menunggu') RETURNING id_pesanan`,
+        `INSERT INTO pesanan (no_meja, catatan, status_pesanan) VALUES ($1, $2, 'Menunggu Konfirmasi') RETURNING id_pesanan`,
         [parsedMeja, catatan || null]
       );
       id_pesanan = orderResult[0].id_pesanan;
@@ -247,7 +255,7 @@ exports.createOrder = async (req, res) => {
 };
 
 // ── PATCH /api/orders/:id/status ─────────────────────────────────
-const VALID_STATUS = ['pending', 'Menunggu', 'cooking', 'Diproses', 'ready', 'Selesai'];
+const VALID_STATUS = ['pending', 'Menunggu', 'Menunggu Konfirmasi', 'Terkonfirmasi', 'cooking', 'Diproses', 'ready', 'Selesai'];
 exports.updateStatus = async (req, res) => {
   const { status } = req.body;
   if (!VALID_STATUS.includes(status))

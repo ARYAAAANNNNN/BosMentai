@@ -112,9 +112,12 @@ export const OrderProvider = ({ children }) => {
         setOrders(prev => prev.map(order =>
           order.id === id ? { ...order, status: newStatus } : order
         ));
+        return { success: true };
       }
+      return { success: false, message: res.message || 'Gagal update status' };
     } catch (err) {
       console.error('[OrderContext updateOrderStatus]', err);
+      return { success: false, message: err.message };
     }
   };
 

@@ -2,13 +2,46 @@ import { useState, useEffect, useCallback } from 'react';
 import { useOrderContext } from '../context/OrderContext';
 import { UseCart } from '../context/CartContext';
 import { useParams } from 'react-router-dom';
-import { paymentAPI, getImageUrl } from '../services/api';
-import { ShoppingCart, Plus, Search, UtensilsCrossed, ArrowRight } from 'lucide-react';
+import { paymentAPI, orderAPI, getImageUrl } from '../services/api';
+import { ShoppingCart, Plus, Search, UtensilsCrossed, ArrowRight, CheckCircle, X } from 'lucide-react';
 
 // Sub-components
 import CartSheet from '../components/CartSheet';
 import PaymentView from '../components/PaymentView';
 import StatusView from '../components/StatusView';
+
+// ── Toast Notification Component ─────────────────────────────────
+const Toast = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const colors = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    info: 'bg-blue-500',
+    warning: 'bg-yellow-500 text-yellow-900',
+  };
+
+  return (
+    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100]" style={{ animation: 'toastIn 0.35s ease-out' }}>
+      <div className={`${colors[type] || colors.success} text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 min-w-[280px] max-w-[90vw]`}>
+        {type === 'success' && <CheckCircle size={18} className="shrink-0" />}
+        <span className="text-sm font-semibold flex-1">{message}</span>
+        <button onClick={onClose} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+          <X size={14} />
+        </button>
+      </div>
+      <style>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translate(-50%, -20px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+      `}</style>
+    </div>
+  );
+};
 
 // ── Warna placeholder per kategori ────────────────────────────────
 const PLACEHOLDER_COLORS = {
@@ -102,7 +135,7 @@ const MenuPage = () => {
   const { tableId } = useParams();
   const context = useOrderContext();
   const {
-    cart, addToCart, incrementQuantity, decrementQuantity, clearCart,
+    cart, addToCart, removeFromCart, incrementQuantity, decrementQuantity, clearCart,
     getTotalPrice, getTotalItems, showCart, setShowCart
   } = UseCart();
 
@@ -118,6 +151,11 @@ const MenuPage = () => {
   const [currentView, setCurrentView] = useState('menu');
   const [paymentData, setPaymentData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [catatan, setCatatan] = useState('');
+
+  // ── Toast State ─────────────────────────────────────────────────
+  const [toast, setToast] = useState(null);
+  const showToast = (message, type = 'success') => setToast({ message, type });
 
   const noMeja = tableId || localStorage.getItem('no_meja') || '12';
   const categories = ["Semua", "Dimsum", "Goreng", "Minuman", "Dessert"];
@@ -153,6 +191,18 @@ const MenuPage = () => {
 
   const handleAdd = (item) => addToCart({ ...item, price: item.harga });
 
+  // ── Remove item from cart completely ─────────────────────────────
+  const handleRemoveItem = (itemId) => {
+    // Keep decrementing until item is gone, or use a direct remove
+    const item = cart.find(i => i.id === itemId);
+    if (item) {
+      // Remove all quantity at once
+      for (let i = 0; i < item.quantity; i++) {
+        removeFromCart(itemId);
+      }
+    }
+  };
+
   // ── Payment Polling ─────────────────────────────────────────────
   useEffect(() => {
     if (currentView !== 'payment' || !paymentData?.order_id) return;
@@ -167,9 +217,12 @@ const MenuPage = () => {
           clearInterval(pollInterval);
           setCurrentView('success');
           clearCart();
+          setCatatan('');
+          showToast('Pembayaran berhasil! Pesanan sedang diproses.', 'success');
         } else if (['deny', 'cancel', 'expire'].includes(status)) {
           clearInterval(pollInterval);
           setCurrentView('failed');
+          showToast('Pembayaran gagal atau expired.', 'error');
         }
       } catch (err) {
         console.error('[MenuPage] Poll error:', err);
@@ -199,23 +252,24 @@ const MenuPage = () => {
 
       const res = await paymentAPI.createTransaction({
         no_meja: parseInt(noMeja, 10),
-        catatan: '',
+        catatan: catatan || '',
         items,
       });
 
       if (res?.success && res?.data) {
         setPaymentData(res.data);
         setCurrentView('payment');
+        showToast('Pesanan dibuat! Silakan scan QR untuk bayar.', 'info');
       } else {
-        alert(res?.message || 'Gagal membuat transaksi');
+        showToast(res?.message || 'Gagal membuat transaksi', 'error');
       }
     } catch (err) {
       console.error('[MenuPage] Checkout error:', err);
-      alert('Gagal membuat transaksi: ' + err.message);
+      showToast('Gagal membuat transaksi: ' + err.message, 'error');
     } finally {
       setIsSubmitting(false);
     }
-  }, [cart, noMeja, isSubmitting]);
+  }, [cart, noMeja, isSubmitting, catatan]);
 
   const handleConfirmPaid = async () => {
     if (!paymentData?.order_id) return;
@@ -225,6 +279,8 @@ const MenuPage = () => {
       if (status === 'settlement') {
         setCurrentView('success');
         clearCart();
+        setCatatan('');
+        showToast('Pembayaran berhasil! Pesanan sedang diproses.', 'success');
       }
       // If still pending, the polling will handle it
     } catch (err) {
@@ -242,6 +298,15 @@ const MenuPage = () => {
   // ══════════════════════════════════════════════════════════════
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+
+      {/* ══ TOAST ═══════════════════════════════════════════════════ */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
 
       {/* ══ HEADER — full width red bar, content centered ══════════ */}
       <header className="bg-[#D04040] sticky top-0 z-40 shadow-md">
@@ -277,7 +342,7 @@ const MenuPage = () => {
               className="bg-white/10 backdrop-blur-md rounded-lg w-9 h-9 flex items-center justify-center relative border border-white/10 active:scale-95 transition-all hover:bg-white/20">
               <ShoppingCart size={16} className="text-white/70" />
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FFB800] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040] animate-in zoom-in duration-300">
+                <span className="absolute -top-1 -right-1 bg-[#FFB800] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040]" style={{ animation: 'popIn 0.3s ease-out' }}>
                   {totalItems}
                 </span>
               )}
@@ -344,6 +409,25 @@ const MenuPage = () => {
         </div>
       </main>
 
+      {/* ══ FLOATING CART BAR (when items in cart & on menu view) ═══ */}
+      {currentView === 'menu' && totalItems > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 p-4 pointer-events-none">
+          <div className="max-w-7xl mx-auto">
+            <button
+              onClick={handleOpenCart}
+              className="pointer-events-auto w-full bg-[#D04040] hover:bg-[#B83030] text-white h-14 rounded-2xl shadow-2xl shadow-red-300/50 flex items-center justify-between px-6 transition-all active:scale-[0.98]"
+              style={{ animation: 'slideUp 0.3s ease-out' }}
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingCart size={18} />
+                <span className="font-bold text-sm">{totalItems} item</span>
+              </div>
+              <span className="font-bold text-sm">Rp {totalPrice.toLocaleString('id-ID')} →</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ══ OVERLAY MODALS ══════════════════════════════════════════ */}
       {currentView === 'cart' && (
         <CartSheet
@@ -352,9 +436,12 @@ const MenuPage = () => {
           onClose={handleCloseCart}
           onIncrement={incrementQuantity}
           onDecrement={decrementQuantity}
+          onRemove={handleRemoveItem}
           onClear={clearCart}
           onCheckout={handleCheckout}
           isSubmitting={isSubmitting}
+          catatan={catatan}
+          onCatatanChange={setCatatan}
         />
       )}
 
@@ -373,6 +460,18 @@ const MenuPage = () => {
           onClose={handleStatusClose}
         />
       )}
+
+      {/* ══ Global Animations ══════════════════════════════════════ */}
+      <style>{`
+        @keyframes popIn {
+          from { transform: scale(0); }
+          to { transform: scale(1); }
+        }
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
