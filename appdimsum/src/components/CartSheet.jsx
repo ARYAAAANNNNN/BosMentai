@@ -19,7 +19,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
           </div>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-8 py-6">
+          <div className="flex items-center justify-between px-8 pt-12 pb-6">
             <h2 className="font-black text-gray-900 text-2xl tracking-tight">Keranjang Pesanan</h2>
             <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all active:scale-90">
               <X size={20} className="text-gray-500" />
