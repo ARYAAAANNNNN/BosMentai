@@ -364,6 +364,7 @@ const MenuPage = () => {
             onClose={handleCloseCart}
             onIncrement={incrementQuantity}
             onDecrement={decrementQuantity}
+            onClear={clearCart}
             onCheckout={handleCheckout}
             isSubmitting={isSubmitting}
           />

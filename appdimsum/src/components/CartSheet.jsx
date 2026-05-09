@@ -1,62 +1,69 @@
 import { X, Minus, Plus, ShoppingCart } from 'lucide-react';
 import { getImageUrl } from '../services/api';
 
-const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onCheckout, isSubmitting }) => {
+const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClear, onCheckout, isSubmitting }) => {
   if (!cart || cart.length === 0) return null;
 
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 transition-opacity animate-in fade-in duration-300" onClick={onClose} />
 
       {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60] animate-in slide-in-from-bottom duration-300">
-        <div className="bg-white rounded-t-3xl shadow-2xl max-h-[80vh] flex flex-col mx-auto max-w-xl w-full">
+      <div className="fixed bottom-0 left-0 right-0 z-[60] animate-in slide-in-from-bottom duration-500 ease-out">
+        <div className="bg-gray-50 rounded-t-[40px] shadow-2xl max-h-[92vh] flex flex-col mx-auto max-w-2xl w-full border-t border-white/20">
+          
+          {/* Handle Bar */}
+          <div className="w-full flex justify-center pt-3 pb-1">
+            <div className="w-16 h-1.5 bg-gray-300 rounded-full" />
+          </div>
+
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <h2 className="font-black text-gray-900 text-lg tracking-tight">Keranjang Pesanan</h2>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-all">
-              <X size={16} className="text-gray-500" />
+          <div className="flex items-center justify-between px-8 py-6">
+            <h2 className="font-black text-gray-900 text-2xl tracking-tight">Keranjang Pesanan</h2>
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all active:scale-90">
+              <X size={20} className="text-gray-500" />
             </button>
           </div>
 
-          {/* Items */}
-          <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
+          {/* Items List */}
+          <div className="flex-1 overflow-y-auto px-6 py-2 space-y-4">
             {cart.map(item => {
               const imgSrc = item.image ? getImageUrl(item.image) : null;
               return (
-                <div key={item.id} className="flex items-center gap-3 py-2">
+                <div key={item.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex items-center gap-5 transition-all hover:shadow-md">
                   {/* Thumbnail */}
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 shrink-0 border border-gray-100">
                     {imgSrc ? (
                       <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xl">🥟</div>
+                      <div className="w-full h-full flex items-center justify-center text-3xl">🥟</div>
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-gray-800 truncate">{item.name || item.nama_menu}</p>
-                    <p className="text-xs font-bold text-[#D04040]">
+                    <p className="text-xl font-black text-gray-900 leading-tight mb-1">
                       Rp {(item.price || item.harga || 0).toLocaleString('id-ID')}
                     </p>
+                    <p className="text-sm font-bold text-gray-500 truncate">{item.name || item.nama_menu}</p>
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mt-1">Dimsum</p>
                   </div>
 
                   {/* Qty Controls */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-gray-50 p-1 rounded-2xl border border-gray-100">
                     <button
                       onClick={() => onDecrement(item.id)}
-                      className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all active:scale-90"
+                      className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 hover:bg-gray-50 transition-all active:scale-90"
                     >
-                      <Minus size={12} strokeWidth={3} className="text-gray-600" />
+                      <Minus size={14} strokeWidth={3} className="text-gray-400" />
                     </button>
-                    <span className="text-sm font-black text-gray-800 w-6 text-center">{item.quantity}</span>
+                    <span className="text-md font-black text-gray-800 w-10 text-center">{item.quantity}</span>
                     <button
                       onClick={() => onIncrement(item.id)}
-                      className="w-7 h-7 rounded-full bg-[#D04040] flex items-center justify-center hover:bg-[#B03030] transition-all active:scale-90"
+                      className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm border border-gray-100 hover:bg-gray-50 transition-all active:scale-90"
                     >
-                      <Plus size={12} strokeWidth={3} className="text-white" />
+                      <Plus size={14} strokeWidth={3} className="text-gray-400" />
                     </button>
                   </div>
                 </div>
@@ -65,28 +72,39 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onChec
           </div>
 
           {/* Footer */}
-          <div className="px-5 py-4 border-t border-gray-100 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500 font-bold">Total Pembayaran</span>
-              <span className="text-lg font-black text-gray-900">Rp {totalPrice.toLocaleString('id-ID')}</span>
+          <div className="px-8 pt-6 pb-10 bg-white rounded-t-[40px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] space-y-6">
+            <div className="space-y-1">
+              <span className="text-sm text-gray-400 font-bold uppercase tracking-widest">Total Pembayaran</span>
+              <p className="text-3xl font-black text-gray-900">
+                Rp {totalPrice.toLocaleString('id-ID')}
+              </p>
             </div>
-            <button
-              onClick={onCheckout}
-              disabled={isSubmitting}
-              className="w-full h-12 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-black text-sm rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Memproses...
-                </>
-              ) : (
-                <>
-                  <ShoppingCart size={16} />
-                  Bayar & Kirim
-                </>
-              )}
-            </button>
+
+            <div className="grid grid-cols-1 gap-3">
+              <button
+                onClick={() => {
+                  if(window.confirm('Hapus semua pesanan?')) {
+                    onClear();
+                    onClose();
+                  }
+                }}
+                className="w-full h-14 bg-white border-2 border-red-500 text-red-500 font-black text-sm rounded-2xl hover:bg-red-50 transition-all flex items-center justify-center active:scale-[0.98]"
+              >
+                Hapus Semua
+              </button>
+              
+              <button
+                onClick={onCheckout}
+                disabled={isSubmitting}
+                className="w-full h-14 bg-[#4ADE80] hover:bg-green-500 active:bg-green-600 text-white font-black text-sm rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-green-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+              >
+                {isSubmitting ? (
+                  <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Lanjutkan Pembayaran"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
