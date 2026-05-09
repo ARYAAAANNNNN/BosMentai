@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Minus, Plus, Trash2, X } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import { getImageUrl } from '../services/api';
 
 const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemove, onClear, onCheckout, isSubmitting, catatan, onCatatanChange }) => {
@@ -8,26 +7,23 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity"
+        className="fixed inset-0 bg-black/40 z-50"
         onClick={onClose}
-        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        style={{ animation: 'cartFadeIn 0.2s ease-out' }}
       />
 
       {/* Bottom Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-[60]" style={{ animation: 'slideUp 0.35s ease-out' }}>
+      <div className="fixed bottom-0 left-0 right-0 z-[60]" style={{ animation: 'cartSlideUp 0.35s ease-out' }}>
         <div className="bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col w-full">
 
-          {/* Handle Bar + Close */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-12 h-1 bg-gray-300 rounded-full" />
+          {/* Handle Bar */}
+          <div className="flex justify-center pt-3 pb-2">
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
           </div>
 
           {/* Header */}
-          <div className="px-6 pt-2 pb-3 flex items-center justify-between">
+          <div className="px-6 pt-2 pb-4">
             <h2 className="text-xl font-bold text-gray-900">Keranjang Pesanan</h2>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-              <X size={16} className="text-gray-500" />
-            </button>
           </div>
 
           {/* Empty State */}
@@ -46,10 +42,10 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                 {cart.map((item, index) => {
                   const imgSrc = item.image ? getImageUrl(item.image) : null;
                   const harga = item.price || item.harga || 0;
-                  const subtotal = harga * (item.quantity || 1);
+                  const kategori = item.kategori || item.category || 'Dimsum';
                   return (
                     <div key={item.id}>
-                      <div className="flex items-center gap-3 py-4">
+                      <div className="flex items-center gap-4 py-4">
                         {/* Thumbnail */}
                         <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                           {imgSrc ? (
@@ -61,42 +57,37 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
 
                         {/* Info */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold text-gray-900 leading-tight truncate">
+                          <p className="text-base font-bold text-gray-900 leading-tight">
+                            Rp {harga.toLocaleString('id-ID')}
+                          </p>
+                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
                             {item.name || item.nama_menu}
                           </p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            Rp {harga.toLocaleString('id-ID')} × {item.quantity}
-                          </p>
-                          <p className="text-[13px] font-bold text-[#D04040] mt-0.5">
-                            Rp {subtotal.toLocaleString('id-ID')}
+                          <p className="text-[11px] text-gray-400 mt-0">
+                            {kategori}
                           </p>
                         </div>
 
                         {/* Quantity Controls */}
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-0 shrink-0">
                           <button
                             onClick={() => onDecrement(item.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                           >
-                            <Minus size={13} strokeWidth={2.5} />
+                            <Minus size={14} strokeWidth={2} />
                           </button>
-                          <span className="text-sm font-bold text-gray-800 w-5 text-center">{item.quantity}</span>
+                          <span className="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-800 border-t border-b border-gray-200">
+                            {item.quantity}
+                          </span>
                           <button
                             onClick={() => onIncrement(item.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-colors"
                           >
-                            <Plus size={13} strokeWidth={2.5} />
+                            <Plus size={14} strokeWidth={2} />
                           </button>
                         </div>
-
-                        {/* Delete Button */}
-                        <button
-                          onClick={() => onRemove(item.id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors shrink-0"
-                        >
-                          <Trash2 size={14} strokeWidth={2} />
-                        </button>
                       </div>
+
                       {/* Divider */}
                       {index < cart.length - 1 && (
                         <div className="h-px bg-gray-100" />
@@ -106,30 +97,18 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                 })}
               </div>
 
-              {/* Catatan */}
-              <div className="px-6 pt-3">
-                <label className="text-xs text-gray-400 font-medium mb-1.5 block">Catatan (opsional)</label>
-                <textarea
-                  value={catatan || ''}
-                  onChange={(e) => onCatatanChange?.(e.target.value)}
-                  placeholder="Contoh: tidak pedas, extra sambal..."
-                  rows={2}
-                  className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-[#D04040]/40 focus:bg-white transition-all resize-none placeholder-gray-300"
-                />
-              </div>
-
               {/* Footer */}
-              <div className="px-6 pt-4 pb-8 space-y-3 bg-white">
+              <div className="px-6 pt-5 pb-8 border-t border-gray-200 space-y-4 bg-white">
                 {/* Total */}
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-400 font-medium">Total Pembayaran</p>
-                  <p className="text-xl font-bold text-gray-900">
+                <div>
+                  <p className="text-xs text-gray-400 font-medium mb-0.5">Total Pembayaran</p>
+                  <p className="text-2xl font-bold text-gray-900">
                     Rp {totalPrice.toLocaleString('id-ID')}
                   </p>
                 </div>
 
                 {/* Buttons */}
-                <div className="flex gap-2">
+                <div className="space-y-2.5">
                   <button
                     onClick={() => {
                       if (window.confirm('Hapus semua pesanan?')) {
@@ -137,7 +116,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                         onClose();
                       }
                     }}
-                    className="flex-shrink-0 h-12 px-5 bg-white border border-gray-200 text-gray-500 font-semibold text-sm rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]"
+                    className="w-full h-12 bg-white border-2 border-red-400 text-red-500 font-semibold text-sm rounded-full hover:bg-red-50 transition-all active:scale-[0.98]"
                   >
                     Hapus Semua
                   </button>
@@ -145,12 +124,12 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                   <button
                     onClick={onCheckout}
                     disabled={isSubmitting || cart.length === 0}
-                    className="flex-1 h-12 bg-[#D04040] hover:bg-[#B83030] text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-200"
+                    className="w-full h-12 bg-[#4CAF50] hover:bg-[#43A047] text-white font-semibold text-sm rounded-full transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      'Konfirmasi Pesanan'
+                      'Lanjutkan Pembayaran'
                     )}
                   </button>
                 </div>
@@ -163,11 +142,11 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
 
       {/* Animations */}
       <style>{`
-        @keyframes fadeIn {
+        @keyframes cartFadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
         }
-        @keyframes slideUp {
+        @keyframes cartSlideUp {
           from { transform: translateY(100%); }
           to { transform: translateY(0); }
         }

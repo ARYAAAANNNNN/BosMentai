@@ -409,25 +409,6 @@ const MenuPage = () => {
         </div>
       </main>
 
-      {/* ══ FLOATING CART BAR (when items in cart & on menu view) ═══ */}
-      {currentView === 'menu' && totalItems > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-30 p-4 pointer-events-none">
-          <div className="max-w-7xl mx-auto">
-            <button
-              onClick={handleOpenCart}
-              className="pointer-events-auto w-full bg-[#D04040] hover:bg-[#B83030] text-white h-14 rounded-2xl shadow-2xl shadow-red-300/50 flex items-center justify-between px-6 transition-all active:scale-[0.98]"
-              style={{ animation: 'slideUp 0.3s ease-out' }}
-            >
-              <div className="flex items-center gap-2">
-                <ShoppingCart size={18} />
-                <span className="font-bold text-sm">{totalItems} item</span>
-              </div>
-              <span className="font-bold text-sm">Rp {totalPrice.toLocaleString('id-ID')} →</span>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ══ OVERLAY MODALS ══════════════════════════════════════════ */}
       {currentView === 'cart' && (
         <CartSheet
