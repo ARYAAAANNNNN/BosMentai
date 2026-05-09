@@ -75,7 +75,7 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onClea
           <div className="px-14 pt-6 pb-10 bg-white rounded-t-[40px] shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] space-y-6">
             <div className="space-y-1">
               <span className="text-sm text-gray-400 font-bold uppercase tracking-widest">Total Pembayaran</span>
-              <p className="text-2xl font-black text-gray-900">
+              <p className="text-2xl font-medium text-gray-900">
                 Rp {totalPrice.toLocaleString('id-ID')}
               </p>
             </div>
