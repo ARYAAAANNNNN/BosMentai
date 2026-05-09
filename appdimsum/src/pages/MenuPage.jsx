@@ -247,8 +247,8 @@ const MenuPage = () => {
       <div className="w-full relative flex flex-col min-h-screen">
 
         {/* ══ HEADER ═══════════════════════════════════════════════ */}
-        <header className="bg-[#D04040] sticky top-0 z-40 h-[80px] flex items-center shadow-lg">
-          <div className="w-full px-5 md:px-10 lg:px-16 flex items-center justify-between">
+        <header className="bg-[#D04040] sticky top-0 z-40 h-[65px] flex items-center shadow-md">
+          <div className="w-full px-8 md:px-12 lg:px-20 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/20">
                 <img src="/images/logo-bosmentai.jpg" alt="Bos Mentai Logo" className="w-full h-full object-cover" />
@@ -282,12 +282,12 @@ const MenuPage = () => {
         </header>
 
         {/* ══ CATEGORIES ═══════════════════════════════════════════ */}
-        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[80px] z-30 h-[70px] flex items-center">
-          <div className="px-4 md:px-10 lg:px-16 flex gap-3 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
+        <div className="bg-white border-b border-gray-100 shadow-sm sticky top-[65px] z-30 h-[55px] flex items-center">
+          <div className="px-8 md:px-12 lg:px-20 flex gap-3 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
             {categories.map(cat => (
               <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 w-[120px] h-[44px] flex items-center justify-center rounded-2xl text-sm font-black transition-all whitespace-nowrap ${
-                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-lg shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                className={`shrink-0 w-[110px] h-[36px] flex items-center justify-center rounded-xl text-xs font-black transition-all whitespace-nowrap ${
+                  activeCategory === cat ? 'bg-[#D04040] text-white shadow-md shadow-red-900/20' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}>
                 {cat}
               </button>
