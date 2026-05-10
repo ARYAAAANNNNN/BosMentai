@@ -63,11 +63,13 @@ exports.getAllMenus = async (req, res) => {
          m.harga,
          m.status,
          m.id_kategori,
+         k.nama_kategori  AS category,
          m.total_dipesan  AS pesanan,
          m.is_active
        FROM menu m
+       LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
        WHERE m.is_active = 1
-       ORDER BY m.nama_menu ASC`
+       ORDER BY k.nama_kategori ASC, m.nama_menu ASC`
     );
     return res.status(200).json({ success: true, total: rows.length, data: rows });
   } catch (err) {

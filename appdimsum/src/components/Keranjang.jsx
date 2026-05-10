@@ -61,7 +61,14 @@ const Keranjang = ({ visible, onClose }) => {
 
       const response = await orderAPI.create(orderData)
       if (response.success) {
-        setTrackingOrderId(response.data.id)
+        const newOrderId = response.data?.id || response.id_pesanan || response.id || null
+        if (!newOrderId) {
+          console.error('Order API returned missing ID:', response)
+          alert('Gagal mengirim pesanan: response ID tidak ditemukan')
+          return
+        }
+
+        setTrackingOrderId(newOrderId)
         setShowSentNotification(true)
         clearCart()
         setTimeout(() => {
@@ -81,6 +88,7 @@ const Keranjang = ({ visible, onClose }) => {
   const totalItems = getTotalItems()
   const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
   const trackingOrder = orders.find(o => o.id === trackingOrderId)
+  const currentStatus = trackingOrder?.status || 'Menunggu'
   const progressHeight = trackingStep === 0 ? '26%' : trackingStep === 1 ? '62%' : '100%'
   const canClose = !showSentNotification && (!showTracking || currentStatus === 'Selesai')
 

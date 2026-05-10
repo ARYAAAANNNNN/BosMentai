@@ -37,22 +37,6 @@ function MenuPage() {
     return () => { mounted = false }
   }, [])
 
-  const categories = [
-    { id: 'semua', name: 'Semua' },
-    { id: 'dimsum', name: 'Dimsum' },
-    { id: 'goreng', name: 'Goreng' },
-    { id: 'minuman', name: 'Minuman' },
-    { id: 'dessert', name: 'Dessert' }
-  ]
-
-  const categoryMap = {
-    semua: ['all'],
-    dimsum: ['siomai', 'hakau', 'xiao long bao', 'dumpling'],
-    goreng: ['cakwe'],
-    minuman: ['es teh', 'es jeruk'],
-    dessert: ['puding']
-  }
-
   const normalizeMenu = (item) => {
     const name = item.nama_menu || item.nama || item.name || ''
     const rawPrice = item.price ?? item.harga ?? 0
@@ -66,17 +50,29 @@ function MenuPage() {
       price,
       priceValue,
       availability: item.availability ?? item.stok ?? 0,
-      category: item.category || item.kategori || '',
+      category: item.category || item.kategori || item.nama_kategori || '',
+      id_kategori: item.id_kategori ? String(item.id_kategori) : '',
       image: getImageUrl(item.image || item.gambar),
     }
   }
 
   const normalizedMenu = menuItems.map(normalizeMenu)
 
+  const categories = [
+    { id: 'semua', name: 'Semua' },
+    ...normalizedMenu.reduce((acc, item) => {
+      if (!item.category) return acc
+      const categoryId = item.id_kategori || item.category.toLowerCase().replace(/\s+/g, '-')
+      if (!acc.some(category => category.id === categoryId)) {
+        acc.push({ id: categoryId, name: item.category })
+      }
+      return acc
+    }, []),
+  ]
+
   const filteredMenu = normalizedMenu.filter(item => {
     const itemName = item.name.toLowerCase()
-    const matchesCategory = activeCategory === 'semua' ||
-      categoryMap[activeCategory].some(keyword => itemName.includes(keyword))
+    const matchesCategory = activeCategory === 'semua' || item.id_kategori === activeCategory
     const matchesSearch = itemName.includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch
   })
