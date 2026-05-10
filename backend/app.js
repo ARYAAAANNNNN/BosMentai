@@ -33,7 +33,9 @@ const allowedOrigins = [
   process.env.CORS_ORIGIN_ADMIN,
   process.env.CORS_ORIGIN_APP,
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5175'
 ].filter(Boolean);
 
 app.use(
