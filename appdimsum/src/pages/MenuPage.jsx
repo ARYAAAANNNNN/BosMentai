@@ -2,459 +2,315 @@ import { useState, useEffect, useCallback } from 'react';
 import { useOrderContext } from '../context/OrderContext';
 import { UseCart } from '../context/CartContext';
 import { useParams } from 'react-router-dom';
-import { paymentAPI, orderAPI, getImageUrl } from '../services/api';
-import { ShoppingCart, Plus, Search, UtensilsCrossed, ArrowRight, CheckCircle, X } from 'lucide-react';
+import { paymentAPI } from '../services/api';
+import { CheckCircle, X } from 'lucide-react';
 
-// Sub-components
 import CartSheet from '../components/CartSheet';
 import PaymentView from '../components/PaymentView';
 import StatusView from '../components/StatusView';
 
-// ── Toast Notification Component ─────────────────────────────────
+/* ── Toast ─────────────────────────────────────────────── */
 const Toast = ({ message, type = 'success', onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 3500);
     return () => clearTimeout(timer);
   }, [onClose]);
 
-  const colors = {
-    success: 'bg-green-500',
-    error: 'bg-red-500',
-    info: 'bg-blue-500',
-    warning: 'bg-yellow-500 text-yellow-900',
-  };
+  const bg = { success: '#4CAF50', error: '#f44336', info: '#2196F3', warning: '#FF9800' };
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100]" style={{ animation: 'toastIn 0.35s ease-out' }}>
-      <div className={`${colors[type] || colors.success} text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 min-w-[280px] max-w-[90vw]`}>
-        {type === 'success' && <CheckCircle size={18} className="shrink-0" />}
-        <span className="text-sm font-semibold flex-1">{message}</span>
-        <button onClick={onClose} className="shrink-0 opacity-70 hover:opacity-100 transition-opacity">
+    <div style={{
+      position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 100,
+      animation: 'toastIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275)',
+    }}>
+      <div style={{
+        background: bg[type] || bg.success, color: '#fff', padding: '10px 18px',
+        borderRadius: 14, display: 'flex', alignItems: 'center', gap: 10,
+        minWidth: 260, maxWidth: '90vw', boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+        fontSize: 13, fontWeight: 700,
+      }}>
+        {type === 'success' && <CheckCircle size={16} />}
+        <span style={{ flex: 1 }}>{message}</span>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: 0 }}>
           <X size={14} />
         </button>
       </div>
-      <style>{`
-        @keyframes toastIn {
-          from { opacity: 0; transform: translate(-50%, -20px); }
-          to { opacity: 1; transform: translate(-50%, 0); }
-        }
-      `}</style>
     </div>
   );
 };
 
-// ── Warna placeholder per kategori ────────────────────────────────
-const PLACEHOLDER_COLORS = {
-  1: 'from-red-50 to-orange-100',
-  2: 'from-orange-50 to-amber-100',
-  3: 'from-blue-50 to-cyan-100',
-  4: 'from-pink-50 to-purple-100',
-};
-
-// ── MenuCard Sub-Component ────────────────────────────────────────
-const MenuCard = ({ item, onAdd, cartQty }) => {
-  const [imgError, setImgError] = useState(false);
-  const [isAdded, setIsAdded] = useState(false);
-  const isHabis = item.stok === 0;
-  const imgSrc = item.image ? getImageUrl(item.image) : null;
-  const catColor = PLACEHOLDER_COLORS[item.id_kategori] || 'from-gray-50 to-slate-100';
-
-  return (
-    <div className={`w-full bg-white rounded-xl overflow-hidden shadow-sm flex flex-col border border-gray-100 transition-all ${isHabis ? 'grayscale opacity-70' : 'hover:shadow-md'}`}>
-      {/* Image — square */}
-      <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
-        {imgSrc && !imgError ? (
-          <img src={imgSrc} alt={item.name} onError={() => setImgError(true)} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
-        ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${catColor} flex items-center justify-center`}>
-            <UtensilsCrossed size={40} className="text-gray-300 opacity-50" />
-          </div>
-        )}
-        {isHabis && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-bold text-xs bg-black/50 px-3 py-1 rounded-full">Stok Habis</span>
-          </div>
-        )}
-        {isAdded && !isHabis && (
-          <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        )}
-        {cartQty > 0 && !isHabis && !isAdded && (
-          <div className="absolute top-2 right-2 bg-[#D04040] text-white text-[10px] font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md border-2 border-white">
-            {cartQty}
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="px-3 pt-3 pb-4 flex flex-col gap-0.5">
-        <p className="text-[15px] font-bold text-gray-900 leading-tight">
-          Rp {(item.harga || 0).toLocaleString('id-ID')}
-        </p>
-        <p className="text-[12px] font-medium text-gray-600 leading-tight line-clamp-2">
-          {item.name}
-        </p>
-        <p className="text-[10px] text-gray-400 font-medium">
-          Tersedia: {item.stok}
-        </p>
-
-        {/* Button */}
-        <div className="mt-2 flex justify-center">
-          <button
-            onClick={() => {
-              if (!isHabis) {
-                onAdd(item);
-                setIsAdded(true);
-                setTimeout(() => setIsAdded(false), 1500);
-              }
-            }}
-            disabled={isHabis}
-            className={`w-full h-[42px] rounded-xl font-bold text-[13px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 ${
-              isHabis
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : isAdded
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-[#D04040] text-white hover:bg-red-700 active:scale-95 shadow-sm hover:shadow-md'
-            }`}
-          >
-            {isHabis ? 'Habis' : isAdded ? '✓ Ditambahkan' : '+ Pesan'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ══════════════════════════════════════════════════════════════════
-// MenuPage — Main Component
-// ══════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════
+   MenuPage
+   ══════════════════════════════════════════════════════════ */
 const MenuPage = () => {
   const { tableId } = useParams();
   const context = useOrderContext();
   const {
-    cart, addToCart, removeFromCart, incrementQuantity, decrementQuantity, clearCart,
-    getTotalPrice, getTotalItems, showCart, setShowCart
+    cart, addToCart, removeFromCart, incrementQuantity, decrementQuantity,
+    clearCart, getTotalPrice, getTotalItems, setShowCart,
   } = UseCart();
 
-  const menuItems = context?.menuItems || [];
+  /* ── Fallback data jika API belum tersedia ────────── */
+  const fallbackMenu = [
+    { id: 1, name: 'Düşman Ayam Pedas', harga: 15000, stok: 37, id_kategori: 1 },
+    { id: 2, name: 'Düşman Udang Pedas', harga: 18000, stok: 24, id_kategori: 2 },
+    { id: 3, name: 'Es Krim Coklat', harga: 8000, stok: 22, id_kategori: 4 },
+    { id: 4, name: 'Es Teh Manis', harga: 5000, stok: 42, id_kategori: 3 },
+    { id: 5, name: 'Lumpia Ayam', harga: 12000, stok: 16, id_kategori: 1 },
+  ];
 
-  // ── UI State ────────────────────────────────────────────────────
+  const apiItems = context?.menuItems || [];
+  const menuItems = apiItems.length > 0 ? apiItems : fallbackMenu;
+
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [loading, setLoading] = useState(true);
-
-  // ── Payment Flow State ──────────────────────────────────────────
-  // currentView: 'menu' | 'cart' | 'payment' | 'success' | 'failed'
   const [currentView, setCurrentView] = useState('menu');
   const [paymentData, setPaymentData] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [catatan, setCatatan] = useState('');
-
-  // ── Toast State ─────────────────────────────────────────────────
   const [toast, setToast] = useState(null);
-  const showToast = (message, type = 'success') => setToast({ message, type });
+  const showToast = (msg, type = 'success') => setToast({ message: msg, type });
 
   const noMeja = tableId || localStorage.getItem('no_meja') || '12';
-  const categories = ["Semua", "Dimsum", "Goreng", "Minuman", "Dessert"];
-  const categoryMap = { "Dimsum": 1, "Goreng": 2, "Minuman": 3, "Dessert": 4 };
+  const categories = ['Semua', 'Ayam', 'Udang', 'Minuman', 'Dessert'];
+  const categoryMap = { Ayam: 1, Udang: 2, Minuman: 3, Dessert: 4 };
 
-  // ── Loading Timer ───────────────────────────────────────────────
+  /* ── Font + scrollbar hide ──────────────────────────── */
   useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .hide-scroll::-webkit-scrollbar{display:none}
+      .hide-scroll{-ms-overflow-style:none;scrollbar-width:none}
+      @keyframes toastIn{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+    `;
+    document.head.appendChild(style);
+
     const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (document.head.contains(link)) document.head.removeChild(link);
+      if (document.head.contains(style)) document.head.removeChild(style);
+    };
   }, []);
 
-  // ── Normalize & Filter Menu Items ───────────────────────────────
+  /* ── Normalize menu items ───────────────────────────── */
   const normalized = menuItems.map(item => ({
     ...item,
     id: item.id || item.id_menu,
     name: item.name || item.nama || item.nama_menu || '',
-    image: item.image || item.gambar || null,
     harga: item.harga || 0,
     stok: item.stok ?? 99,
-    id_kategori: item.id_kategori || item.kategori_id || 1
+    id_kategori: item.id_kategori || item.kategori_id || 1,
   }));
 
   const filtered = normalized.filter(item => {
     const nama = (item.name || '').toLowerCase();
     const matchSearch = nama.includes(search.toLowerCase());
     if (activeCategory === 'Semua') return matchSearch;
-    return matchSearch && (item.id_kategori || item.kategori_id) === categoryMap[activeCategory];
+    return matchSearch && item.id_kategori === categoryMap[activeCategory];
   });
 
-  const cartMap = cart.reduce((acc, i) => { acc[i.id] = i.quantity || i.qty; return acc; }, {});
+  const cartMap = cart.reduce((a, i) => { a[i.id] = i.quantity || i.qty; return a; }, {});
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
-
   const handleAdd = (item) => addToCart({ ...item, price: item.harga });
 
-  // ── Remove item from cart completely ─────────────────────────────
   const handleRemoveItem = (itemId) => {
-    // Keep decrementing until item is gone, or use a direct remove
     const item = cart.find(i => i.id === itemId);
-    if (item) {
-      // Remove all quantity at once
-      for (let i = 0; i < item.quantity; i++) {
-        removeFromCart(itemId);
-      }
-    }
+    if (item) { for (let i = 0; i < item.quantity; i++) removeFromCart(itemId); }
   };
 
-  // ── Payment Polling ─────────────────────────────────────────────
+  /* ── Payment polling ────────────────────────────────── */
   useEffect(() => {
     if (currentView !== 'payment' || !paymentData?.order_id) return;
-
-    const pollInterval = setInterval(async () => {
+    const poll = setInterval(async () => {
       try {
         const res = await paymentAPI.getStatus(paymentData.order_id);
-        const status = res?.data?.transaction_status;
-        console.log('[MenuPage] Poll status:', status);
-
-        if (status === 'settlement') {
-          clearInterval(pollInterval);
-          setCurrentView('success');
-          clearCart();
-          setCatatan('');
-          showToast('Pembayaran berhasil! Pesanan sedang diproses.', 'success');
-        } else if (['deny', 'cancel', 'expire'].includes(status)) {
-          clearInterval(pollInterval);
-          setCurrentView('failed');
-          showToast('Pembayaran gagal atau expired.', 'error');
-        }
-      } catch (err) {
-        console.error('[MenuPage] Poll error:', err);
-      }
+        const st = res?.data?.transaction_status;
+        if (st === 'settlement') { clearInterval(poll); setCurrentView('success'); clearCart(); setCatatan(''); showToast('Pembayaran berhasil!', 'success'); }
+        else if (['deny','cancel','expire'].includes(st)) { clearInterval(poll); setCurrentView('failed'); showToast('Pembayaran gagal.', 'error'); }
+      } catch (e) { console.error('[Poll]', e); }
     }, 3000);
-
-    return () => clearInterval(pollInterval);
+    return () => clearInterval(poll);
   }, [currentView, paymentData?.order_id, clearCart]);
 
-  // ── Handlers ────────────────────────────────────────────────────
-  const handleOpenCart = () => {
-    setShowCart(false);
-    setCurrentView('cart');
-  };
-
+  const handleOpenCart = () => { setShowCart(false); setCurrentView('cart'); };
   const handleCloseCart = () => setCurrentView('menu');
 
   const handleCheckout = useCallback(async () => {
     if (cart.length === 0 || isSubmitting) return;
     setIsSubmitting(true);
-
     try {
-      const items = cart.map(item => ({
-        id_menu: item.id,
-        jumlah: item.quantity,
-      }));
-
+      const items = cart.map(i => ({ id_menu: i.id, jumlah: i.quantity }));
       const sanitizedMeja = String(noMeja).replace(/\D/g, '');
-
-      const res = await paymentAPI.createTransaction({
-        no_meja: parseInt(sanitizedMeja, 10) || 1,
-        catatan: catatan || '',
-        items,
-      });
-
-      if (res?.success && res?.data) {
-        setPaymentData(res.data);
-        setCurrentView('payment');
-        showToast('Pesanan dibuat! Silakan scan QR untuk bayar.', 'info');
-      } else {
-        showToast(res?.message || 'Gagal membuat transaksi', 'error');
-      }
-    } catch (err) {
-      console.error('[MenuPage] Checkout error:', err);
-      showToast('Gagal membuat transaksi: ' + err.message, 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+      const res = await paymentAPI.createTransaction({ no_meja: parseInt(sanitizedMeja, 10) || 1, catatan: catatan || '', items });
+      if (res?.success && res?.data) { setPaymentData(res.data); setCurrentView('payment'); showToast('Pesanan dibuat! Silakan scan QR.', 'info'); }
+      else showToast(res?.message || 'Gagal membuat transaksi', 'error');
+    } catch (err) { showToast('Gagal: ' + err.message, 'error'); }
+    finally { setIsSubmitting(false); }
   }, [cart, noMeja, isSubmitting, catatan]);
 
   const handleConfirmPaid = async () => {
     if (!paymentData?.order_id) return;
     try {
       const res = await paymentAPI.getStatus(paymentData.order_id);
-      const status = res?.data?.transaction_status;
-      if (status === 'settlement') {
-        setCurrentView('success');
-        clearCart();
-        setCatatan('');
-        showToast('Pembayaran berhasil! Pesanan sedang diproses.', 'success');
-      }
-      // If still pending, the polling will handle it
-    } catch (err) {
-      console.error('[MenuPage] Check paid error:', err);
-    }
+      if (res?.data?.transaction_status === 'settlement') { setCurrentView('success'); clearCart(); setCatatan(''); showToast('Pembayaran berhasil!', 'success'); }
+    } catch (e) { console.error(e); }
   };
 
-  const handleStatusClose = () => {
-    setCurrentView('menu');
-    setPaymentData(null);
+  const handleStatusClose = () => { setCurrentView('menu'); setPaymentData(null); };
+
+  /* ── Inline style objects ───────────────────────────── */
+  const S = {
+    page: { width: '100%', minHeight: '100vh', backgroundColor: '#FFFFFF', fontFamily: "'Poppins', sans-serif", display: 'flex', flexDirection: 'column' },
+    header: { padding: '20px 16px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    brandSub: { fontSize: 12, color: '#999999', fontWeight: 400, margin: 0, lineHeight: '1.4' },
+    brandMain: { fontSize: 20, color: '#000000', fontWeight: 700, margin: 0, lineHeight: '1.3' },
+    cartBtn: { background: 'none', border: 'none', cursor: 'pointer', position: 'relative', padding: 4, marginTop: 2 },
+    separator: { height: 1, backgroundColor: '#EEEEEE' },
+    tabRow: { display: 'flex', gap: 20, padding: '12px 16px 0 16px', overflowX: 'auto' },
+    subheader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 16px 0 16px' },
+    grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 12, rowGap: 16, padding: 16 },
+    card: { backgroundColor: '#FFFFFF', borderRadius: 12, boxShadow: '0px 2px 8px rgba(0,0,0,0.08)', padding: 12, display: 'flex', flexDirection: 'column' },
+    cardName: { fontSize: 16, fontWeight: 700, color: '#000000', margin: 0, lineHeight: '1.3' },
+    cardPrice: { fontSize: 16, fontWeight: 400, color: '#000000', margin: '4px 0 0 0' },
+    cardStock: { fontSize: 12, fontWeight: 400, color: '#888888', margin: '4px 0 0 0' },
+    orderBtn: { width: '100%', height: 36, borderRadius: 8, backgroundColor: '#FF6B35', color: '#FFFFFF', fontWeight: 700, fontSize: 14, border: 'none', marginTop: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', sans-serif" },
+    orderBtnDisabled: { width: '100%', height: 36, borderRadius: 8, backgroundColor: '#E0E0E0', color: '#999', fontWeight: 700, fontSize: 14, border: 'none', marginTop: 10, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Poppins', sans-serif" },
   };
 
-  // ══════════════════════════════════════════════════════════════
-  // RENDER
-  // ══════════════════════════════════════════════════════════════
+  /* ── Cart icon SVG (black outline) ──────────────────── */
+  const CartIcon = () => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </svg>
+  );
+
+  /* ══ RENDER ══════════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div style={S.page}>
 
-      {/* ══ TOAST ═══════════════════════════════════════════════════ */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      {/* ══ HEADER — full width red bar, content centered ══════════ */}
-      <header className="bg-[#D04040] sticky top-0 z-40 shadow-md">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 h-16 flex items-center justify-between">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-              <img src="/images/logo-bosmentai.jpg" alt="Bos Mentai Logo" className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-sm tracking-tight leading-tight">QR SmartOrder</h1>
-              <p className="text-white/50 text-[9px] font-medium tracking-wider">PT10 Warisan Nusantara</p>
-            </div>
-          </div>
-
-          {/* Search + Table + Cart */}
-          <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="bg-white/10 backdrop-blur-md rounded-lg h-9 flex items-center gap-2 px-3 border border-white/10 focus-within:bg-white/20 transition-all w-36 sm:w-52 lg:w-64">
-              <Search size={14} className="text-white/40 shrink-0" />
-              <input id="search-header" type="text" placeholder="mau makan apa..." value={search} onChange={e => setSearch(e.target.value)}
-                className="bg-transparent outline-none text-xs text-white placeholder-white/40 font-medium w-full" />
-            </div>
-
-            {/* Table Badge */}
-            <div className="hidden sm:flex bg-white/10 backdrop-blur-md rounded-lg h-9 px-3 items-center gap-2 border border-white/10">
-              <UtensilsCrossed size={12} className="text-white/50" />
-              <span className="text-white/60 text-[11px] font-bold tracking-wide">Meja {noMeja}</span>
-            </div>
-
-            {/* Cart Button */}
-            <button id="btn-open-cart" onClick={handleOpenCart}
-              className="bg-white/10 backdrop-blur-md rounded-lg w-9 h-9 flex items-center justify-center relative border border-white/10 active:scale-95 transition-all hover:bg-white/20">
-              <ShoppingCart size={16} className="text-white/70" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#FFB800] text-white text-[8px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#D04040]" style={{ animation: 'popIn 0.3s ease-out' }}>
-                  {totalItems}
-                </span>
-              )}
-            </button>
-          </div>
+      {/* ── HEADER ──────────────────────────────────────── */}
+      <header style={S.header}>
+        <div>
+          <p style={S.brandSub}>QR SmartOrder</p>
+          <h1 style={S.brandMain}>AYCE Düşman Restaurant</h1>
         </div>
+        <button style={S.cartBtn} onClick={handleOpenCart} aria-label="Keranjang">
+          <CartIcon />
+          {totalItems > 0 && (
+            <span style={{
+              position: 'absolute', top: -6, right: -6,
+              backgroundColor: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 800,
+              width: 18, height: 18, borderRadius: '50%', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', border: '2px solid #fff',
+            }}>{totalItems}</span>
+          )}
+        </button>
       </header>
 
-      {/* ══ CATEGORIES — full width white bar, content centered ════ */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 h-12 flex items-center gap-2 overflow-x-auto scrollbar-hide no-scrollbar" style={{ scrollbarWidth: 'none' }}>
-          {categories.map(cat => (
-            <button key={cat} id={`cat-${cat.toLowerCase()}`} onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 px-5 h-8 flex items-center justify-center rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                activeCategory === cat
-                  ? 'bg-[#D04040] text-white shadow-sm'
-                  : 'bg-transparent text-gray-500 hover:bg-gray-100'
-              }`}>
+      {/* ── SEPARATOR ───────────────────────────────────── */}
+      <div style={S.separator} />
+
+      {/* ── CATEGORY TABS ───────────────────────────────── */}
+      <div className="hide-scroll" style={S.tabRow}>
+        {categories.map(cat => {
+          const isActive = activeCategory === cat;
+          return (
+            <button key={cat} onClick={() => setActiveCategory(cat)} style={{
+              background: 'none', border: 'none', padding: '8px 0 10px 0', cursor: 'pointer',
+              fontSize: 14, fontWeight: isActive ? 700 : 400, color: '#000000',
+              borderBottom: isActive ? '3px solid #FF6B35' : '3px solid transparent',
+              whiteSpace: 'nowrap', fontFamily: "'Poppins', sans-serif",
+              transition: 'border-color 0.2s',
+            }}>
               {cat}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      {/* ══ MAIN CONTENT — centered container ═════════════════════ */}
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-16 py-6">
+      {/* ── SUBHEADER ───────────────────────────────────── */}
+      <div style={S.subheader}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: '#000000', margin: 0 }}>
+          {activeCategory === 'Semua' ? 'Semua Menu' : activeCategory}
+        </h2>
+        <span style={{ fontSize: 14, color: '#888888', fontWeight: 400 }}>
+          {filtered.length} menu tersedia
+        </span>
+      </div>
 
-          {/* Section Header */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold text-gray-800 text-lg">
-              {activeCategory === 'Semua' ? 'Semua Menu' : activeCategory}
-            </h2>
-            <span className="text-xs text-gray-400 font-medium">
-              › {filtered.length} menu tersedia
-            </span>
+      {/* ── GRID MENU ───────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        {loading ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
+            <div style={{ width: 30, height: 30, border: '4px solid #eee', borderTop: '4px solid #FF6B35', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <p style={{ color: '#999', fontSize: 13, marginTop: 14 }}>Memuat menu...</p>
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 16px', color: '#999' }}>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#333', marginBottom: 4 }}>Menu tidak ditemukan</p>
+            <p style={{ fontSize: 13 }}>Coba ganti kategori atau kata kunci lain.</p>
+          </div>
+        ) : (
+          <div style={S.grid}>
+            {filtered.map(item => {
+              const isHabis = item.stok === 0;
+              const qty = cartMap[item.id] || 0;
+              return (
+                <div key={item.id} style={{ ...S.card, position: 'relative' }}>
+                  {/* Badge qty in cart */}
+                  {qty > 0 && !isHabis && (
+                    <span style={{
+                      position: 'absolute', top: -6, right: -6,
+                      backgroundColor: '#FF6B35', color: '#fff', fontSize: 10, fontWeight: 800,
+                      width: 20, height: 20, borderRadius: '50%', display: 'flex',
+                      alignItems: 'center', justifyContent: 'center', border: '2px solid #fff',
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                    }}>{qty}</span>
+                  )}
 
-          {/* Grid / States */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <div className="w-10 h-10 border-3 border-red-100 border-t-red-600 rounded-full animate-spin mb-3" />
-              <p className="text-gray-400 font-medium text-sm">Memuat menu...</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-24 text-center flex flex-col items-center">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
-                <UtensilsCrossed size={40} />
-              </div>
-              <h3 className="font-bold text-gray-700 mb-1">Menu tidak ditemukan</h3>
-              <p className="text-gray-400 text-xs">Coba ganti kategori atau kata kunci lain.</p>
-              <button onClick={() => { setSearch(''); setActiveCategory('Semua'); }}
-                className="mt-4 text-red-500 font-bold text-xs underline">
-                Reset Filter
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-5">
-              {filtered.map(item => (
-                <MenuCard key={item.id} item={item} onAdd={handleAdd} cartQty={cartMap[item.id] || 0} />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+                  <h3 style={S.cardName}>{item.name}</h3>
+                  <p style={S.cardPrice}>Rp {(item.harga || 0).toLocaleString('id-ID')}</p>
+                  <p style={S.cardStock}>Tersedia : {item.stok}</p>
+                  <button
+                    onClick={() => { if (!isHabis) handleAdd(item); }}
+                    disabled={isHabis}
+                    style={isHabis ? S.orderBtnDisabled : S.orderBtn}
+                  >
+                    {isHabis ? 'Habis' : '+ Pesan'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      {/* ══ OVERLAY MODALS ══════════════════════════════════════════ */}
+      {/* ══ OVERLAY MODALS ════════════════════════════════ */}
       {currentView === 'cart' && (
-        <CartSheet
-          cart={cart}
-          totalPrice={totalPrice}
-          onClose={handleCloseCart}
-          onIncrement={incrementQuantity}
-          onDecrement={decrementQuantity}
-          onRemove={handleRemoveItem}
-          onClear={clearCart}
-          onCheckout={handleCheckout}
-          isSubmitting={isSubmitting}
-          catatan={catatan}
-          onCatatanChange={setCatatan}
-        />
+        <CartSheet cart={cart} totalPrice={totalPrice} onClose={handleCloseCart}
+          onIncrement={incrementQuantity} onDecrement={decrementQuantity}
+          onRemove={handleRemoveItem} onClear={clearCart} onCheckout={handleCheckout}
+          isSubmitting={isSubmitting} catatan={catatan} onCatatanChange={setCatatan} />
       )}
-
       {currentView === 'payment' && paymentData && (
-        <PaymentView
-          paymentData={paymentData}
-          onPaid={handleConfirmPaid}
-          onClose={() => { setCurrentView('menu'); setPaymentData(null); }}
-        />
+        <PaymentView paymentData={paymentData} onPaid={handleConfirmPaid}
+          onClose={() => { setCurrentView('menu'); setPaymentData(null); }} />
       )}
-
       {(currentView === 'success' || currentView === 'failed') && (
-        <StatusView
-          status={currentView}
-          orderId={paymentData?.order_id}
-          onClose={handleStatusClose}
-        />
+        <StatusView status={currentView} orderId={paymentData?.order_id} onClose={handleStatusClose} />
       )}
-
-      {/* ══ Global Animations ══════════════════════════════════════ */}
-      <style>{`
-        @keyframes popIn {
-          from { transform: scale(0); }
-          to { transform: scale(1); }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 };
