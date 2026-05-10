@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
-export const UseCart = () => {
+export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
     throw new Error('useCart must be used within a CartProvider');
@@ -11,6 +11,16 @@ export const UseCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  // Clear old cache on component mount to avoid compatibility issues
+  useEffect(() => {
+    const cacheVersion = localStorage.getItem('cartCacheVersion')
+    if (cacheVersion !== '2') {
+      localStorage.removeItem('cart')
+      localStorage.removeItem('kitchenOrders')
+      localStorage.setItem('cartCacheVersion', '2')
+    }
+  }, [])
+
   // Inisialisasi state langsung dari localStorage agar tidak ada "flicker" data kosong
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('cart');
@@ -113,7 +123,10 @@ export const CartProvider = ({ children }) => {
 
   // Menghitung total harga (tambahan fungsionalitas umum)
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    return cart.reduce((total, item) => {
+      const priceValue = typeof item.priceValue === 'number' ? item.priceValue : 0
+      return total + (priceValue * (item.quantity || 1))
+    }, 0)
   };
 
   const value = {

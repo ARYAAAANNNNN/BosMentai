@@ -27,19 +27,25 @@ const KitchenPage = () => {
           <h3>Meja {order.tableNumber}</h3>
           <p>Status: {order.status}</p>
 
-          {order.status === "pending" && (
-            <button onClick={() => updateOrderStatus(order.id, "cooking")}>
+          {order.status === "Menunggu" && (
+            <button onClick={() => updateOrderStatus(order.id, "Diproses")}>
               Mulai Masak
             </button>
           )}
 
-          {order.status === "cooking" && (
+          {order.status === "Diproses" && (
             <button onClick={() => updateOrderStatus(order.id, "ready")}>
-              Selesai
+              Siap Diantar
             </button>
           )}
 
           {order.status === "ready" && (
+            <button onClick={() => updateOrderStatus(order.id, "Selesai")}>{
+              'Selesaikan Pesanan'
+            }</button>
+          )}
+
+          {order.status === "Selesai" && (
             <button onClick={() => handleDelete(order.id)}>
               Hapus
             </button>

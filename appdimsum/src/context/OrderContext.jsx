@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { menuAPI } from '../services/api';
+import { menuAPI, orderAPI } from '../services/api';
 
 const STORAGE_KEY_ORDERS = 'restaurant_orders';
 
@@ -37,13 +37,26 @@ const saveOrdersToStorage = (orders) => {
 const OrderContext = createContext({});
 
 export const OrderProvider = ({ children }) => {
-  const [orders, setOrders] = useState(getStoredOrders);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [menuItems, setMenuItems] = useState([]);
+  const [orders, setOrders] = useState([])
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [menuItems, setMenuItems] = useState([])
 
   useEffect(() => {
-    saveOrdersToStorage(orders);
-  }, [orders]);
+    const fetchOrders = async () => {
+      try {
+        const res = await orderAPI.getAll()
+        if (res.success) {
+          setOrders(res.data)
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error)
+      }
+    }
+
+    fetchOrders()
+    const intervalId = setInterval(fetchOrders, 5000) // Polling setiap 5 detik
+    return () => clearInterval(intervalId)
+  }, [])
 
   useEffect(() => {
     const fetchMenus = async () => {
@@ -96,23 +109,38 @@ export const OrderProvider = ({ children }) => {
     );
   };
 
-  const updateOrderStatus = (id, newStatus) => {
-    setOrders(prev => prev.map(order =>
-      order.id === id ? { ...order, status: newStatus } : order
-    ));
-  };
+  const updateOrderStatus = async (id, newStatus) => {
+    try {
+      const res = await orderAPI.updateStatus(id, newStatus)
+      if (res.success) {
+        setOrders(prev => prev.map(order =>
+          order.id === id ? { ...order, status: newStatus } : order
+        ))
+      } else {
+        console.error('Failed to update status:', res.message)
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error)
+    }
+  }
 
-  const addOrder = (orderData) => {
-    setOrders(prev => [...prev, {
-      id: Date.now(),
-      ...orderData,
-    }]);
-  };
+  const deleteOrder = async (id) => {
+    try {
+      const res = await orderAPI.delete(id)
+      if (res.success) {
+        setOrders(prev => prev.filter(order => order.id !== id))
+      } else {
+        console.error('Failed to delete order:', res.message)
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error)
+    }
+  }
 
   return (
     <OrderContext.Provider value={{
       orders, selectedOrder, setSelectedOrder, updateOrderStatus,
-      menuItems, addMenu, updateMenu, deleteMenu, updateStok, addOrder,
+      menuItems, addMenu, updateMenu, deleteMenu, updateStok, deleteOrder,
     }}>
       {children}
     </OrderContext.Provider>
