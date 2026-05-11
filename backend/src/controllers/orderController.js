@@ -237,7 +237,9 @@ exports.createOrder = async (req, res) => {
     return res.status(201).json({
       success:   true,
       message:   failedItems.length > 0 ? 'Pesanan disimpan, sebagian item dilewati.' : 'Pesanan berhasil dibuat.',
-      id_pesanan, no_meja: parsedMeja,
+      id: id_pesanan,
+      id_pesanan: id_pesanan,
+      no_meja: parsedMeja,
       berhasil: successItems, gagal: failedItems,
     });
   } catch (err) {

@@ -42,8 +42,8 @@ export const OrderProvider = ({ children }) => {
 
   useEffect(() => {
     fetchData(false); // fetch pertama — tampilkan loading & error
-    // Polling setiap 5 detik; quiet=true agar tidak spam console
-    const intervalId = setInterval(() => fetchData(true), 5000);
+    // Polling setiap 2 detik; quiet=true agar tidak spam console
+    const intervalId = setInterval(() => fetchData(true), 2000);
     return () => clearInterval(intervalId);
   }, []);
 

@@ -41,18 +41,18 @@ export const OrderProvider = ({ children }) => {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [menuItems, setMenuItems] = useState([])
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await orderAPI.getAll()
-        if (res.success) {
-          setOrders(res.data)
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error)
+  const fetchOrders = async () => {
+    try {
+      const res = await orderAPI.getAll()
+      if (res.success) {
+        setOrders(res.data)
       }
+    } catch (error) {
+      console.error('Error fetching orders:', error)
     }
+  }
 
+  useEffect(() => {
     fetchOrders()
     const intervalId = setInterval(fetchOrders, 5000) // Polling setiap 5 detik
     return () => clearInterval(intervalId)
@@ -141,6 +141,7 @@ export const OrderProvider = ({ children }) => {
     <OrderContext.Provider value={{
       orders, selectedOrder, setSelectedOrder, updateOrderStatus,
       menuItems, addMenu, updateMenu, deleteMenu, updateStok, deleteOrder,
+      refreshOrders: fetchOrders,
     }}>
       {children}
     </OrderContext.Provider>

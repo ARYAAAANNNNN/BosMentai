@@ -13,9 +13,7 @@ const getStatus = (stok) => {
 };
 
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
-const KATEGORI_LIST = ['Semua Kategori', 'Dimsum', 'Goreng', 'Minuman', 'Dessert'];
-const categoryMap = { 'Dimsum': 1, 'Goreng': 2, 'Minuman': 3, 'Dessert': 4 };
-const idToCategory = { 1: 'Dimsum', 2: 'Goreng', 3: 'Minuman', 4: 'Dessert' };
+const KATEGORI_LIST = ['Semua Kategori'];  // Will be populated dynamically
 
 const statusColor = {
   Tersedia:       'text-green-600',
@@ -333,12 +331,18 @@ const Menu = () => {
   const [modal,        setModal]    = useState(false);
   const [editData,     setEditData] = useState(null);
   const [deleteId,     setDeleteId] = useState(null);
+  
+  // Get unique categories dari menuItems (dari API)
+  const uniqueCategories = Array.from(
+    new Set(menuItems.map(m => m.category).filter(Boolean))
+  ).sort();
+  const DYNAMIC_KATEGORI_LIST = ['Semua Kategori', ...uniqueCategories];
 
   // ── Filter & Pagination ───────────────────────────────────────────────────────
   const filtered = menuItems.filter(m =>
     (m.nama?.toLowerCase().includes(search.toLowerCase()) || m.nama_menu?.toLowerCase().includes(search.toLowerCase())) &&
     (statusFilter === 'Semua Status'   || getStatus(m.stok) === statusFilter) &&
-    (kategoriFilter === 'Semua Kategori' || idToCategory[m.id_kategori || m.kategori_id] === kategoriFilter)
+    (kategoriFilter === 'Semua Kategori' || m.category === kategoriFilter)
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
@@ -409,7 +413,7 @@ const Menu = () => {
         <Dropdown
           value={kategoriFilter}
           onChange={v => { setKategori(v); setPage(1); }}
-          options={KATEGORI_LIST}
+          options={DYNAMIC_KATEGORI_LIST}
         />
         <div className="flex-1" />
         <button
@@ -451,7 +455,7 @@ const Menu = () => {
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-800">{item.nama || item.nama_menu}</td>
                   <td className="px-5 py-3 text-sm text-gray-600">
-                    {idToCategory[item.id_kategori || item.kategori_id] || '-'}
+                    {item.category || '-'}
                   </td>
                   <td className="px-5 py-3 text-sm font-bold text-gray-900">
                     Rp {(item.harga || 0).toLocaleString('id-ID')}

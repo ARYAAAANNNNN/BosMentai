@@ -14,7 +14,7 @@ const Keranjang = ({ visible, onClose }) => {
     tableNumber,
   } = useCart()
 
-  const { orders, addOrder } = useOrderContext()
+  const { orders, refreshOrders } = useOrderContext()
   const [showSentNotification, setShowSentNotification] = useState(false)
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrderId, setTrackingOrderId] = useState(null)
@@ -68,6 +68,7 @@ const Keranjang = ({ visible, onClose }) => {
           return
         }
 
+        await refreshOrders()
         setTrackingOrderId(newOrderId)
         setShowSentNotification(true)
         clearCart()
