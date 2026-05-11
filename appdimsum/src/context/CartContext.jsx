@@ -46,19 +46,39 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
-  const sendToKitchen = (orderData) => {
-    const newOrder = {
-      id: Date.now(),
-      tableNumber: tableNumber,
-      items: orderData,
-      timestamp: new Date().toISOString(),
-      status: 'pending' 
-    };
-    
-    // Gunakan functional update (prev) untuk menghindari bug data lama
-    setKitchenOrders((prevOrders) => [...prevOrders, newOrder]);
-    
-    return newOrder.id;
+  const sendToKitchen = async (orderData) => {
+    try {
+      // 1. Format data untuk Backend
+      const payload = {
+        no_meja: tableNumber,
+        catatan: '', // Bisa ditambahkan field catatan di UI nanti
+        items: orderData.map(item => ({
+          id_menu: item.id,
+          jumlah: item.quantity
+        }))
+      };
+
+      // 2. Kirim ke Backend API
+      const response = await orderAPI.create(payload);
+      
+      if (response.success) {
+        const newOrder = {
+          id: response.id_pesanan || Date.now(),
+          tableNumber: tableNumber,
+          items: orderData,
+          timestamp: new Date().toISOString(),
+          status: 'Menunggu Konfirmasi' 
+        };
+        
+        setKitchenOrders((prevOrders) => [...prevOrders, newOrder]);
+        return { success: true, id: newOrder.id };
+      } else {
+        throw new Error(response.message || 'Gagal mengirim pesanan ke server');
+      }
+    } catch (err) {
+      console.error('[CartContext sendToKitchen]', err);
+      return { success: false, message: err.message };
+    }
   };
 
   const addToCart = (item) => {
