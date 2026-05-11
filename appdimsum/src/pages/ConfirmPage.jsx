@@ -7,18 +7,22 @@ const ConfirmPage = () => {
   const { cart, tableNumber, clearCart, sendToKitchen, getTotalItems } = useCart();
   const totalItems = getTotalItems();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (cart.length === 0) {
       alert('Keranjang kosong! Silakan pilih menu terlebih dahulu.');
       return;
     }
     
-    // Kirim pesanan ke dapur via localStorage
-    sendToKitchen(cart);
+    // Kirim pesanan ke database backend
+    const result = await sendToKitchen(cart);
     
-    alert(`Pesanan Meja ${tableNumber} dikirim ke dapur!`);
-    clearCart();
-    navigate('/');
+    if (result.success) {
+      alert(`Pesanan Meja ${tableNumber} dikirim ke dapur!`);
+      clearCart();
+      navigate('/');
+    } else {
+      alert(`Gagal mengirim pesanan: ${result.message}`);
+    }
   };
 
   return (
