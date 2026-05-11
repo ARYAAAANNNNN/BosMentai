@@ -13,8 +13,11 @@
 //   Atau gunakan: statsAPI.get() dari file ini
 // ================================================================
 
-const BASE_URL = (import.meta.env.VITE_API_URL || 'https://bosmentai-production.up.railway.app') + '/api';
-export const STORAGE_URL = (import.meta.env.VITE_API_URL || 'https://bosmentai-production.up.railway.app');
+const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+const DEFAULT_URL = isLocal ? 'http://localhost:3000' : 'https://bosmentai-production.up.railway.app';
+
+const BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_URL) + '/api';
+export const STORAGE_URL = (import.meta.env.VITE_API_URL || DEFAULT_URL);
 const SUPABASE_STORAGE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://ydndrkxchypzaywhbywg.supabase.co') + '/storage/v1/object/public/menus/';
 
 export const getImageUrl = (path) => {

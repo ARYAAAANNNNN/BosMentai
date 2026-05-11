@@ -48,7 +48,7 @@ const Keranjang = ({ visible, onClose }) => {
 
     const interval = setInterval(() => {
       refreshOrders()
-    }, 2000)
+    }, 5000)
 
     return () => clearInterval(interval)
   }, [showTracking, trackingOrderId, refreshOrders])

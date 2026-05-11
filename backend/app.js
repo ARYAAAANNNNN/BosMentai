@@ -59,10 +59,10 @@ app.use(
 app.use(
   rateLimit({
     windowMs:         15 * 60 * 1000,
-    max:              500,   // Dinaikkan agar polling dashboard tidak block request CRUD
+    max:              2500,   // Dinaikkan lagi agar tidak kena 429 saat banyak tab terbuka
     standardHeaders:  true,
     legacyHeaders:    false,
-    message: { success: false, message: 'Terlalu banyak request. Coba lagi dalam 15 menit.' },
+    message: { success: false, message: 'Terlalu banyak request. Coba lagi nanti.' },
   })
 );
 

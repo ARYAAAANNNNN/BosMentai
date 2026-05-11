@@ -363,7 +363,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 3.5rem;
-    padding: 1rem 0;
+    padding: 1.5rem 0; /* Simetris */
     width: fit-content;
     margin: 0 auto;
 }
@@ -371,10 +371,11 @@ html, body {
 .tracking-line-container {
     position: absolute;
     right: 14px;
-    top: 2rem;     /* Center of first bullet */
-    bottom: 2rem;  /* Center of last bullet */
+    top: 2.5rem;    /* Center of first bullet (1.5rem padding + 1rem half-box) */
+    bottom: 2.5rem; /* Center of last bullet */
     width: 4px;
     z-index: 1;
+    overflow: hidden; /* Tambahan pengaman */
 }
 
 .tracking-rail {
