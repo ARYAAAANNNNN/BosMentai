@@ -18,13 +18,15 @@ const KATEGORI_LIST = ['Semua Kategori'];  // Will be populated dynamically
 const categoryMap = {
   'Dimsum': 1,
   'Goreng': 2,
-  'Minuman': 3
+  'Minuman': 3,
+  'Dessert': 4
 };
 
 const idToCategory = {
   1: 'Dimsum',
   2: 'Goreng',
   3: 'Minuman'
+  4: 'Dessert'
 };
 
 const statusColor = {
