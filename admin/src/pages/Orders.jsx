@@ -11,13 +11,40 @@ const STATUS_CONFIG = {
   'Selesai':            { color: 'bg-green-100 text-green-700 border-green-200', icon: CircleCheck, label: 'Selesai' },
 };
 
+// ── Time Ago Helper ───────────────────────────────────────────────
+const getTimeAgo = (date) => {
+  if (!date) return '-';
+  const now = new Date();
+  const past = new Date(date);
+  const diffInMs = now - past;
+  const diffInMins = Math.floor(diffInMs / (1000 * 60));
+
+  if (diffInMins < 1) return 'Baru saja';
+  if (diffInMins < 60) return `${diffInMins} menit lalu`;
+  
+  const diffInHours = Math.floor(diffInMins / 60);
+  if (diffInHours < 24) return `${diffInHours} jam lalu`;
+  
+  return past.toLocaleDateString('id-ID', { 
+    day: 'numeric', 
+    month: 'short', 
+    hour: '2-digit', 
+    minute: '2-digit' 
+  });
+};
+
 // ── Status Badge ──────────────────────────────────────────────────
-const StatusBadge = ({ status }) => {
+const StatusBadge = ({ status, isNew }) => {
   const cfg = STATUS_CONFIG[status] || { color: 'bg-gray-100 text-gray-500 border-gray-200', label: status };
   return (
-    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${cfg.color}`}>
-      {cfg.label}
-    </span>
+    <div className="flex items-center gap-2">
+      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold border ${cfg.color}`}>
+        {cfg.label}
+      </span>
+      {isNew && (
+        <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase animate-pulse">Baru</span>
+      )}
+    </div>
   );
 };
 
@@ -53,7 +80,7 @@ const DetailModal = ({ order, onClose, onCetakStruk, loadingAction }) => {
           <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-start justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Detail Pesanan #{order.id}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Waktu order: {order.waktu || '-'}</p>
+              <p className="text-xs text-gray-400 mt-0.5">Waktu order: {getTimeAgo(order.waktu_pesan)}</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors no-print">
               <X size={16} className="text-gray-500" />
@@ -145,6 +172,13 @@ const Orders = () => {
   const [toast, setToast] = useState(null);
   const [detailOrder, setDetailOrder] = useState(null);
   const [loadingAction, setLoadingAction] = useState(null);
+  const [, setTick] = useState(0);
+
+  // Update relative time every minute
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const showToast = (message, type = 'success') => setToast({ message, type });
 
@@ -256,10 +290,17 @@ const Orders = () => {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-start mb-5">
+      <div className="flex justify-between items-end mb-5">
         <div>
           <h1 className="text-xl font-bold text-gray-800">Kelola Pesanan</h1>
-          <p className="text-sm font-bold text-gray-400">Semua pesanan pelanggan • {data.length} total</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-sm font-bold text-gray-400">Semua pesanan pelanggan • {data.length} total</p>
+            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+            <div className="flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[10px] font-bold text-green-600 uppercase tracking-tight">Live</span>
+            </div>
+          </div>
         </div>
         <div className="relative">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -315,8 +356,13 @@ const Orders = () => {
                 </td>
                 <td className="py-3 px-4 font-semibold text-gray-700 max-w-[200px] truncate">{item.menu || item.items?.[0]?.name || '-'}</td>
                 <td className="py-3 px-4 text-gray-500 font-medium">{item.totalItems || item.items?.reduce((s, i) => s + (i.qty || 0), 0) || 0}</td>
-                <td className="py-3 px-4 text-gray-500 font-medium">{item.waktu || '-'}</td>
-                <td className="py-3 px-4"><StatusBadge status={item.status} /></td>
+                <td className="py-3 px-4 text-gray-500 font-medium">{getTimeAgo(item.waktu_pesan)}</td>
+                <td className="py-3 px-4">
+                  <StatusBadge 
+                    status={item.status} 
+                    isNew={new Date() - new Date(item.waktu_pesan) < 120000} 
+                  />
+                </td>
                 <td className="py-3 px-4">{getActions(item)}</td>
               </tr>
             ))}

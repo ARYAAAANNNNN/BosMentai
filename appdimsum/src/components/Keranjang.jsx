@@ -20,6 +20,28 @@ const Keranjang = ({ visible, onClose }) => {
   const [trackingOrderId, setTrackingOrderId] = useState(null)
   const [trackingStep, setTrackingStep] = useState(0)
 
+  // Load tracking state from localStorage on mount
+  useEffect(() => {
+    const savedOrderId = localStorage.getItem('trackingOrderId')
+    const savedShowTracking = localStorage.getItem('showTracking') === 'true'
+    
+    if (savedOrderId && savedShowTracking) {
+      setTrackingOrderId(parseInt(savedOrderId, 10))
+      setShowTracking(true)
+    }
+  }, [])
+
+  // Save tracking state to localStorage when it changes
+  useEffect(() => {
+    if (showTracking && trackingOrderId) {
+      localStorage.setItem('trackingOrderId', trackingOrderId)
+      localStorage.setItem('showTracking', 'true')
+    } else if (!showTracking) {
+      localStorage.removeItem('trackingOrderId')
+      localStorage.removeItem('showTracking')
+    }
+  }, [showTracking, trackingOrderId])
+
   // Auto refresh pesanan untuk real-time update
   useEffect(() => {
     if (!showTracking || !trackingOrderId) return
@@ -38,8 +60,10 @@ const Keranjang = ({ visible, onClose }) => {
     const trackingOrder = orders.find(o => o.id === trackingOrderId)
     const currentStatus = trackingOrder?.status?.toLowerCase() || 'menunggu'
     
-    let step = 0
-    if (currentStatus === 'diproses') {
+    let step = -1
+    if (currentStatus === 'terkonfirmasi') {
+      step = 0
+    } else if (currentStatus === 'diproses') {
       step = 1
     } else if (currentStatus === 'selesai' || currentStatus === 'disajikan') {
       step = 2
@@ -114,7 +138,7 @@ const Keranjang = ({ visible, onClose }) => {
   const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
   const trackingOrder = orders.find(o => o.id === trackingOrderId)
   const currentStatus = trackingOrder?.status || 'Menunggu'
-  const progressHeight = trackingStep === 0 ? '0%' : trackingStep === 1 ? '50%' : '100%'
+  const progressHeight = trackingStep === -1 ? '0%' : trackingStep === 0 ? '0%' : trackingStep === 1 ? '50%' : '100%'
   const canClose = !showSentNotification && (!showTracking || currentStatus.toLowerCase() === 'selesai' || currentStatus.toLowerCase() === 'disajikan')
 
   const handleOverlayClick = () => {
@@ -142,8 +166,10 @@ const Keranjang = ({ visible, onClose }) => {
             <h2 className="tracking-title">Lacak pesanan anda</h2>
           </div>
           <div className="tracking-steps">
-            <div className="tracking-rail" />
-            <div className="tracking-progress" style={{ height: progressHeight }} />
+            <div className="tracking-line-container">
+              <div className="tracking-rail" />
+              <div className="tracking-progress" style={{ height: progressHeight }} />
+            </div>
             {[
               {
                 label: 'Pesanan Telah Dikonfirmasi',

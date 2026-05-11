@@ -18,7 +18,20 @@ export default function LaporanPenjualan() {
   const [endDate,   setEndDate]   = useState(today());
 
   // real-time state
+  const [loading,    setLoading]    = useState(false);
+  const [summary,    setSummary]    = useState(null);
+  const [detailRows, setDetailRows] = useState([]);
   const [categoryRows, setCategoryRows] = useState([]);
+  const [chartData,  setChartData]  = useState([]);
+  const [toast,      setToast]      = useState(null);
+  const [animCards,  setAnimCards]  = useState(true);
+  const [selectedRow, setSelectedRow] = useState(null);
+
+  // ── helpers ───────────────────────────────────────────────────────
+  const showToast = (msg, color = "#e53e3e") => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchAll = useCallback(async (dari, sampai, quiet = false) => {
     if (!quiet) setLoading(true);
@@ -249,7 +262,7 @@ export default function LaporanPenjualan() {
         <div style={s.exportRow}>
           <button
             onClick={async () => {
-              showToast("Membuat PDF...", "#e53e3e");
+              showToast("Membuat Laporan PDF...", "#e53e3e");
               try {
                 const res  = await fetch(`${API}/api/laporan/export/pdf?dari=${startDate}&sampai=${endDate}`);
                 const json = await res.json();
@@ -257,69 +270,116 @@ export default function LaporanPenjualan() {
 
                 const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-                // ── Header restoran ──────────────────────────────
+                // ── Background Header ────────────────────────────
                 doc.setFillColor(229, 62, 62);
-                doc.rect(0, 0, 210, 30, "F");
+                doc.rect(0, 0, 210, 45, "F");
+                
+                // ── Restoran Name ────────────────────────────────
                 doc.setTextColor(255, 255, 255);
-                doc.setFontSize(16);
+                doc.setFontSize(22);
                 doc.setFont("helvetica", "bold");
-                doc.text(json.nama_restoran, 14, 12);
-                doc.setFontSize(9);
+                doc.text("BOS MENTAI & DIMSUM", 14, 18);
+                
+                doc.setFontSize(10);
                 doc.setFont("helvetica", "normal");
-                doc.text("Laporan Penjualan", 14, 19);
-                doc.text(`Periode: ${json.periode}`, 14, 25);
-                doc.text(`Dicetak: ${json.dicetak}`, 120, 25);
-
-                // ── Summary box ──────────────────────────────────
-                doc.setTextColor(60, 60, 60);
+                doc.text("Laporan Analisis Penjualan & Performa Menu", 14, 25);
+                
+                // ── Info Periode ─────────────────────────────────
                 doc.setFontSize(9);
-                doc.setFont("helvetica", "bold");
-                doc.text(`Total Item Terjual: ${json.total_terjual}`, 14, 38);
+                doc.text(`Periode Laporan : ${startDate} s/d ${endDate}`, 14, 34);
+                doc.text(`Tanggal Cetak   : ${new Date().toLocaleString('id-ID')}`, 14, 39);
 
-                // ── Tabel data ───────────────────────────────────
+                // ── Stats Row ────────────────────────────────────
+                let currentY = 55;
+                doc.setTextColor(40, 40, 40);
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.text("RINGKASAN PERFORMA", 14, currentY);
+                
+                currentY += 8;
+                doc.setDrawColor(229, 62, 62);
+                doc.setLineWidth(0.5);
+                doc.line(14, currentY - 5, 60, currentY - 5);
+
+                const stats = [
+                  { l: "Total Pendapatan", v: `Rp ${json.total_pendapatan.toLocaleString('id-ID')}` },
+                  { l: "Total Item Terjual", v: `${json.total_terjual} pcs` },
+                  { l: "Menu Terlaris", v: json.data[0]?.menu || "-" }
+                ];
+
+                doc.setFontSize(9);
+                stats.forEach((s, i) => {
+                  doc.setFont("helvetica", "bold");
+                  doc.text(s.l, 14 + (i * 65), currentY);
+                  doc.setFont("helvetica", "normal");
+                  doc.text(s.v, 14 + (i * 65), currentY + 5);
+                });
+
+                currentY += 18;
+
+                // ── Tabel 1: Per Kategori ────────────────────────
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text("LAPORAN PER KATEGORI", 14, currentY);
+                
                 autoTable(doc, {
-                  startY: 44,
-                  head: [["Tanggal", "Menu", "Terjual"]],
-                  body: [
-                    ...json.data.map(r => [r.tanggal, r.menu, r.terjual]),
-                    ["", { content: "TOTAL", styles: { fontStyle: "bold" } }, { content: String(json.total_terjual), styles: { fontStyle: "bold", textColor: [229, 62, 62] } }],
-                  ],
-                  headStyles: {
-                    fillColor: [229, 62, 62],
-                    textColor: [255, 255, 255],
-                    fontStyle: "bold",
-                    fontSize: 9,
-                  },
-                  bodyStyles: { fontSize: 8.5, textColor: [55, 65, 81] },
-                  alternateRowStyles: { fillColor: [255, 247, 247] },
+                  startY: currentY + 4,
+                  head: [["Kategori", "Jumlah Terjual", "Total Pendapatan"]],
+                  body: categoryRows.map(r => [
+                    r.name, 
+                    `${r.qty} item`, 
+                    `Rp ${(r.revenue || 0).toLocaleString('id-ID')}`
+                  ]),
+                  theme: "striped",
+                  headStyles: { fillColor: [217, 119, 6], textColor: 255, fontStyle: 'bold' },
+                  styles: { fontSize: 9, cellPadding: 3 },
+                  margin: { left: 14, right: 14 }
+                });
+
+                currentY = doc.lastAutoTable.finalY + 12;
+
+                // ── Tabel 2: Detail Menu ─────────────────────────
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.text("RINCIAN PENJUALAN PER MENU", 14, currentY);
+
+                autoTable(doc, {
+                  startY: currentY + 4,
+                  head: [["Tanggal", "Nama Menu", "Item Terjual"]],
+                  body: json.data.map(r => [r.tanggal, r.menu, r.terjual]),
+                  theme: "grid",
+                  headStyles: { fillColor: [229, 62, 62], textColor: 255, fontStyle: 'bold' },
+                  styles: { fontSize: 8.5, cellPadding: 3 },
+                  alternateRowStyles: { fillColor: [255, 245, 245] },
                   columnStyles: {
-                    0: { cellWidth: 28 },
-                    1: { cellWidth: 120 },
-                    2: { cellWidth: 22, halign: "center", fontStyle: "bold" },
+                    0: { cellWidth: 35 },
+                    1: { cellWidth: 110 },
+                    2: { cellWidth: 35, halign: 'center' }
                   },
-                  margin: { left: 14, right: 14 },
-                  tableLineColor: [229, 229, 229],
-                  tableLineWidth: 0.2,
+                  margin: { left: 14, right: 14 }
                 });
 
                 // ── Footer ───────────────────────────────────────
-                const pageH = doc.internal.pageSize.height;
-                doc.setFontSize(8);
-                doc.setTextColor(160, 160, 160);
-                doc.text("© Bos Mentai & Dimsum — QR SmartOrder System", 14, pageH - 8);
-                doc.text(`Halaman 1`, 190, pageH - 8, { align: "right" });
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                  doc.setPage(i);
+                  doc.setFontSize(8);
+                  doc.setTextColor(150, 150, 150);
+                  doc.text(`Halaman ${i} dari ${pageCount}`, 196, 288, { align: "right" });
+                  doc.text("Laporan ini dihasilkan secara otomatis oleh Sistem Manajemen Bos Mentai", 14, 288);
+                }
 
-                doc.save(`laporan_penjualan_${startDate}_sd_${endDate}.pdf`);
-                showToast("PDF berhasil diunduh ✅", "#16a34a");
+                doc.save(`Laporan_BosMentai_${startDate}_sd_${endDate}.pdf`);
+                showToast("PDF Berhasil Diunduh ✅", "#16a34a");
               } catch (err) {
                 console.error(err);
-                showToast("Gagal membuat PDF: " + err.message, "#ef4444");
+                showToast("Gagal Export PDF: " + err.message, "#ef4444");
               }
             }}
             style={s.btnPdf}
             onMouseEnter={(e) => (e.currentTarget.style.background = "#c53030")}
             onMouseLeave={(e) => (e.currentTarget.style.background = "#e53e3e")}>
-            ⬇ Export PDF
+            ⬇ Download Laporan PDF
           </button>
         </div>
 

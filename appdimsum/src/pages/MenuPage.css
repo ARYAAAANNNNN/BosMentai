@@ -368,26 +368,30 @@ html, body {
     margin: 0 auto;
 }
 
-.tracking-rail {
+.tracking-line-container {
     position: absolute;
     right: 14px;
-    top: 2rem;
-    bottom: 2rem;
+    top: 2rem;     /* Center of first bullet */
+    bottom: 2rem;  /* Center of last bullet */
     width: 4px;
+    z-index: 1;
+}
+
+.tracking-rail {
+    position: absolute;
+    inset: 0;
     background: #e5e7eb;
     border-radius: 999px;
-    z-index: 1;
 }
 
 .tracking-progress {
     position: absolute;
-    right: 14px;
-    top: 2rem;
-    width: 4px;
+    top: 0;
+    left: 0;
+    width: 100%;
     background: #d32f2f;
     border-radius: 999px;
-    z-index: 2;
-    transition: height 0.8s ease-in-out;
+    transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .tracking-step {
