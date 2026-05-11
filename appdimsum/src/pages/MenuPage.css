@@ -360,36 +360,43 @@ html, body {
 
 .tracking-steps {
     position: relative;
-    display: grid;
-    gap: 1.75rem;
-    padding-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+    padding: 1rem 0;
+    width: fit-content;
+    margin: 0 auto;
 }
 
 .tracking-rail {
     position: absolute;
-    right: 26px;
-    top: 46px;
+    right: 14px;
+    top: 2rem;
+    bottom: 2rem;
     width: 4px;
-    height: calc(100% - 46px);
     background: #e5e7eb;
     border-radius: 999px;
+    z-index: 1;
 }
 
 .tracking-progress {
     position: absolute;
-    right: 26px;
-    top: 46px;
+    right: 14px;
+    top: 2rem;
     width: 4px;
     background: #d32f2f;
     border-radius: 999px;
+    z-index: 2;
     transition: height 0.8s ease-in-out;
 }
 
 .tracking-step {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) 48px;
-    gap: 1rem;
-    align-items: flex-start;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+    width: 100%;
+    z-index: 3;
 }
 
 .tracking-step-info {
@@ -417,8 +424,9 @@ html, body {
 .tracking-marker-box {
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: 4px;
+    align-items: center;
+    width: 32px;
+    height: 32px;
 }
 
 .tracking-circle {

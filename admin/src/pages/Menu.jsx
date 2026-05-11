@@ -15,6 +15,18 @@ const getStatus = (stok) => {
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
 const KATEGORI_LIST = ['Semua Kategori'];  // Will be populated dynamically
 
+const categoryMap = {
+  'Dimsum': 1,
+  'Goreng': 2,
+  'Minuman': 3
+};
+
+const idToCategory = {
+  1: 'Dimsum',
+  2: 'Goreng',
+  3: 'Minuman'
+};
+
 const statusColor = {
   Tersedia:       'text-green-600',
   'Hampir Habis': 'text-orange-500',

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, CheckCircle, Clock, ChefHat, CircleCheck, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Search, X, CheckCircle, Clock, ChefHat, CircleCheck, Trash2, Eye, Loader2, Printer } from 'lucide-react';
 import { useOrderContext } from '../context/OrderContext.jsx';
 import { getImageUrl } from '../services/api.js';
 
@@ -40,23 +40,22 @@ const Toast = ({ message, type = 'success', onClose }) => {
 };
 
 // ── Detail Modal Component ────────────────────────────────────────
-const DetailModal = ({ order, onClose, onProcess, loadingAction }) => {
+const DetailModal = ({ order, onClose, onCetakStruk, loadingAction }) => {
   if (!order) return null;
   const totalHarga = order.total_harga || order.items?.reduce((s, i) => s + (i.harga || 0) * (i.qty || 0), 0) || 0;
-  const canProcess = order.status === 'Terkonfirmasi';
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] no-print" onClick={onClose} />
       <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden" style={{ animation: 'scaleIn .25s ease-out' }}>
+        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden detail-modal-content" style={{ animation: 'scaleIn .25s ease-out' }}>
           {/* Header */}
           <div className="px-6 pt-6 pb-4 border-b border-gray-100 flex items-start justify-between">
             <div>
               <h2 className="text-lg font-bold text-gray-900">Detail Pesanan #{order.id}</h2>
               <p className="text-xs text-gray-400 mt-0.5">Waktu order: {order.waktu || '-'}</p>
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors no-print">
               <X size={16} className="text-gray-500" />
             </button>
           </div>
@@ -109,18 +108,26 @@ const DetailModal = ({ order, onClose, onProcess, loadingAction }) => {
           </div>
 
           {/* Footer Actions */}
-          {canProcess && (
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+          <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 no-print">
+            {order.status === 'Menunggu Konfirmasi' ? (
               <button
-                onClick={() => onProcess(order.id)}
+                onClick={() => onCetakStruk(order)}
                 disabled={loadingAction === order.id}
-                className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-orange-200"
+                className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-blue-200"
               >
-                {loadingAction === order.id ? <Loader2 size={18} className="animate-spin" /> : <ChefHat size={18} />}
-                {loadingAction === order.id ? 'Memproses...' : 'Proses Pesanan'}
+                {loadingAction === order.id ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
+                {loadingAction === order.id ? 'Memproses...' : 'Cetak Struk & Konfirmasi'}
               </button>
-            </div>
-          )}
+            ) : (
+              <button
+                onClick={() => window.print()}
+                className="w-full h-12 bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Printer size={18} />
+                Cetak Ulang Struk
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>
@@ -142,12 +149,21 @@ const Orders = () => {
   const showToast = (message, type = 'success') => setToast({ message, type });
 
   // ── Actions ─────────────────────────────────────────────────────
-  const handleKonfirmasi = async (id) => {
-    setLoadingAction(id);
-    const res = await updateOrderStatus(id, 'Terkonfirmasi');
+  const handleCetakStruk = async (order) => {
+    // Buka dialog print browser
+    window.print();
+    
+    // Konfirmasi pesanan & ubah status
+    setLoadingAction(order.id);
+    const res = await updateOrderStatus(order.id, 'Terkonfirmasi');
     setLoadingAction(null);
-    if (res?.success) showToast('Pesanan dikonfirmasi!', 'success');
-    else showToast(res?.message || 'Gagal konfirmasi', 'error');
+    
+    if (res?.success) {
+      showToast('Struk dicetak & pesanan dikonfirmasi!', 'success');
+      setDetailOrder(null); // Tutup modal otomatis
+    } else {
+      showToast(res?.message || 'Gagal konfirmasi', 'error');
+    }
   };
 
   const handleProses = async (id) => {
@@ -200,20 +216,15 @@ const Orders = () => {
 
     if (item.status === 'Menunggu Konfirmasi') {
       return (
-        <div className="flex gap-1.5">
-          <button className={`bg-green-500 hover:bg-green-600 text-white ${btnBase}`} onClick={() => handleKonfirmasi(item.id)} disabled={isLoading}>
-            {isLoading ? <Loader2 size={12} className="animate-spin" /> : <><CheckCircle size={12} /> Konfirmasi</>}
-          </button>
-          <button className={`bg-blue-500 hover:bg-blue-600 text-white ${btnBase}`} onClick={() => handleDetail(item)}>
-            <Eye size={12} /> Detail
-          </button>
-        </div>
+        <button className={`bg-blue-500 hover:bg-blue-600 text-white ${btnBase}`} onClick={() => handleDetail(item)}>
+          <Eye size={12} /> Detail
+        </button>
       );
     }
     if (item.status === 'Terkonfirmasi') {
       return (
-        <button className={`bg-blue-500 hover:bg-blue-600 text-white ${btnBase}`} onClick={() => handleDetail(item)}>
-          <Eye size={12} /> Detail
+        <button className={`bg-orange-500 hover:bg-orange-600 text-white ${btnBase}`} onClick={() => handleProses(item.id)} disabled={isLoading}>
+          {isLoading ? <Loader2 size={12} className="animate-spin" /> : <><ChefHat size={12} /> Proses</>}
         </button>
       );
     }
@@ -241,7 +252,7 @@ const Orders = () => {
 
       {/* Detail Modal */}
       {detailOrder && (
-        <DetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onProcess={handleProses} loadingAction={loadingAction} />
+        <DetailModal order={detailOrder} onClose={() => setDetailOrder(null)} onCetakStruk={handleCetakStruk} loadingAction={loadingAction} />
       )}
 
       {/* Header */}
@@ -331,10 +342,16 @@ const Orders = () => {
         </div>
       )}
 
-      {/* Animations */}
+      {/* Animations & Print Styles */}
       <style>{`
         @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @media print {
+          body * { visibility: hidden; }
+          .detail-modal-content, .detail-modal-content * { visibility: visible; }
+          .detail-modal-content { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; padding: 0; margin: 0; }
+          .no-print { display: none !important; }
+        }
       `}</style>
     </div>
   );

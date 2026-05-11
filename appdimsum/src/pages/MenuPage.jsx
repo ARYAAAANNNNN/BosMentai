@@ -173,9 +173,14 @@ function MenuPage() {
                       <div className="menu-price">{item.price}</div>
                       <div className="menu-name">{item.name}</div>
                       <div className="menu-availability">Tersedia : {item.availability}</div>
-                      <button className="order-btn" onClick={() => addToCartHandler(item)}>
-                        <span className="material-icons">add</span>
-                        Pesan
+                      <button 
+                        className="order-btn" 
+                        onClick={() => addToCartHandler(item)}
+                        disabled={item.availability <= 0}
+                        style={item.availability <= 0 ? { opacity: 0.5, cursor: 'not-allowed', backgroundColor: '#9ca3af' } : {}}
+                      >
+                        <span className="material-icons">{item.availability <= 0 ? 'block' : 'add'}</span>
+                        {item.availability <= 0 ? 'Habis' : 'Pesan'}
                       </button>
                     </div>
                   </div>
