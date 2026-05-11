@@ -14,7 +14,8 @@ const Login = () => {
     // In a real app, you would call your API here
     // For now, let's simulate a login or use the authAPI if it exists
     try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/login`, {
+        const apiHost = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${apiHost}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })

@@ -15,7 +15,8 @@ const Register = () => {
     setLoading(true);
     
     try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/register-customer`, {
+        const apiHost = import.meta.env.VITE_API_URL || '';
+        const response = await fetch(`${apiHost}/api/auth/register-customer`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ no_meja: noMeja, username, password })
