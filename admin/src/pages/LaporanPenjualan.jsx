@@ -14,11 +14,24 @@ const weekAgo = () => toInput(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000));
 
 // ─── main page ────────────────────────────────────────────────────
 export default function LaporanPenjualan() {
+  // --- STATE ---
   const [startDate, setStartDate] = useState(weekAgo());
-  const [endDate,   setEndDate]   = useState(today());
-
-  // real-time state
+  const [endDate, setEndDate] = useState(today());
+  const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [detailRows, setDetailRows] = useState([]);
   const [categoryRows, setCategoryRows] = useState([]);
+  const [chartData, setChartData] = useState([]);
+  const [toast, setToast] = useState(null);
+  const [animCards, setAnimCards] = useState(true);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // --- UI LOGIC ---
+  const showToast = (msg, color = "#16a34a") => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const fetchAll = useCallback(async (dari, sampai, quiet = false) => {
     if (!quiet) setLoading(true);
@@ -35,9 +48,9 @@ export default function LaporanPenjualan() {
         sumRes.json(), detailRes.json(), chartRes.json(), catRes.json(),
       ]);
 
-      if (sumJson.success)    setSummary(sumJson.data);
+      if (sumJson.success) setSummary(sumJson.data);
       if (detailJson.success) setDetailRows(detailJson.data);
-      if (catJson.success)    setCategoryRows(catJson.data);
+      if (catJson.success) setCategoryRows(catJson.data);
       if (chartJson.success) {
         setChartData(
           chartJson.data.map((r) => ({
@@ -52,7 +65,7 @@ export default function LaporanPenjualan() {
         setTimeout(() => setAnimCards(true), 50);
         showToast(`Data diperbarui — ${detailJson.data?.length ?? 0} baris`);
       }
-    } catch {
+    } catch (err) {
       if (!quiet) showToast("Gagal memuat data dari server", "#ef4444");
     } finally {
       if (!quiet) setLoading(false);
@@ -72,26 +85,22 @@ export default function LaporanPenjualan() {
   // mount + auto-refresh 30 s
   useEffect(() => {
     fetchAll(startDate, endDate);
-    const id = setInterval(() => fetchAll(startDate, endDate, true), 30_000);
+    const id = setInterval(() => fetchAll(startDate, endDate, true), 30000);
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchAll, startDate, endDate]);
 
   // ── derived card values ───────────────────────────────────────
   const totalPesanan = summary?.totalPesanan ?? "—";
-  const totalItem    = summary?.totalItem    ?? "—";
-  const pendapatan   = summary?.pendapatan   ? `Rp ${summary.pendapatan.toLocaleString('id-ID')}` : "Rp 0";
-  const terlaris     = summary?.terlaris     ?? "—";
+  const totalItem = summary?.totalItem ?? "—";
+  const pendapatan = summary?.pendapatan ? `Rp ${summary.pendapatan.toLocaleString('id-ID')}` : "Rp 0";
+  const terlaris = summary?.terlaris ?? "—";
 
   const cards = [
-    { label: "Total Pesanan",      value: totalPesanan, sub: "pesanan total",        bg: "#e53e3e" },
-    { label: "Total Pendapatan",   value: pendapatan,   sub: "revenue bersih",        bg: "#d97706" },
-    { label: "Total Menu Terjual", value: totalItem,    sub: "item terjual",          bg: "#dc2626" },
-    { label: "Menu Terlaris",      value: terlaris,     sub: "paling banyak dipesan", bg: "#16a34a" },
+    { label: "Total Pesanan", value: totalPesanan, sub: "pesanan total", bg: "#e53e3e" },
+    { label: "Total Pendapatan", value: pendapatan, sub: "revenue bersih", bg: "#d97706" },
+    { label: "Total Menu Terjual", value: totalItem, sub: "item terjual", bg: "#dc2626" },
+    { label: "Menu Terlaris", value: terlaris, sub: "paling banyak dipesan", bg: "#16a34a" },
   ];
-
-  // ── total baris tabel ─────────────────────────────────────────
-  const totalTerjualAll = detailRows.reduce((s, r) => s + Number(r.terjual), 0);
 
   return (
     <div style={s.page}>
@@ -112,7 +121,13 @@ export default function LaporanPenjualan() {
           </div>
           <div style={{ position: "relative" }}>
             <Search style={s.searchIcon} />
-            <input type="text" placeholder="cari menu..." style={s.searchInput} />
+            <input 
+              type="text" 
+              placeholder="cari menu..." 
+              style={s.searchInput} 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
@@ -127,7 +142,6 @@ export default function LaporanPenjualan() {
             onMouseLeave={(e) => (e.currentTarget.style.background = "#e53e3e")}>
             {loading ? "Memuat..." : "Tampilkan"}
           </button>
-          {/* live indicator */}
           <div style={s.liveChip}>
             <span style={s.liveDot} />
             Live
@@ -140,12 +154,12 @@ export default function LaporanPenjualan() {
             <div key={i}
               onClick={() => showToast(`${c.label}: ${c.value}`, c.bg)}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform  = "translateY(-4px)";
-                e.currentTarget.style.boxShadow  = "0 8px 24px rgba(0,0,0,0.15)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform  = "translateY(0)";
-                e.currentTarget.style.boxShadow  = "0 2px 10px rgba(0,0,0,0.08)";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)";
               }}
               style={{
                 ...s.card,
@@ -153,7 +167,7 @@ export default function LaporanPenjualan() {
                 padding: "20px 24px",
                 borderRadius: 18,
                 minHeight: 110,
-                opacity:   animCards ? 1 : 0,
+                opacity: animCards ? 1 : 0,
                 transform: animCards ? "translateY(0)" : "translateY(12px)",
                 transition: `all 0.3s cubic-bezier(0.4, 0, 0.2, 1)`,
               }}>
@@ -186,63 +200,66 @@ export default function LaporanPenjualan() {
 
         {/* ── Table: Tanggal | Menu | Terjual ── */}
         <div style={s.midRow}>
-            <div style={s.tableWrap}>
-            <div style={s.panelTitle}>Rincian Penjualan per Menu</div>
+          <div style={s.tableWrap}>
+            <div style={{ ...s.panelTitle, padding: '20px 20px 10px' }}>Rincian Penjualan per Menu</div>
             <table style={s.table}>
-                <thead>
+              <thead>
                 <tr style={{ background: "#e53e3e" }}>
-                    {["Tanggal", "Menu", "Terjual"].map((h) => (
-                    <th key={h} style={s.th}>{h}</th>
-                    ))}
+                  <th style={s.th}>Tanggal</th>
+                  <th style={s.th}>Menu</th>
+                  <th style={s.th}>Terjual</th>
                 </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                 {detailRows.length === 0 ? (
-                    <tr>
+                  <tr>
                     <td colSpan={3} style={s.tdEmpty}>Tidak ada data pada rentang ini</td>
-                    </tr>
+                  </tr>
                 ) : (
-                    detailRows.slice(0, 10).map((row, i) => (
-                    <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
+                  detailRows
+                    .filter(r => r.menu.toLowerCase().includes(searchTerm.toLowerCase()))
+                    .slice(0, 10)
+                    .map((row, i) => (
+                      <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
                         <td style={s.td}>{row.tanggal}</td>
                         <td style={s.td}>{row.menu}</td>
                         <td style={{ ...s.td, fontWeight: 700, color: "#e53e3e" }}>{row.terjual}</td>
-                    </tr>
+                      </tr>
                     ))
                 )}
-                </tbody>
+              </tbody>
             </table>
-            </div>
+          </div>
 
-            <div style={s.tableWrap}>
-            <div style={s.panelTitle}>Laporan per Kategori</div>
+          <div style={s.tableWrap}>
+            <div style={{ ...s.panelTitle, padding: '20px 20px 10px' }}>Laporan per Kategori</div>
             <table style={s.table}>
-                <thead>
+              <thead>
                 <tr style={{ background: "#d97706" }}>
-                    {["Kategori", "Item Terjual", "Pendapatan"].map((h) => (
-                    <th key={h} style={s.th}>{h}</th>
-                    ))}
+                  <th style={s.th}>Kategori</th>
+                  <th style={s.th}>Item Terjual</th>
+                  <th style={s.th}>Pendapatan</th>
                 </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                 {categoryRows.length === 0 ? (
-                    <tr>
+                  <tr>
                     <td colSpan={3} style={s.tdEmpty}>Tidak ada data</td>
-                    </tr>
+                  </tr>
                 ) : (
-                    categoryRows.map((row, i) => (
+                  categoryRows.map((row, i) => (
                     <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#fafafa" }}>
-                        <td style={s.td}>{row.name}</td>
-                        <td style={s.td}>{row.qty}</td>
-                        <td style={{ ...s.td, fontWeight: 700, color: "#d97706" }}>
-                            Rp {(row.revenue || 0).toLocaleString('id-ID')}
-                        </td>
+                      <td style={s.td}>{row.name}</td>
+                      <td style={s.td}>{row.qty}</td>
+                      <td style={{ ...s.td, fontWeight: 700, color: "#d97706" }}>
+                        Rp {(row.revenue || 0).toLocaleString('id-ID')}
+                      </td>
                     </tr>
-                    ))
+                  ))
                 )}
-                </tbody>
+              </tbody>
             </table>
-            </div>
+          </div>
         </div>
 
         {/* ── Export ── */}
@@ -251,38 +268,35 @@ export default function LaporanPenjualan() {
             onClick={async () => {
               showToast("Membuat PDF...", "#e53e3e");
               try {
-                const res  = await fetch(`${API}/api/laporan/export/pdf?dari=${startDate}&sampai=${endDate}`);
+                const res = await fetch(`${API}/api/laporan/export/pdf?dari=${startDate}&sampai=${endDate}`);
                 const json = await res.json();
                 if (!json.success) throw new Error(json.message);
 
                 const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-                // ── Header restoran ──────────────────────────────
                 doc.setFillColor(229, 62, 62);
                 doc.rect(0, 0, 210, 30, "F");
                 doc.setTextColor(255, 255, 255);
                 doc.setFontSize(16);
                 doc.setFont("helvetica", "bold");
-                doc.text(json.nama_restoran, 14, 12);
+                doc.text(json.nama_restoran || "BOS MENTAI", 14, 12);
                 doc.setFontSize(9);
                 doc.setFont("helvetica", "normal");
-                doc.text("Laporan Penjualan", 14, 19);
+                doc.text("Laporan Penjualan Resmi", 14, 19);
                 doc.text(`Periode: ${json.periode}`, 14, 25);
                 doc.text(`Dicetak: ${json.dicetak}`, 120, 25);
 
-                // ── Summary box ──────────────────────────────────
                 doc.setTextColor(60, 60, 60);
                 doc.setFontSize(9);
                 doc.setFont("helvetica", "bold");
                 doc.text(`Total Item Terjual: ${json.total_terjual}`, 14, 38);
 
-                // ── Tabel data ───────────────────────────────────
                 autoTable(doc, {
                   startY: 44,
                   head: [["Tanggal", "Menu", "Terjual"]],
                   body: [
                     ...json.data.map(r => [r.tanggal, r.menu, r.terjual]),
-                    ["", { content: "TOTAL", styles: { fontStyle: "bold" } }, { content: String(json.total_terjual), styles: { fontStyle: "bold", textColor: [229, 62, 62] } }],
+                    [{ content: "", styles: { fillColor: [240, 240, 240] } }, { content: "TOTAL", styles: { fontStyle: "bold", fillColor: [240, 240, 240] } }, { content: String(json.total_terjual), styles: { fontStyle: "bold", textColor: [229, 62, 62], fillColor: [240, 240, 240] } }],
                   ],
                   headStyles: {
                     fillColor: [229, 62, 62],
@@ -298,11 +312,8 @@ export default function LaporanPenjualan() {
                     2: { cellWidth: 22, halign: "center", fontStyle: "bold" },
                   },
                   margin: { left: 14, right: 14 },
-                  tableLineColor: [229, 229, 229],
-                  tableLineWidth: 0.2,
                 });
 
-                // ── Footer ───────────────────────────────────────
                 const pageH = doc.internal.pageSize.height;
                 doc.setFontSize(8);
                 doc.setTextColor(160, 160, 160);
@@ -342,99 +353,32 @@ export default function LaporanPenjualan() {
 
 // ─── styles ───────────────────────────────────────────────────────
 const s = {
-  page: {
-    minHeight: "100vh",
-    background: "#f3f4f6",
-    fontFamily: "'Segoe UI', sans-serif",
-    position: "relative",
-    width: "100%",
-    boxSizing: "border-box",
-    zIndex: 0,
-  },
-  toast: {
-    position: "fixed", top: 20, right: 20, zIndex: 9999,
-    color: "#fff", padding: "10px 18px", borderRadius: 10,
-    fontSize: 13, boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-    animation: "fadeIn 0.3s ease",
-  },
-  main: {
-    padding: "28px 32px",
-    position: "relative",
-    zIndex: 1,
-    minHeight: "calc(100vh - 56px)",
-    display: "block",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-
-  // header
+  page: { minHeight: "100vh", background: "#f3f4f6", fontFamily: "'Segoe UI', sans-serif", width: "100%", boxSizing: "border-box" },
+  toast: { position: "fixed", top: 20, right: 20, zIndex: 9999, color: "#fff", padding: "10px 18px", borderRadius: 10, fontSize: 13, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", animation: "fadeIn 0.3s ease" },
+  main: { padding: "28px 32px", width: "100%", boxSizing: "border-box" },
   headerRow: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 },
   h1: { fontSize: 22, fontWeight: 800, color: "#111827", margin: 0 },
   subtitle: { color: "#9ca3af", fontSize: 12, marginTop: 4 },
   searchIcon: { width: 14, height: 14, position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9ca3af" },
-  searchInput: {
-    paddingLeft: 34, paddingRight: 14, paddingTop: 8, paddingBottom: 8,
-    borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff",
-    fontSize: 13, outline: "none", width: 280, color: "#374151",
-  },
-
-  // filter
+  searchInput: { paddingLeft: 34, paddingRight: 14, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", fontSize: 13, outline: "none", width: 280, color: "#374151" },
   filterRow: { display: "flex", gap: 8, marginBottom: 22, alignItems: "center" },
-  dateInput: {
-    border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "9px 14px",
-    fontSize: 13, outline: "none", color: "#374151",
-    background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", width: 170,
-  },
-  btnTampilkan: {
-    background: "#e53e3e", color: "#fff", border: "none",
-    padding: "9px 28px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer",
-  },
-  liveChip: {
-    display: "flex", alignItems: "center", gap: 5,
-    background: "#dcfce7", color: "#16a34a",
-    fontSize: 11, fontWeight: 700, padding: "5px 10px",
-    borderRadius: 20, border: "1px solid #bbf7d0",
-  },
-  liveDot: {
-    width: 7, height: 7, borderRadius: "50%",
-    background: "#16a34a",
-    animation: "pulse 1.5s infinite",
-    display: "inline-block",
-  },
-
-  // cards
+  dateInput: { border: "1.5px solid #e5e7eb", borderRadius: 8, padding: "9px 14px", fontSize: 13, outline: "none", color: "#374151", background: "#fff", width: 170 },
+  btnTampilkan: { background: "#e53e3e", color: "#fff", border: "none", padding: "9px 28px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "0.2s" },
+  liveChip: { display: "flex", alignItems: "center", gap: 5, background: "#dcfce7", color: "#16a34a", fontSize: 11, fontWeight: 700, padding: "5px 10px", borderRadius: 20, border: "1px solid #bbf7d0" },
+  liveDot: { width: 7, height: 7, borderRadius: "50%", background: "#16a34a", animation: "pulse 1.5s infinite", display: "inline-block" },
   cardsGrid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 22 },
-  card: {
-    borderRadius: 12, padding: "14px 16px", color: "#fff",
-    cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
-    minHeight: 96, display: "flex", flexDirection: "column", justifyContent: "space-between",
-  },
-  cardLabel: { fontSize: 10, opacity: 0.85 },
-  cardValue: { fontWeight: 800, lineHeight: 1 },
-  cardSub: { fontSize: 10, opacity: 0.75, marginTop: 4 },
-
-  // mid row
+  card: { borderRadius: 12, color: "#fff", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.10)", display: "flex", flexDirection: "column", justifyContent: "space-between" },
+  cardLabel: { textTransform: "uppercase", letterSpacing: "0.5px" },
+  cardValue: { display: "block" },
+  cardSub: { display: "block" },
   midRow: { display: "grid", gridTemplateColumns: "55% 1fr", gap: 16, marginBottom: 22 },
-  panel: {
-    background: "#fff",
-    borderRadius: 12,
-    padding: "20px",
-    boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
-    minHeight: 200,
-  },
-  panelTitle: { fontSize: 13, fontWeight: 700, color: "#111827", marginBottom: 10 },
-
-  // table
-  tableWrap: { background: "#fff", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", marginBottom: 16 },
+  panel: { background: "#fff", borderRadius: 12, padding: "20px", boxShadow: "0 1px 6px rgba(0,0,0,0.07)", minHeight: 200 },
+  panelTitle: { fontSize: 13, fontWeight: 700, color: "#111827" },
+  tableWrap: { background: "#fff", borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: 13 },
   th: { padding: "12px 18px", textAlign: "left", color: "#fff", fontWeight: 700 },
   td: { padding: "11px 18px", textAlign: "left", color: "#374151" },
   tdEmpty: { textAlign: "center", padding: 28, color: "#9ca3af" },
-  tfootTd: { padding: "11px 18px", textAlign: "left", fontWeight: 700, color: "#374151", fontSize: 12 },
-
-
-
-  // export
   exportRow: { display: "flex", justifyContent: "flex-end", gap: 16, paddingBottom: 16 },
-  btnPdf:   { background: "#e53e3e", color: "#fff", border: "none", padding: "10px 36px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  btnPdf: { background: "#e53e3e", color: "#fff", border: "none", padding: "10px 36px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "0.2s" },
 };
