@@ -87,7 +87,7 @@ export const menuAPI = {
 };
 
 // ── orderAPI ──────────────────────────────────────────────────────
-// Dipakai: Orders.jsx, KelolaPesanan.jsx, DetailPesanan.jsx
+// Dipakai: Orders.jsx, KelolaPesanan.jsx, DetailPesanan.jsx, ConfirmPage.jsx
 export const orderAPI = {
   // GET /api/orders — semua pesanan
   getAll: () =>

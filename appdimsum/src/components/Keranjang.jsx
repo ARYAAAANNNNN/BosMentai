@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useOrderContext } from '../context/OrderContext'
 import { orderAPI } from '../services/api'
 
 const Keranjang = ({ visible, onClose }) => {
-  const navigate = useNavigate()
   const {
     cart,
     clearCart,
@@ -17,47 +15,22 @@ const Keranjang = ({ visible, onClose }) => {
   } = useCart()
 
   const { orders, refreshOrders } = useOrderContext()
-  const [loading, setLoading] = useState(false)
-  
-  // State untuk pelacakan di dalam modal
   const [showSentNotification, setShowSentNotification] = useState(false)
   const [showTracking, setShowTracking] = useState(false)
-  const [trackingOrderId, setTrackingOrderId] = useState(() => {
-    return localStorage.getItem('lastOrderId') || null
-  })
+  const [trackingOrderId, setTrackingOrderId] = useState(null)
   const [trackingStep, setTrackingStep] = useState(0)
 
-  // Efek untuk mengambil status pesanan terbaru jika ada trackingOrderId
   useEffect(() => {
-    if (!trackingOrderId) return
-    
-    const fetchCurrentStatus = async () => {
-      try {
-        const res = await orderAPI.getById(trackingOrderId)
-        if (res.success) {
-          const status = res.data.status.toLowerCase()
-          if (status.includes('menunggu')) setTrackingStep(0)
-          else if (status === 'diproses' || status === 'cooking') setTrackingStep(1)
-          else if (status === 'ready') setTrackingStep(2)
-          else if (status === 'selesai') setTrackingStep(3)
-        }
-      } catch (err) {
-        console.error('Gagal mengambil status pesanan:', err)
-      }
-    }
+    if (!showTracking) return
 
-    fetchCurrentStatus()
-    const interval = setInterval(fetchCurrentStatus, 5000)
-    return () => clearInterval(interval)
-  }, [trackingOrderId])
+    setTrackingStep(0)
+    const timers = [
+      setTimeout(() => setTrackingStep(1), 1500),
+      setTimeout(() => setTrackingStep(2), 3200),
+    ]
 
-  // Reset tampilan jika modal ditutup (kecuali jika sedang tracking)
-  useEffect(() => {
-    if (!visible && !trackingOrderId) {
-      setShowSentNotification(false)
-      setShowTracking(false)
-    }
-  }, [visible, trackingOrderId])
+    return () => timers.forEach(clearTimeout)
+  }, [showTracking])
 
   if (!visible) return null
 
@@ -75,7 +48,6 @@ const Keranjang = ({ visible, onClose }) => {
       return
     }
 
-    setLoading(true)
     try {
       const orderData = {
         no_meja: tableNumber,
@@ -89,49 +61,45 @@ const Keranjang = ({ visible, onClose }) => {
 
       const response = await orderAPI.create(orderData)
       if (response.success) {
-        const newOrderId = response.data?.id || response.id_pesanan || response.id
-        
+        const newOrderId = response.data?.id || response.id_pesanan || response.id || null
         if (!newOrderId) {
-          throw new Error('ID Pesanan tidak ditemukan')
+          console.error('Order API returned missing ID:', response)
+          alert('Gagal mengirim pesanan: response ID tidak ditemukan')
+          return
         }
 
-        localStorage.setItem('lastOrderId', newOrderId)
+        await refreshOrders()
         setTrackingOrderId(newOrderId)
-        
-        if (refreshOrders) await refreshOrders()
-        
         setShowSentNotification(true)
         clearCart()
-        
         setTimeout(() => {
           setShowSentNotification(false)
           setShowTracking(true)
-        }, 1500)
+        }, 1400)
       } else {
-        alert('Gagal mengirim pesanan: ' + (response.message || 'Error tidak diketahui'))
+        alert('Gagal mengirim pesanan: ' + (response.message || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error creating order:', error)
-      alert('Terjadi kesalahan: ' + error.message)
-    } finally {
-      setLoading(false)
+      alert('Terjadi kesalahan saat mengirim pesanan')
     }
   }
 
   const totalPrice = getTotalPrice()
   const totalItems = getTotalItems()
   const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
-  
+  const trackingOrder = orders.find(o => o.id === trackingOrderId)
+  const currentStatus = trackingOrder?.status || 'Menunggu'
+  const progressHeight = trackingStep === 0 ? '26%' : trackingStep === 1 ? '62%' : '100%'
+  const canClose = !showSentNotification && (!showTracking || currentStatus === 'Selesai')
+
   const handleOverlayClick = () => {
-    onClose()
+    if (canClose) onClose()
   }
 
   const stopClose = (e) => {
     e.stopPropagation()
   }
-
-  // Jika user sudah punya pesanan aktif, tunjukkan tombol pelacakan
-  const hasActiveOrder = trackingOrderId && !showTracking && !showSentNotification
 
   return (
     <div className="cart-overlay" onClick={handleOverlayClick}>
@@ -146,35 +114,23 @@ const Keranjang = ({ visible, onClose }) => {
         </div>
       ) : showTracking ? (
         <div className="cart-modal tracking-modal" onClick={stopClose}>
-          <button type="button" className="cart-close" onClick={() => setShowTracking(false)}>
-            <span className="material-icons">close</span>
-          </button>
           <div className="tracking-header">
             <h2 className="tracking-title">Lacak pesanan anda</h2>
-            <button 
-              className="full-page-btn"
-              onClick={() => {
-                onClose()
-                navigate(`/tracking/${trackingOrderId}`)
-              }}
-            >
-              Buka Halaman Penuh
-            </button>
           </div>
           <div className="tracking-steps">
             <div className="tracking-rail" />
-            <div className="tracking-progress" style={{ height: trackingStep === 0 ? '26%' : trackingStep === 1 ? '62%' : '100%' }} />
+            <div className="tracking-progress" style={{ height: progressHeight }} />
             {[
               {
-                label: 'Pesanan Diterima',
+                label: 'Pesanan Telah Dikonfirmasi',
                 subtitle: '(Pesanan sedang diproses)',
               },
               {
-                label: 'Pesanan Sedang Dibuat',
-                subtitle: '(Pesanan akan segera siap)',
+                label: 'Pesanan sudah siap',
+                subtitle: '(Pesanan akan diantarkan)',
               },
               {
-                label: 'Pesanan Selesai',
+                label: 'Pesanan selesai',
                 subtitle: '(Pesanan telah disajikan)',
               },
             ].map((step, idx) => {
@@ -210,29 +166,16 @@ const Keranjang = ({ visible, onClose }) => {
                   {cart.length ? `${totalItems} item dipilih` : 'Tidak ada pesanan saat ini'}
                 </p>
               </div>
-              <div className="cart-header-actions">
-                {hasActiveOrder && (
-                  <button className="tracking-btn-inline" onClick={() => setShowTracking(true)}>
-                    Lacak Pesanan
-                  </button>
-                )}
-                <button className="cart-clear" onClick={clearCart} disabled={!cart.length}>
-                  Hapus
-                </button>
-              </div>
+              <button className="cart-clear" onClick={clearCart} disabled={!cart.length}>
+                Hapus Semua
+              </button>
             </div>
 
             {cart.length === 0 ? (
               <div className="empty-cart">
                 <span className="material-icons">shopping_cart</span>
                 <p>Keranjang kosong</p>
-                {hasActiveOrder ? (
-                  <button className="retrack-btn" onClick={() => setShowTracking(true)}>
-                    Buka Pelacakan Pesanan
-                  </button>
-                ) : (
-                  <small>Pilih menu terlebih dahulu untuk menambahkan pesanan.</small>
-                )}
+                <small>Pilih menu terlebih dahulu untuk menambahkan pesanan.</small>
               </div>
             ) : (
               <div className="cart-items">
@@ -258,12 +201,8 @@ const Keranjang = ({ visible, onClose }) => {
               <div className="summary-value">{formattedTotalPrice}</div>
             </div>
 
-            <button 
-              className="confirm-btn" 
-              onClick={handleConfirm} 
-              disabled={!cart.length || loading}
-            >
-              {loading ? 'Mengirim...' : 'Konfirmasi'}
+            <button className="confirm-btn" onClick={handleConfirm} disabled={!cart.length}>
+              Konfirmasi
             </button>
           </div>
         </div>

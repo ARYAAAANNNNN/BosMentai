@@ -24,7 +24,7 @@ const KitchenPage = () => {
         <p>Tidak ada pesanan</p>
       ) : orders.map((order) => (
         <div key={order.id}>
-          <h3>Meja {order.meja}</h3>
+          <h3>Meja {order.tableNumber}</h3>
           <p>Status: {order.status}</p>
 
           {order.status === "Menunggu" && (
