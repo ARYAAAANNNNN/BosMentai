@@ -1,23 +1,25 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Search }         from "lucide-react";
-import RestaurantMenu from "../components/RestaurantMenu.jsx"
+import { Search, Bell, X } from "lucide-react";
+import RestaurantMenu from "../components/RestaurantMenu.jsx";
 import { useOrderContext } from "../context/OrderContext.jsx";
-import RecentOrders       from "../components/RecentOrders";
-import SalesChart         from "../components/SalesChart";
-import LineChart          from "./LineChart.jsx";
-import { statsAPI, laporanAPI } from "../services/api";
+import RecentOrders from "../components/RecentOrders";
+import SalesChart from "../components/SalesChart";
+import LineChart from "./LineChart.jsx";
+import { laporanAPI } from "../services/api";
 
-// ─── Helper: Format Rupiah ─────────────────────────────────────────
+// ─── HELPER: FORMAT RUPIAH ─────────────────────────────────────────
 const formatRupiah = (angka) =>
   new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR",
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   })
     .format(angka)
     .replace("IDR", "Rp")
     .trim();
 
-// ─── Animated Counter ──────────────────────────────────────────────
+// ─── ANIMATED COUNTER ──────────────────────────────────────────────
 const AnimatedNumber = ({ value, isRupiah = false }) => {
   const [display, setDisplay] = useState(0);
   const ref = useRef(null);
@@ -30,7 +32,10 @@ const AnimatedNumber = ({ value, isRupiah = false }) => {
     clearInterval(ref.current);
     ref.current = setInterval(() => {
       current += increment;
-      if (current >= target) { current = target; clearInterval(ref.current); }
+      if (current >= target) {
+        current = target;
+        clearInterval(ref.current);
+      }
       setDisplay(Math.round(current));
     }, 800 / steps);
     return () => clearInterval(ref.current);
@@ -40,7 +45,7 @@ const AnimatedNumber = ({ value, isRupiah = false }) => {
   return <span>{display.toLocaleString("id-ID")}</span>;
 };
 
-// ─── Stat Card ─────────────────────────────────────────────────────
+// ─── STAT CARD ─────────────────────────────────────────────────────
 const StatCard = ({ label, value, sub, bg, isRupiah }) => {
   const [hovered, setHovered] = useState(false);
   return (
@@ -48,9 +53,14 @@ const StatCard = ({ label, value, sub, bg, isRupiah }) => {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: bg, color: "#fff", borderRadius: 18,
-        padding: "20px 24px", cursor: "pointer",
-        minHeight: 110, display: "flex", flexDirection: "column",
+        background: bg,
+        color: "#fff",
+        borderRadius: 18,
+        padding: "20px 24px",
+        cursor: "pointer",
+        minHeight: 110,
+        display: "flex",
+        flexDirection: "column",
         justifyContent: "space-between",
         boxShadow: hovered ? "0 8px 24px rgba(0,0,0,0.15)" : "0 2px 10px rgba(0,0,0,0.08)",
         transform: hovered ? "translateY(-4px)" : "translateY(0)",
@@ -58,20 +68,8 @@ const StatCard = ({ label, value, sub, bg, isRupiah }) => {
       }}
     >
       <div style={{ fontSize: 13, fontWeight: 500, opacity: 0.9, marginBottom: 8 }}>{label}</div>
-      <div style={{
-        fontSize: 20,
-        fontWeight: 700,
-        lineHeight: 1.1,
-        marginBottom: 10,
-        wordBreak: "break-word",
-      }}>
-        {isRupiah ? (
-          <AnimatedNumber value={value} isRupiah />
-        ) : typeof value === "string" ? (
-          value
-        ) : (
-          <AnimatedNumber value={value} />
-        )}
+      <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.1, marginBottom: 10 }}>
+        {isRupiah ? <AnimatedNumber value={value} isRupiah /> : typeof value === "string" ? value : <AnimatedNumber value={value} />}
       </div>
       <div style={{ borderTop: "1px solid rgba(255,255,255,0.4)", width: "100%", paddingTop: 8 }}>
         <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 400 }}>{sub}</div>
@@ -80,51 +78,72 @@ const StatCard = ({ label, value, sub, bg, isRupiah }) => {
   );
 };
 
-// ─── Section Card (white box) ──────────────────────────────────────
 const SectionCard = ({ children, style }) => (
-  <div style={{
-    background: "#fff", borderRadius: 24, padding: "18px",
-    boxShadow: "0 12px 26px rgba(15, 23, 42, 0.05)", ...style,
-  }}>
+  <div style={{ background: "#fff", borderRadius: 24, padding: "18px", boxShadow: "0 12px 26px rgba(15, 23, 42, 0.05)", ...style }}>
     {children}
   </div>
 );
 
-// ─── Live Chip ─────────────────────────────────────────────────────
 const LiveChip = () => (
-  <div style={{
-    display: "flex", alignItems: "center", gap: 5,
-    background: "#dcfce7", color: "#16a34a",
-    fontSize: 10, fontWeight: 700,
-    padding: "3px 9px", borderRadius: 20, border: "1px solid #bbf7d0",
-  }}>
-    <span style={{
-      width: 6, height: 6, borderRadius: "50%",
-      background: "#16a34a", display: "inline-block",
-      animation: "pulse 1.5s infinite",
-    }} />
+  <div style={{ display: "flex", alignItems: "center", gap: 5, background: "#dcfce7", color: "#16a34a", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20, border: "1px solid #bbf7d0" }}>
+    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#16a34a", display: "inline-block", animation: "pulse 1.5s infinite" }} />
     Live
   </div>
 );
 
-// ─── Dashboard ─────────────────────────────────────────────────────
+// ─── DASHBOARD COMPONENT ───────────────────────────────────────────
 const Dashboard = () => {
-  const { menuItems } = useOrderContext();
+  const { orders } = useOrderContext();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // State untuk Notifikasi
+  const [showNotif, setShowNotif] = useState(false);
+  const [notifData, setNotifData] = useState(null);
+  
+  const lastOrderIdRef = useRef(null);
+  const isFirstLoad = useRef(true);
+  const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"));
 
-  // ── State: 4 cards ──────────────────────────────────────────────
-  const [summary, setSummary] = useState({
-    totalPesanan: 0,
-    totalItem: 0,
-    diproses: 0,
-    terlaris: "—",
-  });
-
-  // ── State: line chart (7 hari terakhir) ───────────────────────
+  const [summary, setSummary] = useState({ totalPesanan: 0, totalItem: 0, diproses: 0, terlaris: "—" });
   const [chartData, setChartData] = useState([]);
 
-  // Hari ini & 7 hari lalu dalam format YYYY-MM-DD
-  const today   = new Date().toISOString().split("T")[0];
+  // ─── LOGIKA NOTIFIKASI PESANAN BARU ───
+  useEffect(() => {
+    if (orders && orders.length > 0) {
+      const latestOrder = orders[0];
+
+      // Mencegah notifikasi muncul saat pertama kali login/refresh
+      if (isFirstLoad.current) {
+        lastOrderIdRef.current = latestOrder.id;
+        isFirstLoad.current = false;
+        return;
+      }
+
+      // Jika ada ID pesanan baru yang masuk
+      if (latestOrder.id !== lastOrderIdRef.current) {
+        lastOrderIdRef.current = latestOrder.id;
+        
+        const jam = new Date().toLocaleTimeString("id-ID", { 
+          hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' 
+        });
+        
+        setNotifData({
+          meja: latestOrder.meja,
+          item: latestOrder.items?.reduce((sum, i) => sum + i.qty, 0) || 0,
+          waktu: jam
+        });
+
+        setShowNotif(true);
+        audioRef.current.play().catch(() => {});
+
+        // Tutup otomatis setelah 7 detik
+        setTimeout(() => setShowNotif(false), 7000);
+      }
+    }
+  }, [orders]);
+
+  // ─── FETCH DATA STATISTIK ───
+  const today = new Date().toISOString().split("T")[0];
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
   const fetchAll = useCallback(async (quiet = false) => {
@@ -138,19 +157,14 @@ const Dashboard = () => {
         const d = sumJson.value.data;
         setSummary({
           totalPesanan: d.totalPesanan ?? 0,
-          totalItem:    d.totalItem    ?? 0,
-          diproses:     d.diproses     ?? 0,
-          terlaris:     d.terlaris     || "—",
+          totalItem: d.totalItem ?? 0,
+          diproses: d.diproses ?? 0,
+          terlaris: d.terlaris || "—",
         });
       }
 
       if (chartJson.status === "fulfilled" && chartJson.value.success) {
-        setChartData(
-          chartJson.value.data.map((r) => ({
-            tanggal: r.label,   // format "dd/mm" dari backend
-            pesanan: r.total,
-          }))
-        );
+        setChartData(chartJson.value.data.map((r) => ({ tanggal: r.label, pesanan: r.total })));
       }
     } catch (err) {
       if (!quiet) console.warn("Dashboard fetch error:", err.message);
@@ -159,96 +173,97 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchAll();
-    const id = setInterval(() => fetchAll(true), 10_000); // polling 10 detik
+    const id = setInterval(() => fetchAll(true), 10000);
     return () => clearInterval(id);
   }, [fetchAll]);
 
   const cards = [
-    { label: "Total Pesanan",      value: summary.totalPesanan, sub: "7 hari terakhir",      bg: "#E53E3E" },
-    { label: "Total Menu Terjual", value: summary.totalItem,    sub: "item terjual",           bg: "#D97706" },
-    { label: "Sedang Diproses",    value: summary.diproses,     sub: "pesanan aktif saat ini", bg: "#DC2626" },
-    { label: "Menu Terlaris",      value: summary.terlaris,     sub: "paling banyak dipesan",  bg: "#15803D" },
+    { label: "Total Pesanan", value: summary.totalPesanan, sub: "7 hari terakhir", bg: "#E53E3E" },
+    { label: "Total Menu Terjual", value: summary.totalItem, sub: "item terjual", bg: "#D97706" },
+    { label: "Sedang Diproses", value: summary.diproses, sub: "pesanan aktif saat ini", bg: "#DC2626" },
+    { label: "Menu Terlaris", value: summary.terlaris, sub: "paling banyak dipesan", bg: "#15803D" },
   ];
 
   return (
-    <div style={{
-      padding: "28px 32px", width: "100%",
-      background: "#F8F9FA", minHeight: "100vh",
-      boxSizing: "border-box", fontFamily: "'Segoe UI', sans-serif",
-    }}>
+    <div style={{ padding: "28px 32px", width: "100%", background: "#F8F9FA", minHeight: "100vh", boxSizing: "border-box", fontFamily: "'Segoe UI', sans-serif", position: "relative" }}>
 
-      {/* ── Header ── */}
+      {/* ── POP-UP NOTIFIKASI ── */}
+      {showNotif && notifData && (
+        <div style={{
+          position: "fixed", top: "25px", right: "25px", zIndex: 9999,
+          background: "#fff", borderRadius: "16px", padding: "16px 20px",
+          boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
+          display: "flex", alignItems: "center", gap: "15px",
+          borderLeft: "6px solid #D04040",
+          animation: "slideIn 0.4s ease-out"
+        }}>
+          <div style={{ background: "#FEE2E2", padding: "10px", borderRadius: "12px" }}>
+            <Bell size={24} color="#D04040" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1F2937" }}>Pesanan Baru!</h4>
+            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#6B7280" }}>
+              Meja {notifData.meja} • {notifData.item} Item • {notifData.waktu} WIB
+            </p>
+          </div>
+          <button onClick={() => setShowNotif(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF" }}>
+            <X size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* ── HEADER ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1A202C", margin: 0 }}>
-            Selamat Datang, Admin !
-          </h1>
-          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>
-            Data real-time · diperbarui otomatis setiap 10 detik
-          </p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1A202C", margin: 0 }}>Selamat Datang, Admin!</h1>
+          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>Data real-time · diperbarui otomatis setiap 10 detik</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <LiveChip />
           <div style={{ position: "relative", width: 280 }}>
-            <Search style={{
-              width: 14, height: 14,
-              position: "absolute", left: 12, top: "50%",
-              transform: "translateY(-50%)", color: "#9CA3AF",
-            }} />
+            <Search style={{ width: 14, height: 14, position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }} />
             <input
               type="text"
               placeholder="Cari menu atau pesanan..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                paddingLeft: 34, paddingRight: 14, paddingTop: 9, paddingBottom: 9,
-                borderRadius: 10, border: "1px solid #E5E7EB",
-                background: "#fff", fontSize: 13, outline: "none",
-                width: "100%", boxSizing: "border-box", color: "#374151",
-              }}
+              style={{ paddingLeft: 34, paddingRight: 14, paddingTop: 9, paddingBottom: 9, borderRadius: 10, border: "1px solid #E5E7EB", background: "#fff", fontSize: 13, outline: "none", width: "100%", color: "#374151" }}
             />
           </div>
         </div>
       </div>
 
-      {/* ── 4 Stat Cards ── */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 12, marginBottom: 20,
-      }}>
+      {/* ── STAT CARDS ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 20 }}>
         {cards.map((c, i) => (
           <StatCard key={i} label={c.label} value={c.value} sub={c.sub} bg={c.bg} />
         ))}
       </div>
 
-      {/* ── Baris 2: Menu Restoran + Grafik ── */}
+      {/* ── GRID TENGAH ── */}
       <div style={{ display: "grid", gridTemplateColumns: "55% 1fr", gap: 16, marginBottom: 16 }}>
-        <SectionCard>
-          <RestaurantMenu searchTerm={searchTerm} />
-        </SectionCard>
+        <SectionCard><RestaurantMenu searchTerm={searchTerm} /></SectionCard>
         <SectionCard>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1A202C", margin: 0 }}>
-              Grafik Jumlah Pesanan
-            </h3>
+            <h3 style={{ fontSize: 14, fontWeight: 700, color: "#1A202C", margin: 0 }}>Grafik Jumlah Pesanan</h3>
             <LiveChip />
           </div>
           <LineChart data={chartData} />
         </SectionCard>
       </div>
 
-      {/* ── Baris 3: Pesanan Terbaru + Statistik Penjualan ── */}
+      {/* ── GRID BAWAH ── */}
       <div style={{ display: "grid", gridTemplateColumns: "55% 1fr", gap: 12 }}>
-        <SectionCard style={{ padding: "20px" }}>
-          <RecentOrders />
-        </SectionCard>
-        <SectionCard style={{ padding: "20px" }}>
-          <SalesChart />
-        </SectionCard>
+        <SectionCard style={{ padding: "20px" }}><RecentOrders /></SectionCard>
+        <SectionCard style={{ padding: "20px" }}><SalesChart /></SectionCard>
       </div>
 
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        @keyframes slideIn {
+          from { transform: translateX(120%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
       `}</style>
     </div>
   );

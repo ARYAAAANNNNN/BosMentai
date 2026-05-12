@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { useOrderContext } from '../context/OrderContext.jsx';
 
+// Konfigurasi Warna & Label Status
 const STATUS_CONFIG = {
   'Menunggu Konfirmasi': { color: 'bg-[#FEF3C7] text-[#D97706]', label: 'Menunggu konfirmasi' },
   'Terkonfirmasi': { color: 'bg-[#DBEAFE] text-[#2563EB]', label: 'Terkonfirmasi' },
@@ -21,52 +22,49 @@ const Orders = () => {
   const [detailOrder, setDetailOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // State untuk memicu re-render otomatis setiap interval
-  const [now, setNow] = useState(new Date());
-
-  // ─── SISTEM WAKTU REAL-TIME (ASIA/JAKARTA) ───────────────────────────────
-
-  /**
-   * Mengonversi waktu ke objek Date Jakarta (WIB)
-   * Memastikan perhitungan selisih akurat meskipun jam di perangkat admin berbeda
-   */
-  const getJakartaTime = (dateInput) => {
-    const d = new Date(dateInput);
-    const jakartaString = d.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-    return new Date(jakartaString);
-  };
+  // ─── LOGIKA REAL-TIME ───────────────────────────────────────────────────
+  
+  // State 'tick' digunakan hanya untuk memicu render ulang komponen setiap detik
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    // Update state 'now' setiap 1 detik agar tampilan "Baru saja" ke "1 menit" terasa real-time
     const timer = setInterval(() => {
-      setNow(new Date());
-    }, 1000); 
-
+      setTick(t => t + 1);
+    }, 1000); // Update setiap 1 detik
     return () => clearInterval(timer);
   }, []);
 
-  const formatRelativeTime = (timestamp) => {
-    if (!timestamp) return '-';
-    
-    const orderDate = getJakartaTime(timestamp);
-    const currentDate = getJakartaTime(now);
-    
-    if (isNaN(orderDate.getTime())) return '-';
+  /**
+   * Fungsi untuk menghitung selisih waktu secara akurat di zona Asia/Jakarta
+   */
+  const formatRelativeTime = (rawTimestamp) => {
+    if (!rawTimestamp) return '-';
 
-    const diffInMs = currentDate.getTime() - orderDate.getTime();
-    const diffInSecs = Math.floor(diffInMs / 1000);
-    const diffInMins = Math.floor(diffInSecs / 60);
-    const diffInHours = Math.floor(diffInMins / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-    
-    // Logika format waktu sesuai instruksi
-    if (diffInSecs < 60) return 'Baru saja';
-    if (diffInMins < 60) return `${diffInMins} menit yang lalu`;
-    if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
-    return `${diffInDays} hari yang lalu`;
+    try {
+      const orderDate = new Date(rawTimestamp);
+      if (isNaN(orderDate.getTime())) return '-';
+
+      // Paksa perbandingan menggunakan zona Asia/Jakarta
+      const nowJakarta = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+      const orderJakarta = new Date(orderDate.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+
+      const diffInMs = nowJakarta - orderJakarta;
+      const diffInSecs = Math.floor(diffInMs / 1000);
+      const diffInMins = Math.floor(diffInSecs / 60);
+      const diffInHours = Math.floor(diffInMins / 60);
+      const diffInDays = Math.floor(diffInHours / 24);
+
+      if (diffInSecs < 60) return 'Baru saja';
+      if (diffInMins < 60) return `${diffInMins} menit yang lalu`;
+      if (diffInHours < 24) return `${diffInHours} jam yang lalu`;
+      return `${diffInDays} hari yang lalu`;
+    } catch (e) {
+      return '-';
+    }
   };
 
-  // ─── LOGIKA FILTER & PAGINATION ───────────────────────────────────────────
+  // ─── FILTER & PAGINATION ────────────────────────────────────────────────
+  
   const filtered = data.filter(p => {
     const matchTab = activeTab === 'Semua' || p.status === activeTab;
     const menuName = (p.menu || p.items?.[0]?.name || '').toLowerCase();
@@ -83,7 +81,7 @@ const Orders = () => {
   return (
     <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans print:bg-white print:p-0">
       
-      {/* HEADER SECTION */}
+      {/* HEADER */}
       <div className="flex justify-between items-start mb-8 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Kelola Pesanan</h1>
@@ -118,7 +116,7 @@ const Orders = () => {
         ))}
       </div>
 
-      {/* DATA TABLE */}
+      {/* TABLE DATA */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden print:hidden border border-gray-100">
         <table className="w-full text-sm text-left">
           <thead>
@@ -194,13 +192,13 @@ const Orders = () => {
         </table>
       </div>
 
-      {/* PAGINATION CONTROLS */}
+      {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-8">
           <button 
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => prev - 1)}
-            className="p-2 bg-white border border-gray-100 rounded-xl disabled:opacity-30 shadow-sm hover:bg-gray-50 transition-all"
+            className="p-2 bg-white border border-gray-100 rounded-xl disabled:opacity-30 shadow-sm"
           >
             <ChevronLeft size={20} className="text-gray-600" />
           </button>
@@ -210,20 +208,20 @@ const Orders = () => {
           <button 
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => prev + 1)}
-            className="p-2 bg-white border border-gray-100 rounded-xl disabled:opacity-30 shadow-sm hover:bg-gray-50 transition-all"
+            className="p-2 bg-white border border-gray-100 rounded-xl disabled:opacity-30 shadow-sm"
           >
             <ChevronRight size={20} className="text-gray-600" />
           </button>
         </div>
       )}
 
-      {/* MODAL DETAIL PESANAN */}
+      {/* MODAL DETAIL */}
       {detailOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 print:hidden backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl">
             <div className="p-6 border-b flex justify-between items-center">
               <h2 className="font-bold text-xl text-gray-800">Pesanan Meja {detailOrder.meja}</h2>
-              <button onClick={() => setDetailOrder(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+              <button onClick={() => setDetailOrder(null)} className="p-2 hover:bg-gray-100 rounded-full">
                 <X size={20} className="text-gray-400"/>
               </button>
             </div>
@@ -249,7 +247,7 @@ const Orders = () => {
                   updateOrderStatus(detailOrder.id, 'Terkonfirmasi'); 
                   setDetailOrder(null); 
                 }}
-                className="w-full bg-[#D04040] hover:bg-red-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 shadow-lg transition-all active:scale-95"
+                className="w-full bg-[#D04040] hover:bg-red-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3"
               >
                 <Printer size={20}/> Cetak & Konfirmasi
               </button>

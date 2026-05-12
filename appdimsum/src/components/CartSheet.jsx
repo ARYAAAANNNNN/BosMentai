@@ -1,4 +1,4 @@
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingCart } from 'lucide-react';
 import { getImageUrl } from '../services/api';
 
 const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemove, onClear, onCheckout, isSubmitting, catatan, onCatatanChange }) => {
@@ -7,140 +7,151 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 z-50"
+        className="fixed inset-0 bg-black/40 z-50 backdrop-blur-sm"
         onClick={onClose}
         style={{ animation: 'cartFadeIn 0.2s ease-out' }}
       />
 
       {/* Bottom Sheet */}
       <div className="fixed bottom-0 left-0 right-0 z-[60]" style={{ animation: 'cartSlideUp 0.35s ease-out' }}>
-        <div className="bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col w-full">
+        <div className="bg-white rounded-t-[32px] shadow-2xl max-h-[85vh] flex flex-col w-full overflow-hidden">
 
           {/* Handle Bar */}
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+          <div className="flex justify-center pt-4 pb-2">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
           </div>
 
           {/* Header */}
-          <div className="px-6 pt-2 pb-4">
-            <h2 className="text-xl font-bold text-gray-900">Keranjang Pesanan</h2>
+          <div className="px-6 py-2 flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">Pesanan Saya</h2>
+              <p className="text-xs text-gray-400">Pastikan pesanan Anda sudah sesuai</p>
+            </div>
+            {cart && cart.length > 0 && (
+              <button 
+                onClick={() => {
+                  if (window.confirm('Kosongkan keranjang?')) {
+                    onClear();
+                    onClose();
+                  }
+                }}
+                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              >
+                <Trash2 size={20} />
+              </button>
+            )}
           </div>
 
-          {/* Empty State */}
+          {/* Body Content */}
           {(!cart || cart.length === 0) ? (
-            <div className="flex-1 flex flex-col items-center justify-center py-16 px-6">
-              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <span className="text-3xl">🛒</span>
+            <div className="flex-1 flex flex-col items-center justify-center py-20 px-6">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-4xl">
+                🛒
               </div>
-              <p className="text-gray-500 font-medium text-sm">Keranjang kosong</p>
-              <p className="text-gray-400 text-xs mt-1">Silakan pilih menu yang tersedia</p>
+              <p className="text-gray-500 font-bold">Keranjang Kosong</p>
+              <p className="text-gray-400 text-xs mt-1 text-center">
+                Belum ada menu yang dipilih.<br/>Yuk, pilih menu favoritmu!
+              </p>
+              <button 
+                onClick={onClose}
+                className="mt-6 px-8 py-2 bg-gray-900 text-white rounded-full text-sm font-bold active:scale-95 transition-transform"
+              >
+                Lihat Menu
+              </button>
             </div>
           ) : (
             <>
               {/* Items List */}
-              <div className="flex-1 overflow-y-auto px-6">
+              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                 {cart.map((item, index) => {
                   const imgSrc = item.image ? getImageUrl(item.image) : null;
                   const harga = item.price || item.harga || 0;
-                  const kategori = item.kategori || item.category || 'Dimsum';
                   return (
-                    <div key={item.id}>
-                      <div className="flex items-center gap-4 py-4">
-                        {/* Thumbnail */}
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                          {imgSrc ? (
-                            <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-2xl">🥟</div>
-                          )}
-                        </div>
-
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-gray-900 leading-tight">
-                            Rp {harga.toLocaleString('id-ID')}
-                          </p>
-                          <p className="text-[13px] font-semibold text-gray-700 mt-0.5 truncate">
-                            {item.name || item.nama_menu}
-                          </p>
-                          <p className="text-[11px] text-gray-400 mt-0">
-                            {kategori}
-                          </p>
-                        </div>
-
-                        {/* Quantity Controls */}
-                        <div className="flex items-center gap-0 shrink-0">
-                          <button
-                            onClick={() => onDecrement(item.id)}
-                            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                          >
-                            <Minus size={14} strokeWidth={2} />
-                          </button>
-                          <span className="w-8 h-8 flex items-center justify-center text-sm font-bold text-gray-800 border-t border-b border-gray-200">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => onIncrement(item.id)}
-                            className="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-md text-gray-500 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                          >
-                            <Plus size={14} strokeWidth={2} />
-                          </button>
-                        </div>
+                    <div key={item.id} className="flex items-center gap-4 group">
+                      {/* Thumbnail */}
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-gray-100 shrink-0 border border-gray-50">
+                        {imgSrc ? (
+                          <img src={imgSrc} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl">🥟</div>
+                        )}
                       </div>
 
-                      {/* Divider */}
-                      {index < cart.length - 1 && (
-                        <div className="h-px bg-gray-100" />
-                      )}
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 truncate">
+                          {item.name || item.nama_menu}
+                        </p>
+                        <p className="text-[#D04040] font-black text-sm mt-0.5">
+                          Rp {(harga * item.quantity).toLocaleString('id-ID')}
+                        </p>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center bg-gray-50 rounded-xl p-1 border border-gray-100">
+                        <button
+                          onClick={() => onDecrement(item.id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-white hover:shadow-sm active:scale-90 transition-all"
+                        >
+                          <Minus size={14} strokeWidth={3} />
+                        </button>
+                        <span className="w-8 text-center text-sm font-black text-gray-800">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => onIncrement(item.id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-white hover:shadow-sm active:scale-90 transition-all"
+                        >
+                          <Plus size={14} strokeWidth={3} />
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Footer */}
-              <div className="px-6 pt-5 pb-8 border-t border-gray-200 space-y-4 bg-white">
-                {/* Total */}
-                <div>
-                  <p className="text-xs text-gray-400 font-medium mb-0.5">Total Pembayaran</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    Rp {totalPrice.toLocaleString('id-ID')}
-                  </p>
+              {/* Footer Section */}
+              <div className="px-6 pt-6 pb-10 border-t border-gray-100 bg-white space-y-4">
+                {/* Total Info */}
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Estimasi Total</p>
+                    <p className="text-2xl font-black text-gray-900">
+                      Rp {totalPrice.toLocaleString('id-ID')}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Item</p>
+                    <p className="text-sm font-black text-gray-700">{cart.length} Menu</p>
+                  </div>
                 </div>
 
-                {/* Buttons */}
-                <div className="space-y-2.5">
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Hapus semua pesanan?')) {
-                        onClear();
-                        onClose();
-                      }
-                    }}
-                    className="w-full h-12 bg-white border-2 border-red-400 text-red-500 font-semibold text-sm rounded-full hover:bg-red-50 transition-all active:scale-[0.98]"
-                  >
-                    Hapus Semua
-                  </button>
-
-                  <button
-                    onClick={onCheckout}
-                    disabled={isSubmitting || cart.length === 0}
-                    className="w-full h-12 bg-[#4CAF50] hover:bg-[#43A047] text-white font-semibold text-sm rounded-full transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'Lanjutkan Pembayaran'
-                    )}
-                  </button>
-                </div>
+                {/* Checkout Button */}
+                <button
+                  onClick={onCheckout}
+                  disabled={isSubmitting || cart.length === 0}
+                  className={`w-full h-14 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.97] shadow-lg shadow-green-100
+                    ${isSubmitting 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      : 'bg-[#4CAF50] text-white hover:bg-[#43A047]'
+                    }`}
+                >
+                  {isSubmitting ? (
+                    <div className="w-6 h-6 border-3 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <ShoppingCart size={18} />
+                      Pesan Sekarang
+                    </>
+                  )}
+                </button>
               </div>
             </>
           )}
-
         </div>
       </div>
 
-      {/* Animations */}
+      {/* Animations CSS */}
       <style>{`
         @keyframes cartFadeIn {
           from { opacity: 0; }
