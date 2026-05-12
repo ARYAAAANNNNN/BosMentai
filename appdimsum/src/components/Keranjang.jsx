@@ -18,7 +18,6 @@ const Keranjang = ({ visible, onClose }) => {
   const [showSentNotification, setShowSentNotification] = useState(false)
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrderId, setTrackingOrderId] = useState(null)
-  
   useEffect(() => {
     // Poll orders when tracking is active to get updates from admin
     if (!showTracking) return;
@@ -153,15 +152,14 @@ const Keranjang = ({ visible, onClose }) => {
 
               return (
                 <div key={idx} className="tracking-step">
-                  {/* Memindahkan marker ke bagian awal agar posisinya otomatis sinkron di tengah garis dan tidak terdorong ke samping */}
-                  <div className="tracking-marker-box">
-                    <span className={`tracking-circle ${isDone || isActive ? 'active' : ''}`} />
-                  </div>
                   <div className="tracking-step-info">
                     <h3 className={`tracking-step-title ${isActive || isDone ? 'active-text' : ''}`}>
                       {step.label}
                     </h3>
                     <p className="tracking-step-desc">{step.subtitle}</p>
+                  </div>
+                  <div className="tracking-marker-box">
+                    <span className={`tracking-circle ${isDone || isActive ? 'active' : ''}`} />
                   </div>
                 </div>
               )
