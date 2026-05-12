@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Pencil, Trash2, X, Search, ChevronUp, ChevronDown } from 'lucide-react';
 import { useOrderContext } from '../context/OrderContext';
-import { STORAGE_URL, getImageUrl } from '../services/api';
+import { getImageUrl } from '../services/api';
 
-// ─── Mapping Kategori (PASTIKAN ID INI SAMA DENGAN DI DATABASE SUPABASE LU) ──────────────
+// ─── Mapping Kategori ────────────────────────────────────────────────────────
 const categoryMap = {
   'Makanan': 1,
   'Minuman': 2,
@@ -16,7 +16,6 @@ const idToCategory = {
   3: 'Snack',
 };
 
-// List untuk filter dropdown agar statis sesuai permintaan lu
 const KATEGORI_LIST_FIXED = ['Semua Kategori', 'Makanan', 'Minuman', 'Snack'];
 
 // ─── Status stok ──────────────────────────────────────────────────────────────
@@ -31,10 +30,10 @@ const getStatus = (stok) => {
 const STATUS_LIST   = ['Semua Status', 'Tersedia', 'Hampir Habis', 'Menipis', 'Habis'];
 
 const statusColor = {
-  Tersedia:     'text-green-600',
+  Tersedia:      'text-green-600',
   'Hampir Habis': 'text-orange-500',
-  Menipis:          'text-yellow-600',
-  Habis:           'text-red-500',
+  Menipis:       'text-yellow-600',
+  Habis:         'text-red-500',
 };
 
 // ─── Dropdown Component ───────────────────────────────────────────────────────
@@ -45,10 +44,10 @@ const Dropdown = ({ value, onChange, options }) => {
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 pl-4 pr-3 py-2 rounded-lg border border-[#B34949] bg-red-50 text-sm font-medium text-gray-700 min-w-[150px] justify-between"
+        className="flex items-center gap-2 pl-4 pr-3 py-2 rounded-lg border border-[#E13E3E] bg-red-50 text-sm font-medium text-gray-700 min-w-[150px] justify-between"
       >
         {value}
-        {open ? <ChevronUp className="w-4 h-4 text-[#B34949]" /> : <ChevronDown className="w-4 h-4 text-[#B34949]" />}
+        {open ? <ChevronUp className="w-4 h-4 text-[#E13E3E]" /> : <ChevronDown className="w-4 h-4 text-[#E13E3E]" />}
       </button>
       {open && (
         <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-30 min-w-[160px] overflow-hidden">
@@ -57,7 +56,7 @@ const Dropdown = ({ value, onChange, options }) => {
               key={opt}
               onMouseDown={() => { onChange(opt); setOpen(false); }}
               className={`px-4 py-2.5 text-sm cursor-pointer transition-colors border-b border-gray-200 last:border-b-0 ${
-                opt === value ? 'bg-red-50 text-[#B34949] font-bold' : 'text-gray-700 hover:bg-gray-50'
+                opt === value ? 'bg-red-50 text-[#E13E3E] font-bold' : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               {opt}
@@ -143,25 +142,23 @@ const Modal = ({ open, onClose, onSave, editData }) => {
     if (result && !result.success) alert(result.message);
   };
 
-  // Mengambil kategori dari categoryMap yang sudah kita tentukan
   const categories = Object.entries(categoryMap).map(([name, id]) => ({ name, id }));
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 text-sans">
+      <div className="bg-white rounded-[32px] p-8 max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button onClick={onClose} className="absolute right-6 top-6 text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         <h2 className="text-2xl font-bold text-gray-900 mb-1">{editData ? 'Edit Menu' : 'Tambah Menu'}</h2>
         <p className="text-sm text-gray-400 mb-6">Lengkapi detail informasi menu di bawah ini.</p>
 
         <div className="space-y-4">
-          {/* Upload Foto */}
           <div onClick={() => !preview && fileRef.current.click()} className="relative w-full h-48 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-dashed border-gray-200">
             {preview ? (
               <>
                 <img src={preview} alt="preview" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <button type="button" onClick={(e) => { e.stopPropagation(); fileRef.current.click(); }} className="bg-white p-2 rounded-full"><Pencil className="w-5 h-5 text-orange-500" /></button>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setPreview(null); setFile(null); }} className="bg-white p-2 rounded-full"><Trash2 className="w-5 h-5 text-red-500" /></button>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); fileRef.current.click(); }} className="bg-white p-2 rounded-full shadow-sm"><Pencil className="w-5 h-5 text-orange-500" /></button>
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setPreview(null); setFile(null); }} className="bg-white p-2 rounded-full shadow-sm"><Trash2 className="w-5 h-5 text-red-500" /></button>
                 </div>
               </>
             ) : (
@@ -179,7 +176,7 @@ const Modal = ({ open, onClose, onSave, editData }) => {
             value={form.nama_menu}
             onChange={e => setForm({ ...form, nama_menu: e.target.value })}
             placeholder="Nama Menu"
-            className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] text-sm"
+            className="w-full p-4 border border-gray-100 rounded-2xl outline-none focus:border-[#E13E3E] text-sm bg-gray-50/50"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -188,14 +185,14 @@ const Modal = ({ open, onClose, onSave, editData }) => {
               value={form.harga}
               onChange={e => setForm({ ...form, harga: e.target.value })}
               placeholder="Harga (Rp)"
-              className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] text-sm"
+              className="w-full p-4 border border-gray-100 rounded-2xl outline-none focus:border-[#E13E3E] text-sm bg-gray-50/50"
             />
             <input
               type="number"
               value={form.stok}
               onChange={e => setForm({ ...form, stok: e.target.value })}
               placeholder="Stok"
-              className="w-full p-4 border border-gray-200 rounded-xl outline-none focus:border-[#B34949] text-sm"
+              className="w-full p-4 border border-gray-100 rounded-2xl outline-none focus:border-[#E13E3E] text-sm bg-gray-50/50"
             />
           </div>
 
@@ -203,13 +200,13 @@ const Modal = ({ open, onClose, onSave, editData }) => {
             <button
               type="button"
               onClick={() => setIsCatOpen(!isCatOpen)}
-              className="w-full p-4 border border-gray-200 rounded-xl flex items-center justify-between text-sm text-gray-700"
+              className="w-full p-4 border border-gray-100 rounded-2xl flex items-center justify-between text-sm text-gray-700 bg-gray-50/50"
             >
               {idToCategory[form.id_kategori] || 'Pilih Kategori'}
               <ChevronDown className={`w-4 h-4 transition-transform ${isCatOpen ? 'rotate-180' : ''}`} />
             </button>
             {isCatOpen && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-50">
                 {categories.map(cat => (
                   <div
                     key={cat.id}
@@ -225,11 +222,11 @@ const Modal = ({ open, onClose, onSave, editData }) => {
         </div>
 
         <div className="mt-8 flex gap-4">
-          <button onClick={onClose} className="flex-1 py-3 text-sm font-bold text-gray-500 bg-gray-100 rounded-xl">Batal</button>
+          <button onClick={onClose} className="flex-1 py-4 text-sm font-bold text-gray-400 bg-gray-100 rounded-2xl transition-all active:scale-95">Batal</button>
           <button
             onClick={handleSave}
             disabled={isSubmitting}
-            className={`flex-1 py-3 bg-[#B34949] text-white text-sm font-bold rounded-xl ${isSubmitting ? 'opacity-50' : ''}`}
+            className={`flex-1 py-4 bg-[#E13E3E] text-white text-sm font-bold rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-100 ${isSubmitting ? 'opacity-50' : 'hover:bg-red-700'}`}
           >
             {isSubmitting ? 'Proses...' : 'Simpan Menu'}
           </button>
@@ -253,15 +250,10 @@ const Menu = () => {
 
   const PER_PAGE = 10;
 
-  // PERBAIKAN: Gunakan KATEGORI_LIST_FIXED yang sudah kita buat di atas
-  // supaya kategori lama (Goreng/Dimsum) tidak muncul lagi di dropdown filter.
   const filtered = menuItems.filter(m => {
     const nama = (m.nama || m.nama_menu || '').toLowerCase();
     const matchesSearch = nama.includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'Semua Status' || getStatus(m.stok) === statusFilter;
-    
-    // Logika filter kategori: 
-    // Kita cek m.category (string) atau konversi m.id_kategori ke nama kategori
     const currentItemCategory = m.category || idToCategory[m.id_kategori];
     const matchesKategori = kategoriFilter === 'Semua Kategori' || currentItemCategory === kategoriFilter;
     
@@ -283,17 +275,17 @@ const Menu = () => {
   if (loading && menuItems.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B34949]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E13E3E]"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      <div className="flex items-start justify-between mb-6">
+    <div className="p-8 bg-[#F9FAFB] min-h-screen font-sans">
+      <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-extrabold text-gray-900">Kelola Menu</h1>
-          <p className="text-sm text-gray-400">Manajemen inventaris dan harga menu.</p>
+          <h1 className="text-2xl font-bold text-gray-900">Kelola Menu</h1>
+          <p className="text-sm text-gray-500">Manajemen inventaris dan harga menu.</p>
         </div>
         <div className="relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -302,49 +294,52 @@ const Menu = () => {
             placeholder="Cari menu..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 outline-none w-64 text-sm"
+            className="pl-10 pr-4 py-2 rounded-xl border border-gray-100 outline-none w-64 text-sm shadow-sm bg-white"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-6">
         <Dropdown value={statusFilter} onChange={setStatus} options={STATUS_LIST} />
-        {/* Gunakan KATEGORI_LIST_FIXED di sini */}
         <Dropdown value={kategoriFilter} onChange={setKategori} options={KATEGORI_LIST_FIXED} />
         <button
           onClick={() => { setEditData(null); setModal(true); }}
-          className="ml-auto flex items-center gap-2 px-5 py-2 bg-[#B34949] text-white rounded-lg text-sm font-bold"
+          className="ml-auto flex items-center gap-2 px-6 py-2.5 bg-[#E13E3E] hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-red-100 transition-all active:scale-95"
         >
           <Plus className="w-4 h-4" /> Tambah Menu
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+      <div className="bg-white rounded-[24px] shadow-sm overflow-hidden border border-gray-100">
         <table className="min-w-full">
           <thead>
-            <tr className="bg-[#B34949] text-white">
+            {/* WARNA MERAH DISAMAKAN DENGAN SIDEBAR SESUAI image_d116d2.png */}
+            <tr className="bg-[#E13E3E] text-white">
               {['No', 'Gambar', 'Nama Menu', 'Kategori', 'Harga', 'Stok', 'Status', 'Aksi'].map(h => (
-                <th key={h} className="px-6 py-4 text-left text-xs font-bold uppercase">{h}</th>
+                <th key={h} className={`px-6 py-5 text-left text-xs font-bold uppercase ${h === 'No' || h === 'Aksi' ? 'text-center' : ''}`}>{h}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-50">
             {paginated.map((item, i) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-600">{(page - 1) * PER_PAGE + i + 1}</td>
+              <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 text-sm text-gray-400 text-center font-medium">{(page - 1) * PER_PAGE + i + 1}</td>
                 <td className="px-6 py-4">
-                  <img src={getImageUrl(item.image)} alt="" className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
+                  <img src={getImageUrl(item.image)} alt="" className="w-12 h-12 rounded-xl object-cover bg-gray-50 border border-gray-100 shadow-sm" />
                 </td>
-                <td className="px-6 py-4 text-sm font-medium text-gray-800">{item.nama || item.nama_menu}</td>
-                {/* Menampilkan nama kategori berdasarkan ID jika item.category kosong */}
-                <td className="px-6 py-4 text-sm text-gray-500">{item.category || idToCategory[item.id_kategori] || '-'}</td>
-                <td className="px-6 py-4 text-sm font-bold text-gray-900">Rp {Number(item.harga).toLocaleString('id-ID')}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{item.stok}</td>
-                <td className={`px-6 py-4 text-sm font-bold ${statusColor[getStatus(item.stok)]}`}>{getStatus(item.stok)}</td>
+                <td className="px-6 py-4 text-sm font-bold text-gray-800">{item.nama || item.nama_menu}</td>
                 <td className="px-6 py-4">
-                  <div className="flex gap-3">
-                    <button onClick={() => { setEditData(item); setModal(true); }} className="text-orange-500"><Pencil className="w-4 h-4" /></button>
-                    <button onClick={() => setDeleteId(item.id)} className="text-red-500"><Trash2 className="w-4 h-4" /></button>
+                   <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[11px] font-bold">
+                    {item.category || idToCategory[item.id_kategori] || '-'}
+                   </span>
+                </td>
+                <td className="px-6 py-4 text-sm font-black text-gray-900">Rp {Number(item.harga).toLocaleString('id-ID')}</td>
+                <td className="px-6 py-4 text-sm text-gray-600 font-bold">{item.stok}</td>
+                <td className={`px-6 py-4 text-xs font-black ${statusColor[getStatus(item.stok)]}`}>{getStatus(item.stok).toUpperCase()}</td>
+                <td className="px-6 py-4">
+                  <div className="flex gap-2 justify-center">
+                    <button onClick={() => { setEditData(item); setModal(true); }} className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-all"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => setDeleteId(item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </td>
               </tr>
@@ -354,34 +349,39 @@ const Menu = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-end gap-2 mt-6">
-        <button 
-            disabled={page === 1} 
-            onClick={() => setPage(p => p - 1)}
-            className="px-3 py-1 border rounded bg-white disabled:opacity-50"
-        >
-            Prev
-        </button>
-        <span className="px-3 py-1 text-sm font-medium">Halaman {page} dari {totalPages}</span>
-        <button 
-            disabled={page === totalPages} 
-            onClick={() => setPage(p => p + 1)}
-            className="px-3 py-1 border rounded bg-white disabled:opacity-50"
-        >
-            Next
-        </button>
+      <div className="flex justify-end items-center gap-4 mt-8">
+        <span className="text-sm text-gray-400 font-medium">Halaman {page} dari {totalPages}</span>
+        <div className="flex gap-2">
+          <button 
+              disabled={page === 1} 
+              onClick={() => setPage(p => p - 1)}
+              className="p-2 border border-gray-100 rounded-xl bg-white disabled:opacity-30 shadow-sm transition-all active:scale-90"
+          >
+              <ChevronUp className="-rotate-90 w-5 h-5 text-gray-600" />
+          </button>
+          <button 
+              disabled={page === totalPages} 
+              onClick={() => setPage(p => p + 1)}
+              className="p-2 border border-gray-100 rounded-xl bg-white disabled:opacity-30 shadow-sm transition-all active:scale-90"
+          >
+              <ChevronDown className="-rotate-90 w-5 h-5 text-gray-600" />
+          </button>
+        </div>
       </div>
 
       <Modal open={modal} onClose={() => setModal(false)} onSave={handleSave} editData={editData} />
 
       {deleteId && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60]">
-          <div className="bg-white p-8 rounded-2xl max-w-sm w-full text-center">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white p-8 rounded-[32px] max-w-sm w-full text-center shadow-2xl">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#E13E3E]">
+               <Trash2 size={32} />
+            </div>
             <h3 className="text-xl font-bold mb-2">Hapus Menu?</h3>
             <p className="text-gray-500 text-sm mb-6">Data tidak dapat dikembalikan setelah dihapus.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2 bg-gray-100 rounded-lg font-bold">Batal</button>
-              <button onClick={async () => { await hapusMenu(deleteId); setDeleteId(null); }} className="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold">Hapus</button>
+              <button onClick={() => setDeleteId(null)} className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-400">Batal</button>
+              <button onClick={async () => { await hapusMenu(deleteId); setDeleteId(null); }} className="flex-1 py-3 bg-[#E13E3E] text-white rounded-2xl font-bold shadow-lg shadow-red-100">Hapus</button>
             </div>
           </div>
         </div>
