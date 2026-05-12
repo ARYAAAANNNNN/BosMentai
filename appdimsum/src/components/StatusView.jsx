@@ -43,9 +43,8 @@ const StatusView = ({ status, orderId, onClose }) => {
             {isSuccess ? 'Pesanan Berhasil!' : isFailed ? 'Pesanan Gagal' : 'Sedang Diproses'}
           </h3>
 
-          {/* Subtitle - Error fixed here */}
+          {/* Subtitle */}
           <p className="text-sm text-gray-500 font-medium leading-relaxed px-2 mb-2">
-            {isSuccess
               ? 'Pesanan Anda sedang diteruskan ke dapur. Mohon ditunggu ya! 🥟'
               : isFailed
               ? 'Pesanan tidak berhasil dikirim. Silakan coba lagi.'
@@ -70,28 +69,23 @@ const StatusView = ({ status, orderId, onClose }) => {
                   { label: 'Pesanan sedang diproses', done: false, active: true },
                   { label: 'Pesanan siap', done: false },
                 ].map((step, i, arr) => (
-                  <div key={i} className="flex gap-3">
-                    {/* Container khusus bulatan & garis biar auto center */}
+                  <div key={i} className="flex items-start gap-3">
                     <div className="flex flex-col items-center">
-                      <div className={`relative z-10 w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                         step.done ? 'bg-green-500' : step.active ? 'bg-amber-400 animate-pulse' : 'bg-gray-200'
                       }`}>
                         {step.done && <CheckCircle2 size={12} className="text-white" />}
                         {step.active && <Clock size={10} className="text-white" />}
                       </div>
-                      {/* Garis alur dibikin flex-1 biar nyambung sempurna ke bawah */}
                       {i < arr.length - 1 && (
-                        <div className={`w-0.5 flex-1 my-1 rounded-full ${step.done ? 'bg-green-300' : 'bg-gray-200'}`} />
+                        <div className={`w-0.5 h-6 ${step.done ? 'bg-green-300' : 'bg-gray-200'}`} />
                       )}
                     </div>
-                    {/* Teks dikasih padding bawah (pb-5) sebagai jarak antar baris */}
-                    <div className="pb-5 pt-0.5">
-                      <span className={`text-xs font-bold ${
-                        step.done ? 'text-green-600' : step.active ? 'text-amber-600' : 'text-gray-400'
-                      }`}>
-                        {step.label}
-                      </span>
-                    </div>
+                    <span className={`text-xs font-bold pt-0.5 ${
+                      step.done ? 'text-green-600' : step.active ? 'text-amber-600' : 'text-gray-400'
+                    }`}>
+                      {step.label}
+                    </span>
                   </div>
                 ))}
               </div>
