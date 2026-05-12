@@ -8,7 +8,6 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import TrackingPage from './pages/TrackingPage'
 import MonitoringPage from './pages/MonitoringPage'
-import ConfirmPage from './pages/ConfirmPage'
 
 function App() {
   return (
@@ -19,7 +18,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/tracking/:orderId" element={<TrackingPage />} />
-          <Route path="/confirm" element={<ConfirmPage />} />
           <Route path="/monitoring/:orderId" element={<MonitoringPage />} />
           <Route path="/" element={<Dashboard />} />
           <Route path="/menu" element={<MenuPage />} />
