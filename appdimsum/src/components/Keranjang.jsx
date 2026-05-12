@@ -19,24 +19,24 @@ const Keranjang = ({ visible, onClose }) => {
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrderId, setTrackingOrderId] = useState(null)
 
-  // 1. SINKRONISASI REFRESH
-  // Jika ada ID di localStorage, otomatis buka modal tracking
+  // 1. Sinkronisasi dengan LocalStorage saat refresh
   useEffect(() => {
     const savedOrderId = localStorage.getItem('activeTrackingOrderId')
     if (savedOrderId) {
       setTrackingOrderId(parseInt(savedOrderId))
       setShowTracking(true)
-      // Jika refresh terjadi saat tracking aktif, kita panggil onClose di parent 
-      // tapi sebenarnya logic di bawah akan menjaga modal tetap tampil
     }
   }, [])
 
+  // 2. Auto Refresh Data Pesanan (Dihapus karena sudah ada polling global di OrderContext)
+  // Ini mencegah request berlebih yang menyebabkan error 429
+
+  // 3. Mapping Status ke Step (Disesuaikan dengan status di Orders.jsx)
   const getStepFromStatus = (status) => {
-    const s = status?.toLowerCase()
-    if (s === 'selesai') return 2
-    if (s === 'diproses' || s === 'cooking') return 1
-    if (s === 'terkonfirmasi') return 0
-    return -1 
+    if (status === 'Selesai') return 2
+    if (status === 'Diproses') return 1
+    if (status === 'Terkonfirmasi') return 0
+    return -1 // Menunggu Konfirmasi
   }
 
   const getPriceValue = (item) => {
@@ -49,7 +49,11 @@ const Keranjang = ({ visible, onClose }) => {
 
   // 4. Handle Konfirmasi Pesanan
   const handleConfirm = async () => {
-    if (!cart.length) return
+    if (!cart.length) {
+      alert('Keranjang kosong')
+      return
+    }
+
     try {
       const orderData = {
         no_meja: tableNumber,
@@ -62,9 +66,16 @@ const Keranjang = ({ visible, onClose }) => {
       }
 
       const response = await orderAPI.create(orderData)
+
       if (response.success) {
         const newOrderId = response.data?.id || response.id_pesanan || response.id
-        
+
+        if (!newOrderId) {
+          alert('Gagal mengirim pesanan: response ID tidak ditemukan')
+          return
+        }
+
+        // Simpan ID ke state dan localStorage
         setTrackingOrderId(newOrderId)
         localStorage.setItem('activeTrackingOrderId', newOrderId)
 
@@ -76,38 +87,42 @@ const Keranjang = ({ visible, onClose }) => {
           setShowSentNotification(false)
           setShowTracking(true)
         }, 1400)
+      } else {
+        alert('Gagal mengirim pesanan: ' + (response.message || 'Unknown error'))
       }
     } catch (error) {
-      console.error(error)
+      alert('Gagal mengirim pesanan: ' + error.message)
     }
   }
 
+  const totalPrice = getTotalPrice()
+  const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
+
+  // 5. Logika Tracking
   const trackingOrder = orders.find((o) => o.id === trackingOrderId)
   const currentStatus = trackingOrder?.status || 'Menunggu Konfirmasi'
   const trackingStep = getStepFromStatus(currentStatus)
 
-  // 5. LOGIKA CLEANUP
-  // Hanya hapus localStorage jika user menekan tombol "Selesai & Tutup"
-  // Jangan hapus otomatis di sini agar persistensi terjaga saat refresh di status 'Selesai'
+  // Jika pesanan selesai, bersihkan localStorage agar bisa pesan baru nanti
+  if (currentStatus === 'Selesai' && trackingOrderId) {
+    localStorage.removeItem('activeTrackingOrderId')
+  }
 
   const progressHeight =
     trackingStep === -1 ? '0%' :
       trackingStep === 0 ? '12%' :
         trackingStep === 1 ? '50%' : '100%';
 
-  // 6. PROTEKSI MODAL & PERSISTENCE
-  // Modal WAJIB visible jika showTracking bernilai true (sedang melacak)
-  const isCurrentlyTracking = showTracking && trackingOrderId
-  const actualVisible = isCurrentlyTracking ? true : visible
-  
-  // User hanya bisa tutup jika TIDAK sedang tracking atau pesanan SUDAH selesai
-  const canClose = !showTracking || currentStatus?.toLowerCase() === 'selesai'
+  // 6. Proteksi Modal (Tidak bisa diclose jika belum selesai)
+  // User hanya bisa tutup jika: 
+  // - Sedang di keranjang biasa (bukan tracking)
+  // - ATAU Pesanan sudah berstatus 'Selesai'
+  const canClose = !showTracking || currentStatus === 'Selesai'
 
   const handleOverlayClick = () => { if (canClose) onClose() }
   const stopClose = (e) => { e.stopPropagation() }
 
-  // Ganti 'visible' dengan 'actualVisible' untuk memaksa modal muncul jika ada tracking
-  if (!actualVisible) return null
+  if (!visible) return null
 
   return (
     <div className="cart-overlay" onClick={handleOverlayClick}>
@@ -117,23 +132,33 @@ const Keranjang = ({ visible, onClose }) => {
             <span className="material-icons">check_circle</span>
           </div>
           <h2 className="notification-title">Pesanan Terkirim!</h2>
-          <p className="notification-text">Pesanan Anda telah diterima dapur.</p>
+          <p className="notification-text">Pesanan Anda telah kami terima dan sedang diteruskan ke dapur.</p>
+          <div className="loading-dots"><span>.</span><span>.</span><span>.</span></div>
         </div>
       ) : showTracking ? (
         <div className="cart-modal tracking-modal" onClick={stopClose}>
           <div className="tracking-header">
-            <h2 className="tracking-title">Lacak Pesanan #{trackingOrderId}</h2>
-            {/* Tombol close dihilangkan selama tracking aktif */}
+            <h2 className="tracking-title">Lacak Pesanan</h2>
           </div>
 
           <div className="tracking-status-badge">
-            <span className={`status-dot ${currentStatus?.toLowerCase() === 'selesai' ? 'done' : 'pulse'}`}></span>
+            <span className={`status-dot ${currentStatus === 'Selesai' ? 'done' : 'pulse'}`}></span>
             {currentStatus}
           </div>
 
           <div className="tracking-steps" style={{ position: 'relative', marginTop: '32px', paddingLeft: '40px' }}>
-            <div style={{ position: 'absolute', left: '14px', top: '10px', bottom: '10px', width: '2px', background: '#E5E7EB', zIndex: 1 }} />
-            <div style={{ position: 'absolute', left: '14px', top: '10px', width: '2px', height: progressHeight, background: '#ef4444', zIndex: 2, transition: 'height 0.8s ease' }} />
+            {/* GARIS DASAR */}
+            <div style={{
+              position: 'absolute', left: '14px', top: '10px', bottom: '10px',
+              width: '2px', background: '#E5E7EB', zIndex: 1
+            }} />
+
+            {/* GARIS PROGRESS */}
+            <div style={{
+              position: 'absolute', left: '14px', top: '10px', width: '2px',
+              height: progressHeight, background: '#ef4444', zIndex: 2,
+              transition: 'height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+            }} />
 
             {[
               { label: 'Pesanan Dikonfirmasi', subtitle: 'Admin telah menyetujui pesanan Anda' },
@@ -142,68 +167,138 @@ const Keranjang = ({ visible, onClose }) => {
             ].map((step, idx) => {
               const isDone = idx < trackingStep
               const isActive = idx === trackingStep
+
               return (
                 <div key={idx} style={{ position: 'relative', marginBottom: idx === 2 ? 0 : 35, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ position: 'absolute', left: '-40px', width: '30px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3 }}>
+                  <div style={{
+                    position: 'absolute', left: '-40px', width: '30px', height: '24px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3
+                  }}>
                     <div style={{
-                      width: isActive ? '14px' : '10px', height: isActive ? '14px' : '10px', borderRadius: '50%',
+                      width: isActive ? '14px' : '10px',
+                      height: isActive ? '14px' : '10px',
+                      borderRadius: '50%',
                       background: (isDone || isActive) ? '#ef4444' : '#fff',
                       border: (isDone || isActive) ? '3px solid #fff' : '2px solid #E5E7EB',
-                      boxShadow: isActive ? '0 0 0 4px rgba(239, 68, 68, 0.2)' : 'none'
+                      boxShadow: isActive ? '0 0 0 4px rgba(239, 68, 68, 0.2)' : 'none',
+                      transition: 'all 0.3s ease'
                     }} />
                   </div>
-                  <div className="tracking-step-info">
-                    <h3 style={{ margin: 0, fontSize: '14px', color: (isActive || isDone) ? '#ef4444' : '#9CA3AF' }}>{step.label}</h3>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6B7280' }}>{step.subtitle}</p>
+
+                  <div className="tracking-step-info" style={{ textAlign: 'left' }}>
+                    <h3 className={`tracking-step-title ${(isActive || isDone) ? 'active-text' : ''}`}
+                      style={{ margin: 0, fontSize: '14px', fontWeight: (isActive || isDone) ? '700' : '500' }}>
+                      {step.label}
+                    </h3>
+                    <p className="tracking-step-desc" style={{ margin: '4px 0 0', fontSize: '12px', color: '#6B7280' }}>
+                      {step.subtitle}
+                    </p>
                   </div>
                 </div>
               )
             })}
           </div>
 
-          {currentStatus?.toLowerCase() === 'selesai' && (
+          {trackingStep === -1 && (
+            <div className="pending-notice" style={{
+              textAlign: 'left', display: 'flex', alignItems: 'center',
+              gap: '8px', marginTop: '30px', padding: '12px',
+              background: '#FEF3C7', borderRadius: '8px', color: '#92400E', fontSize: '12px'
+            }}>
+              <span className="material-icons" style={{ fontSize: '18px' }}>hourglass_empty</span>
+              <p style={{ margin: 0, fontWeight: '600' }}>Menunggu konfirmasi kasir...</p>
+            </div>
+          )}
+
+          {currentStatus === 'Selesai' && (
             <button
               className="btn-browse"
-              style={{ marginTop: '30px', width: '100%', background: '#10B981' }}
+              style={{ marginTop: '30px', width: '100%' }}
               onClick={() => {
-                localStorage.removeItem('activeTrackingOrderId') // Hapus saat benar-benar selesai
                 setTrackingOrderId(null)
                 setShowTracking(false)
                 onClose()
               }}
             >
-              Pesanan Selesai & Tutup
+              Selesai & Tutup
             </button>
           )}
         </div>
       ) : (
         <div className="cart-modal" onClick={stopClose}>
-          {/* Bagian Keranjang Biasa Tetap Sama */}
           <div className="cart-box">
-             <div className="cart-header-main">
-               <div className="header-info">
-                 <h2 className="cart-title-large">Keranjang Saya</h2>
-                 <div className="table-tag">Meja {tableNumber}</div>
-               </div>
-               <button className="btn-close-circle" onClick={onClose}>
-                 <span className="material-icons">close</span>
-               </button>
-             </div>
-             {/* ... rest of cart items ... */}
-             <div className="cart-items-container">
-                {cart.length > 0 && (
+            <div className="cart-header-main">
+              <div className="header-info">
+                <h2 className="cart-title-large">Keranjang Saya</h2>
+                <div className="table-tag">Meja {tableNumber}</div>
+              </div>
+              <button className="btn-close-circle" onClick={onClose}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+
+            <div className="cart-items-container">
+              {cart.length === 0 ? (
+                <div className="empty-cart-state">
+                  <div className="empty-icon">🛒</div>
+                  <p className="empty-title">Keranjang Kosong</p>
+                  <p className="empty-desc">Belum ada menu yang dipilih nih. Yuk pilih menu favoritmu!</p>
+                  <button className="btn-browse" onClick={onClose}>Lihat Menu</button>
+                </div>
+              ) : (
+                <>
+                  <div className="items-scroll">
+                    {cart.map(item => (
+                      <div key={item.id} className="cart-item-card">
+                        <div className="item-img-box">
+                          <img src={item.image} alt={item.name} />
+                        </div>
+                        <div className="item-details">
+                          <p className="item-name">{item.name}</p>
+                          <p className="item-price">Rp {getPriceValue(item).toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="item-actions">
+                          <div className="qty-stepper">
+                            <button onClick={() => decrementQuantity(item.id)}>−</button>
+                            <span>{item.quantity}</span>
+                            <button onClick={() => incrementQuantity(item.id)}>+</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="cart-footer-fixed">
+                    <div className="summary-row">
+                      <span className="label">Total Pembayaran</span>
+                      <span className="value">{formattedTotalPrice}</span>
+                    </div>
                     <button className="btn-confirm-order" onClick={handleConfirm}>
                       Pesan Sekarang
+                      <span className="material-icons">chevron_right</span>
                     </button>
+                    <button className="btn-clear-all" onClick={clearCart}>Hapus Semua</button>
                   </div>
-                )}
-             </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .status-dot.pulse {
+          animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .active-text { color: #ef4444; }
+      `}</style>
     </div>
   )
 }
 
-export default Keranjang
+export default Keranjang;
