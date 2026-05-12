@@ -29,8 +29,13 @@ const TrackingPage = () => {
   }, [orderId]);
 
   const getStatusIndex = (status) => {
-    const statuses = ['Menunggu', 'Diproses', 'ready', 'Selesai'];
-    return statuses.indexOf(status);
+    if (!status) return 0;
+    const s = status.toLowerCase();
+    if (s.includes('menunggu') || s === 'pending') return 0;
+    if (s === 'diproses' || s === 'cooking' || s === 'terkonfirmasi') return 1;
+    if (s === 'ready') return 2;
+    if (s === 'selesai') return 3;
+    return 0;
   };
 
   const steps = [
