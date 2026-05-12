@@ -110,10 +110,10 @@ function MenuPage() {
       <nav className="navbar">
         <div className="nav-left">
           <div className="logo-container">
-            <div className="logo"><span>QR</span></div>
+            <div className="logo"><span>BM</span></div>
             <div className="brand">
-              <div className="brand-name">QR SmartOrder</div>
-              <div className="restaurant-name">Dimsum Restaurant</div>
+              <div className="brand-name">Bos Mentai</div>
+              <div className="restaurant-name">Premium Dimsum & Mentai</div>
             </div>
           </div>
         </div>

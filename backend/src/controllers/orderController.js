@@ -138,6 +138,11 @@ exports.createOrder = async (req, res) => {
     let id_pesanan;
     if (existingOrders.length > 0) {
       id_pesanan = existingOrders[0].id_pesanan;
+      // Reset status ke 'Menunggu Konfirmasi' karena ada item baru yang perlu dicek admin
+      await conn.query(
+        "UPDATE pesanan SET status_pesanan = 'Menunggu Konfirmasi' WHERE id_pesanan = $1",
+        [id_pesanan]
+      );
       console.log(`[orderController.createOrder] Found existing order: ${id_pesanan}`);
       // Update catatan if provided
       if (catatan) {

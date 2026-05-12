@@ -108,35 +108,43 @@ const Keranjang = ({ visible, onClose }) => {
       {showSentNotification ? (
         <div className="order-notification-card" onClick={stopClose}>
           <div className="notification-icon">
-            <span className="material-icons">check</span>
+            <span className="material-icons">check_circle</span>
           </div>
-          <h2 className="notification-title">Pesanan Dikirim</h2>
-          <p className="notification-text">Mohon tunggu, pesanan anda segera diproses</p>
-          <p className="notification-small">Lacak pesanan anda...</p>
+          <h2 className="notification-title">Pesanan Terkirim!</h2>
+          <p className="notification-text">Pesanan Anda telah kami terima dan sedang diteruskan ke dapur.</p>
+          <div className="loading-dots">
+            <span>.</span><span>.</span><span>.</span>
+          </div>
         </div>
       ) : showTracking ? (
         <div className="cart-modal tracking-modal" onClick={stopClose}>
           <div className="tracking-header">
-            <h2 className="tracking-title">Lacak pesanan anda</h2>
-            {trackingStep === -1 && (
-              <p className="tracking-subtitle-pending">Mohon tunggu konfirmasi dari kasir...</p>
-            )}
+            <h2 className="tracking-title">Lacak Pesanan</h2>
+            <button className="close-mini-btn" onClick={onClose}>
+               <span className="material-icons">close</span>
+            </button>
           </div>
+          
+          <div className="tracking-status-badge">
+            <span className="status-dot"></span>
+            {currentStatus}
+          </div>
+
           <div className="tracking-steps">
             <div className="tracking-rail" />
             <div className="tracking-progress" style={{ height: progressHeight }} />
             {[
               {
-                label: 'Pesanan Telah Dikonfirmasi',
-                subtitle: '(Pesanan sedang diproses)',
+                label: 'Pesanan Dikonfirmasi',
+                subtitle: 'Admin telah menyetujui pesanan Anda',
               },
               {
-                label: 'Pesanan sudah siap',
-                subtitle: '(Pesanan akan diantarkan)',
+                label: 'Sedang Disiapkan',
+                subtitle: 'Koki sedang meracik hidangan Anda',
               },
               {
-                label: 'Pesanan selesai',
-                subtitle: '(Pesanan telah disajikan)',
+                label: 'Pesanan Selesai',
+                subtitle: 'Selamat menikmati hidangan kami!',
               },
             ].map((step, idx) => {
               const isDone = idx < trackingStep
@@ -157,58 +165,72 @@ const Keranjang = ({ visible, onClose }) => {
               )
             })}
           </div>
+          
+          {trackingStep === -1 && (
+            <div className="pending-notice">
+              <span className="material-icons">hourglass_empty</span>
+              <p>Menunggu konfirmasi kasir...</p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="cart-modal" onClick={stopClose}>
-          <button type="button" className="cart-close" onClick={onClose}>
-            <span className="material-icons">close</span>
-          </button>
           <div className="cart-box">
-            <div className="cart-header">
-              <div>
-                <p className="cart-title">Keranjang Pesanan</p>
-                <p className="cart-subtitle">
-                  {cart.length ? `${totalItems} item dipilih` : 'Tidak ada pesanan saat ini'}
-                </p>
+            <div className="cart-header-main">
+              <div className="header-info">
+                <h2 className="cart-title-large">Keranjang Saya</h2>
+                <div className="table-tag">Meja {tableNumber}</div>
               </div>
-              <button className="cart-clear" onClick={clearCart} disabled={!cart.length}>
-                Hapus Semua
+              <button className="btn-close-circle" onClick={onClose}>
+                <span className="material-icons">close</span>
               </button>
             </div>
 
-            {cart.length === 0 ? (
-              <div className="empty-cart">
-                <span className="material-icons">shopping_cart</span>
-                <p>Keranjang kosong</p>
-                <small>Pilih menu terlebih dahulu untuk menambahkan pesanan.</small>
-              </div>
-            ) : (
-              <div className="cart-items">
-                {cart.map(item => (
-                  <div key={item.id} className="cart-item">
-                    <img src={item.image} alt={item.name} className="cart-item-image" />
-                    <div className="cart-item-details">
-                      <div className="cart-item-name">{item.name}</div>
-                      <div className="cart-item-price">Rp {getPriceValue(item).toLocaleString('id-ID')}</div>
-                    </div>
-                    <div className="quantity-control">
-                      <button type="button" onClick={() => decrementQuantity(item.id)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button type="button" onClick={() => incrementQuantity(item.id)}>+</button>
-                    </div>
+            <div className="cart-items-container">
+              {cart.length === 0 ? (
+                <div className="empty-cart-state">
+                  <div className="empty-icon">🛒</div>
+                  <p className="empty-title">Keranjang Kosong</p>
+                  <p className="empty-desc">Belum ada menu yang dipilih nih. Yuk pilih menu favoritmu!</p>
+                  <button className="btn-browse" onClick={onClose}>Lihat Menu</button>
+                </div>
+              ) : (
+                <>
+                  <div className="items-scroll">
+                    {cart.map(item => (
+                      <div key={item.id} className="cart-item-card">
+                        <div className="item-img-box">
+                          <img src={item.image} alt={item.name} />
+                        </div>
+                        <div className="item-details">
+                          <p className="item-name">{item.name}</p>
+                          <p className="item-price">Rp {getPriceValue(item).toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="item-actions">
+                          <div className="qty-stepper">
+                            <button onClick={() => decrementQuantity(item.id)}>−</button>
+                            <span>{item.quantity}</span>
+                            <button onClick={() => incrementQuantity(item.id)}>+</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-
-            <div className="cart-summary">
-              <div className="summary-label">Total Pembayaran</div>
-              <div className="summary-value">{formattedTotalPrice}</div>
+                  
+                  <div className="cart-footer-fixed">
+                    <div className="summary-row">
+                      <span className="label">Total Pembayaran</span>
+                      <span className="value">{formattedTotalPrice}</span>
+                    </div>
+                    <button className="btn-confirm-order" onClick={handleConfirm}>
+                      Pesan Sekarang
+                      <span className="material-icons">chevron_right</span>
+                    </button>
+                    <button className="btn-clear-all" onClick={clearCart}>Hapus Semua</button>
+                  </div>
+                </>
+              )}
             </div>
-
-            <button className="confirm-btn" onClick={handleConfirm} disabled={!cart.length}>
-              Konfirmasi
-            </button>
           </div>
         </div>
       )}
