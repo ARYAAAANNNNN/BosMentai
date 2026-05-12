@@ -40,16 +40,15 @@ const StatusView = ({ status, orderId, onClose }) => {
 
           {/* Title */}
           <h3 className="font-black text-gray-900 text-xl mb-1.5 tracking-tight">
-            {isSuccess ? 'Pembayaran Berhasil!' : isFailed ? 'Pembayaran Gagal' : 'Sedang Diproses'}
+            {isSuccess ? 'Pesanan Berhasil!' : isFailed ? 'Pesanan Gagal' : 'Sedang Diproses'}
           </h3>
 
           {/* Subtitle */}
           <p className="text-sm text-gray-500 font-medium leading-relaxed px-2 mb-2">
-            {isSuccess
               ? 'Pesanan Anda sedang diteruskan ke dapur. Mohon ditunggu ya! 🥟'
               : isFailed
-              ? 'Pembayaran tidak berhasil. Silakan coba lagi.'
-              : 'Menunggu konfirmasi pembayaran...'}
+              ? 'Pesanan tidak berhasil dikirim. Silakan coba lagi.'
+              : 'Menunggu konfirmasi pesanan...'}
           </p>
 
           {/* Order ID */}
@@ -66,7 +65,7 @@ const StatusView = ({ status, orderId, onClose }) => {
               <div className="space-y-0">
                 {[
                   { label: 'Pesanan dibuat', done: true },
-                  { label: 'Pembayaran dikonfirmasi', done: true },
+                  { label: 'Pesanan dikonfirmasi', done: true },
                   { label: 'Pesanan sedang diproses', done: false, active: true },
                   { label: 'Pesanan siap', done: false },
                 ].map((step, i, arr) => (

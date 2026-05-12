@@ -89,7 +89,10 @@ exports.createTransaction = async (req, res) => {
 
     if (successItems.length === 0) {
       await conn.query('ROLLBACK');
-      return res.status(409).json({ success: false, message: 'Semua item gagal diproses.' });
+      return res.status(409).json({ 
+        success: false, 
+        message: 'Semua item gagal diproses (stok habis atau menu tidak aktif).' 
+      });
     }
 
     // Update total_harga

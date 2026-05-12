@@ -221,8 +221,11 @@ exports.createOrder = async (req, res) => {
 
     if (successItems.length === 0) {
       await conn.query('ROLLBACK');
+      const reasons = failedItems.map(i => `${i.nama_menu || i.id_menu}: ${i.alasan}`).join(', ');
       return res.status(409).json({
-        success: false, message: 'Semua item gagal diproses.', gagal: failedItems,
+        success: false, 
+        message: `Semua item gagal diproses: ${reasons}`,
+        gagal: failedItems,
       });
     }
 

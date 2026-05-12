@@ -14,7 +14,7 @@ const orderRoutes  = require('./src/routes/orderroutes');
 const statsRoutes  = require('./src/routes/statsRoutes');
 const laporanRoutes = require('./src/routes/laporanRoutes');
 const authRoutes    = require('./src/routes/authRoutes');
-const paymentRoutes = require('./src/routes/paymentRoutes');
+
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -83,7 +83,7 @@ app.use('/api/orders',  orderRoutes);
 app.use('/api/stats',   statsRoutes);
 app.use('/api/laporan', laporanRoutes);
 app.use('/api/auth',    authRoutes);
-app.use('/api/payment', paymentRoutes);
+
 
 // Health check — berguna untuk monitoring & Docker healthcheck
 app.get('/health', (_req, res) => res.status(200).json({ status: 'ok' }));
