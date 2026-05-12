@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useOrderContext } from '../context/OrderContext'
+import { orderAPI } from '../services/api'
 
 const Keranjang = ({ visible, onClose }) => {
   const navigate = useNavigate()
@@ -15,6 +16,9 @@ const Keranjang = ({ visible, onClose }) => {
     tableNumber,
   } = useCart()
 
+  const { refreshOrders } = useOrderContext()
+  const [loading, setLoading] = useState(false)
+
   if (!visible) return null
 
   const getPriceValue = (item) => {
@@ -25,13 +29,46 @@ const Keranjang = ({ visible, onClose }) => {
     return 0
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!cart.length) {
       alert('Keranjang kosong')
       return
     }
-    onClose()
-    navigate('/confirm')
+
+    setLoading(true)
+    try {
+      const orderData = {
+        no_meja: tableNumber,
+        catatan: '',
+        items: cart.map(item => ({
+          id_menu: item.id,
+          jumlah: item.quantity,
+          harga_satuan: item.priceValue || 0,
+        })),
+      }
+
+      const response = await orderAPI.create(orderData)
+      if (response.success) {
+        const newOrderId = response.data?.id || response.id_pesanan || response.id
+        
+        if (!newOrderId) {
+          throw new Error('ID Pesanan tidak ditemukan')
+        }
+
+        if (refreshOrders) await refreshOrders()
+        
+        clearCart()
+        onClose()
+        navigate(`/tracking/${newOrderId}`)
+      } else {
+        alert('Gagal mengirim pesanan: ' + (response.message || 'Error tidak diketahui'))
+      }
+    } catch (error) {
+      console.error('Error creating order:', error)
+      alert('Terjadi kesalahan: ' + error.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const totalPrice = getTotalPrice()
@@ -95,8 +132,12 @@ const Keranjang = ({ visible, onClose }) => {
             <div className="summary-value">{formattedTotalPrice}</div>
           </div>
 
-          <button className="confirm-btn" onClick={handleConfirm} disabled={!cart.length}>
-            Konfirmasi
+          <button 
+            className="confirm-btn" 
+            onClick={handleConfirm} 
+            disabled={!cart.length || loading}
+          >
+            {loading ? 'Mengirim...' : 'Konfirmasi'}
           </button>
         </div>
       </div>
