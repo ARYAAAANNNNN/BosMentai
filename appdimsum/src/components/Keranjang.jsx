@@ -68,7 +68,7 @@ const Keranjang = ({ visible, onClose }) => {
 
       if (response.success) {
         const newOrderId = response.data?.id || response.id_pesanan || response.id
-        
+
         if (!newOrderId) {
           alert('Gagal mengirim pesanan: response ID tidak ditemukan')
           return
@@ -77,7 +77,7 @@ const Keranjang = ({ visible, onClose }) => {
         // Simpan ID ke state dan localStorage
         setTrackingOrderId(newOrderId)
         localStorage.setItem('activeTrackingOrderId', newOrderId)
-        
+
         await refreshOrders()
         setShowSentNotification(true)
         clearCart()
@@ -109,8 +109,8 @@ const Keranjang = ({ visible, onClose }) => {
 
   const progressHeight =
     trackingStep === -1 ? '0%' :
-    trackingStep === 0  ? '12%' : 
-    trackingStep === 1  ? '50%' : '100%';
+      trackingStep === 0 ? '12%' :
+        trackingStep === 1 ? '50%' : '100%';
 
   // 6. Proteksi Modal (Tidak bisa diclose jika belum selesai)
   // User hanya bisa tutup jika: 
@@ -195,8 +195,8 @@ const Keranjang = ({ visible, onClose }) => {
                   </div>
 
                   <div className="tracking-step-info" style={{ textAlign: 'left' }}>
-                    <h3 className={`tracking-step-title ${(isActive || isDone) ? 'active-text' : ''}`} 
-                        style={{ margin: 0, fontSize: '14px', fontWeight: (isActive || isDone) ? '700' : '500' }}>
+                    <h3 className={`tracking-step-title ${(isActive || isDone) ? 'active-text' : ''}`}
+                      style={{ margin: 0, fontSize: '14px', fontWeight: (isActive || isDone) ? '700' : '500' }}>
                       {step.label}
                     </h3>
                     <p className="tracking-step-desc" style={{ margin: '4px 0 0', fontSize: '12px', color: '#6B7280' }}>
@@ -209,10 +209,10 @@ const Keranjang = ({ visible, onClose }) => {
           </div>
 
           {trackingStep === -1 && (
-            <div className="pending-notice" style={{ 
-                textAlign: 'left', display: 'flex', alignItems: 'center', 
-                gap: '8px', marginTop: '30px', padding: '12px', 
-                background: '#FEF3C7', borderRadius: '8px', color: '#92400E', fontSize: '12px' 
+            <div className="pending-notice" style={{
+              textAlign: 'left', display: 'flex', alignItems: 'center',
+              gap: '8px', marginTop: '30px', padding: '12px',
+              background: '#FEF3C7', borderRadius: '8px', color: '#92400E', fontSize: '12px'
             }}>
               <span className="material-icons" style={{ fontSize: '18px' }}>hourglass_empty</span>
               <p style={{ margin: 0, fontWeight: '600' }}>Menunggu konfirmasi kasir...</p>
@@ -220,8 +220,8 @@ const Keranjang = ({ visible, onClose }) => {
           )}
 
           {currentStatus === 'Selesai' && (
-            <button 
-              className="btn-browse" 
+            <button
+              className="btn-browse"
               style={{ marginTop: '30px', width: '100%' }}
               onClick={() => {
                 setTrackingOrderId(null)
@@ -242,8 +242,8 @@ const Keranjang = ({ visible, onClose }) => {
                 <div className="flex gap-2 items-center">
                   <div className="table-tag">Meja {tableNumber}</div>
                   {trackingOrderId && (
-                    <button 
-                      className="tracking-pill-btn" 
+                    <button
+                      className="tracking-pill-btn"
                       onClick={() => setShowTracking(true)}
                     >
                       <span className="material-icons">radar</span>

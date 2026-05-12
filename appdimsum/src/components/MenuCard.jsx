@@ -2,76 +2,86 @@ import { useState } from 'react';
 
 const MenuCard = ({ item, onAdd }) => {
   const [isAdded, setIsAdded] = useState(false);
-  const isDisabled = item.stok === 0;
 
-  const handleAddToCart = () => {
-    if (isDisabled) return;
+  // 1. Validasi Stok (Konversi paksa ke Number)
+  const stokMurni = Number(item.stok || 0);
+  const isHabis = stokMurni <= 0;
+
+  const handleAddToCart = (e) => {
+    // PROTEKSI UTAMA: Hentikan penyebaran event klik ke parent/pembungkus
+    if (e && e.stopPropagation) e.stopPropagation();
+    
+    // Jika habis, jangan lakukan apa-apa
+    if (isHabis) return;
+
     setIsAdded(true);
     if (onAdd) onAdd(item);
+    
     setTimeout(() => setIsAdded(false), 1500);
   };
 
   return (
-    <div className={`w-full bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col border border-gray-100 ${isDisabled ? 'grayscale opacity-70' : ''}`}>
+    <div 
+      onClick={(e) => isHabis && e.stopPropagation()} // Kunci klik pada seluruh kartu jika habis
+      className={`w-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-100 transition-all duration-300 
+      ${isHabis ? 'opacity-60 grayscale pointer-events-none' : 'hover:shadow-md cursor-pointer'}`}
+    >
       
-      {/* Gambar — kotak penuh */}
+      {/* Gambar */}
       <div className="relative w-full aspect-square overflow-hidden bg-gray-100">
         <img
           src={item.image}
           alt={item.name}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+          className={`w-full h-full object-cover transition-transform duration-500 ${!isHabis && 'hover:scale-105'}`}
           loading="lazy"
         />
-        {/* Overlay saat ditambahkan */}
-        {isAdded && (
-          <div className="absolute inset-0 bg-green-500/80 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-        )}
-        {/* Overlay stok habis */}
-        {isDisabled && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-white font-bold text-xs bg-black/50 px-3 py-1 rounded-full">Stok Habis</span>
+        
+        {isHabis && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-30">
+            <span className="bg-white/90 text-black font-black text-[10px] px-3 py-1.5 rounded-full uppercase">
+              Habis
+            </span>
           </div>
         )}
       </div>
 
-      {/* Info Menu */}
+      {/* Konten */}
       <div className="px-3 pt-3 pb-4 flex flex-col gap-1">
-        {/* Harga */}
         <p className="text-[15px] font-black text-gray-900 leading-tight">
           Rp {(item.price || item.harga || 0).toLocaleString('id-ID')}
         </p>
 
-        {/* Nama Menu */}
-        <p className="text-[12px] font-semibold text-gray-600 leading-tight line-clamp-2">
+        <p className="text-[12px] font-semibold text-gray-600 leading-tight line-clamp-2 min-h-[32px]">
           {item.name || item.nama_menu}
         </p>
 
-        {/* Stok */}
-        <p className="text-[10px] text-gray-400 font-medium">
-          Tersedia: {item.stok ?? '—'}
+        <p className={`text-[10px] font-bold ${isHabis ? 'text-red-500' : 'text-gray-400'}`}>
+          Tersedia : {stokMurni}
         </p>
 
-        {/* Tombol Pesan */}
-        <div className="mt-2 flex justify-center">
-          <button
-            onClick={handleAddToCart}
-            disabled={isDisabled}
-            className={`
-              w-full h-[42px] rounded-xl font-bold text-[13px] tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5
-              ${isDisabled
-                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                : isAdded
-                  ? 'bg-green-500 text-white shadow-md'
-                  : 'bg-[#D34848] text-white hover:bg-red-700 active:scale-95 shadow-sm hover:shadow-md'
-              }
-            `}
-          >
-            {isDisabled ? 'Habis' : isAdded ? '✓ Ditambahkan' : '+ Pesan'}
-          </button>
+        <div className="mt-2">
+          {/* TOMBOL DINAMIS */}
+          {isHabis ? (
+            /* Jika Habis: Render DIV Abu-abu (Bukan Button) tanpa fungsi klik */
+            <div className="w-full h-[42px] rounded-xl font-bold text-[13px] bg-gray-300 text-gray-500 flex items-center justify-center cursor-not-allowed border border-gray-200 shadow-none">
+              Habis
+            </div>
+          ) : (
+            /* Jika Ada Stok: Render Button Aktif */
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className={`
+                w-full h-[42px] rounded-xl font-bold text-[13px] transition-all duration-200 flex items-center justify-center
+                ${isAdded 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-[#D34848] text-white active:scale-95 hover:bg-red-700'
+                }
+              `}
+            >
+              {isAdded ? '✓ Berhasil' : '+ Pesan'}
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -93,33 +93,36 @@ const LiveChip = () => (
 
 // ─── DASHBOARD COMPONENT ───────────────────────────────────────────
 const Dashboard = () => {
-  const { orders } = useOrderContext();
+  // Gunakan refreshOrders dari context untuk menarik data terbaru secara polling
+  const { orders, refreshOrders } = useOrderContext();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // State untuk Notifikasi
+  // State Notifikasi
   const [showNotif, setShowNotif] = useState(false);
   const [notifData, setNotifData] = useState(null);
   
+  // Ref untuk mengontrol logika "New Order"
   const lastOrderIdRef = useRef(null);
-  const isFirstLoad = useRef(true);
+  const isInitialLoad = useRef(true);
   const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"));
 
   const [summary, setSummary] = useState({ totalPesanan: 0, totalItem: 0, diproses: 0, terlaris: "—" });
   const [chartData, setChartData] = useState([]);
 
-  // ─── LOGIKA NOTIFIKASI PESANAN BARU ───
+  // ─── LOGIKA REALTIME NOTIFIKASI ───
   useEffect(() => {
     if (orders && orders.length > 0) {
+      // Pastikan data terbaru ada di index 0 (Urutan DESC)
       const latestOrder = orders[0];
 
-      // Mencegah notifikasi muncul saat pertama kali login/refresh
-      if (isFirstLoad.current) {
+      // JIKA INI LOAD PERTAMA: Tandai ID terakhir agar pesanan lama tidak memicu popup
+      if (isInitialLoad.current) {
         lastOrderIdRef.current = latestOrder.id;
-        isFirstLoad.current = false;
+        isInitialLoad.current = false;
         return;
       }
 
-      // Jika ada ID pesanan baru yang masuk
+      // JIKA ADA ID BARU: Tampilkan popup dan bunyi
       if (latestOrder.id !== lastOrderIdRef.current) {
         lastOrderIdRef.current = latestOrder.id;
         
@@ -128,16 +131,20 @@ const Dashboard = () => {
         });
         
         setNotifData({
-          meja: latestOrder.meja,
+          meja: latestOrder.meja || latestOrder.nomor_meja,
           item: latestOrder.items?.reduce((sum, i) => sum + i.qty, 0) || 0,
           waktu: jam
         });
 
         setShowNotif(true);
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().catch(e => console.log("Audio play blocked by browser"));
 
-        // Tutup otomatis setelah 7 detik
-        setTimeout(() => setShowNotif(false), 7000);
+        // Update ringkasan statistik setiap kali ada pesanan baru
+        fetchAll(true);
+
+        // Tutup popup otomatis setelah 7 detik
+        const timer = setTimeout(() => setShowNotif(false), 7000);
+        return () => clearTimeout(timer);
       }
     }
   }, [orders]);
@@ -171,11 +178,18 @@ const Dashboard = () => {
     }
   }, [weekAgo, today]);
 
+  // Pooling Interval 5-10 detik untuk menarik data baru (Realtime tanpa Websocket)
   useEffect(() => {
     fetchAll();
-    const id = setInterval(() => fetchAll(true), 10000);
-    return () => clearInterval(id);
-  }, [fetchAll]);
+    
+    // Sinkronisasi data context (RecentOrders dsb) setiap 8 detik
+    const intervalId = setInterval(() => {
+      if (refreshOrders) refreshOrders(); // Update tabel pesanan di context
+      fetchAll(true); // Update grafik dan stat
+    }, 8000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchAll, refreshOrders]);
 
   const cards = [
     { label: "Total Pesanan", value: summary.totalPesanan, sub: "7 hari terakhir", bg: "#E53E3E" },
@@ -185,29 +199,33 @@ const Dashboard = () => {
   ];
 
   return (
-    <div style={{ padding: "28px 32px", width: "100%", background: "#F8F9FA", minHeight: "100vh", boxSizing: "border-box", fontFamily: "'Segoe UI', sans-serif", position: "relative" }}>
+    <div style={{ padding: "28px 32px", width: "100%", background: "#F8F9FA", minHeight: "100vh", boxSizing: "border-box", fontFamily: "'Segoe UI', sans-serif", position: "relative", overflow: "hidden" }}>
 
-      {/* ── POP-UP NOTIFIKASI ── */}
+      {/* ── POP-UP NOTIFIKASI (FIXED POSITION) ── */}
       {showNotif && notifData && (
         <div style={{
-          position: "fixed", top: "25px", right: "25px", zIndex: 9999,
-          background: "#fff", borderRadius: "16px", padding: "16px 20px",
-          boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
+          position: "fixed", top: "25px", right: "25px", zIndex: 10000,
+          background: "#fff", borderRadius: "16px", padding: "18px 22px",
+          boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
           display: "flex", alignItems: "center", gap: "15px",
           borderLeft: "6px solid #D04040",
-          animation: "slideIn 0.4s ease-out"
+          minWidth: "320px",
+          animation: "slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
         }}>
-          <div style={{ background: "#FEE2E2", padding: "10px", borderRadius: "12px" }}>
+          <div style={{ background: "#FEE2E2", padding: "10px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Bell size={24} color="#D04040" />
           </div>
           <div style={{ flex: 1 }}>
-            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1F2937" }}>Pesanan Baru!</h4>
-            <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#6B7280" }}>
-              Meja {notifData.meja} • {notifData.item} Item • {notifData.waktu} WIB
+            <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1F2937" }}>Pesanan Baru Masuk!</h4>
+            <p style={{ margin: "3px 0 0", fontSize: "12px", color: "#6B7280", fontWeight: 500 }}>
+               Meja {notifData.meja} • {notifData.item} Item • {notifData.waktu} WIB
             </p>
           </div>
-          <button onClick={() => setShowNotif(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#9CA3AF" }}>
-            <X size={18} />
+          <button 
+            onClick={() => setShowNotif(false)} 
+            style={{ background: "#F3F4F6", border: "none", cursor: "pointer", color: "#9CA3AF", padding: "5px", borderRadius: "50%", display: "flex" }}
+          >
+            <X size={16} />
           </button>
         </div>
       )}
@@ -216,7 +234,7 @@ const Dashboard = () => {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1A202C", margin: 0 }}>Selamat Datang, Admin!</h1>
-          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>Data real-time · diperbarui otomatis setiap 10 detik</p>
+          <p style={{ fontSize: 12, color: "#9CA3AF", marginTop: 4 }}>Monitoring Real-time · Update otomatis</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <LiveChip />

@@ -63,9 +63,14 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
             <>
               {/* Items List */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {cart.map((item, index) => {
+                {cart.map((item) => {
                   const imgSrc = item.image ? getImageUrl(item.image) : null;
                   const harga = item.price || item.harga || 0;
+                  
+                  // LOGIKA STOK: Cek apakah jumlah di keranjang sudah maksimal
+                  const stokMurni = Number(item.stok || 0);
+                  const isMaxStok = item.quantity >= stokMurni;
+
                   return (
                     <div key={item.id} className="flex items-center gap-4 group">
                       {/* Thumbnail */}
@@ -85,6 +90,10 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                         <p className="text-[#D04040] font-black text-sm mt-0.5">
                           Rp {(harga * item.quantity).toLocaleString('id-ID')}
                         </p>
+                        {/* Label Stok sisa jika stok menipis */}
+                        <p className="text-[9px] font-bold text-gray-400">
+                          Sisa: {stokMurni}
+                        </p>
                       </div>
 
                       {/* Quantity Controls */}
@@ -95,12 +104,24 @@ const CartSheet = ({ cart, totalPrice, onClose, onIncrement, onDecrement, onRemo
                         >
                           <Minus size={14} strokeWidth={3} />
                         </button>
+                        
                         <span className="w-8 text-center text-sm font-black text-gray-800">
                           {item.quantity}
                         </span>
+
                         <button
-                          onClick={() => onIncrement(item.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-white hover:shadow-sm active:scale-90 transition-all"
+                          onClick={() => {
+                            if (isMaxStok) {
+                              alert(`Stok tidak mencukupi (Maks. ${stokMurni})`);
+                              return;
+                            }
+                            onIncrement(item.id);
+                          }}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all active:scale-90
+                            ${isMaxStok 
+                              ? 'text-gray-300 cursor-not-allowed' 
+                              : 'text-gray-600 hover:bg-white hover:shadow-sm'
+                            }`}
                         >
                           <Plus size={14} strokeWidth={3} />
                         </button>

@@ -49,7 +49,7 @@ function MenuPage() {
       name,
       price,
       priceValue,
-      availability: item.availability ?? item.stok ?? 0,
+      availability: Number(item.availability ?? item.stok ?? 0), // Memastikan ini angka
       category: item.category || item.kategori || item.nama_kategori || '',
       id_kategori: item.id_kategori ? String(item.id_kategori) : '',
       image: getImageUrl(item.image || item.gambar),
@@ -58,7 +58,7 @@ function MenuPage() {
 
   const normalizedMenu = menuItems.map(normalizeMenu)
 
-  // ─── Kategori Statis (Sesuai Permintaan User) ──────────────────────────────
+  // ─── Kategori Statis ──────────────────────────────────────────────────────
   const categories = [
     { id: 'semua', name: 'Semua' },
     { id: '1', name: 'Makanan' },
@@ -82,12 +82,23 @@ function MenuPage() {
   }
 
   const addToCartHandler = (item) => {
+    // Validasi stok di sisi UI sebelum masuk ke context
+    if (item.availability <= 0) {
+      showNotification(`Maaf, ${item.name} sedang habis`)
+      return
+    }
+
     const itemWithPrice = {
       ...item,
       priceValue: getPriceValue(item)
     }
-    addToCart(itemWithPrice)
-    showNotification(`${item.name} ditambahkan ke keranjang`)
+    
+    const success = addToCart(itemWithPrice)
+    if (success) {
+      showNotification(`${item.name} ditambahkan ke keranjang`)
+    } else {
+      showNotification(`Stok ${item.name} tidak mencukupi`)
+    }
   }
 
   const showNotification = (message) => {
@@ -106,7 +117,14 @@ function MenuPage() {
       <nav className="navbar">
         <div className="nav-left">
           <div className="logo-container">
-            <div className="logo"><span>BM</span></div>
+            <div className="logo">
+              <img 
+                src="/images/logo-bosmentai.jpg" 
+                alt="Logo Bos Mentai" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50px' }}
+                onError={(e) => { e.target.style.display = 'none'; e.target.parentNode.innerText = 'BM' }}
+              />
+            </div>
             <div className="brand">
               <div className="brand-name">Bos Mentai</div>
               <div className="restaurant-name">Premium Dimsum & Mentai</div>
@@ -162,20 +180,37 @@ function MenuPage() {
               </div>
             ) : (
               <div className="menu-grid">
-                {filteredMenu.map(item => (
-                  <div key={item.id} className="menu-card">
-                    <img src={item.image} alt={item.name} className="menu-image" />
-                    <div className="menu-info">
-                      <div className="menu-price">{item.price}</div>
-                      <div className="menu-name">{item.name}</div>
-                      <div className="menu-availability">Tersedia : {item.availability}</div>
-                      <button className="order-btn" onClick={() => addToCartHandler(item)}>
-                        <span className="material-icons">add</span>
-                        Pesan
-                      </button>
+                {filteredMenu.map(item => {
+                  const isOutOfStock = item.availability <= 0;
+                  return (
+                    <div key={item.id} className={`menu-card ${isOutOfStock ? 'out-of-stock' : ''}`}>
+                      <img src={item.image} alt={item.name} className="menu-image" style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }} />
+                      <div className="menu-info">
+                        <div className="menu-price">{item.price}</div>
+                        <div className="menu-name">{item.name}</div>
+                        <div className="menu-availability">
+                          {isOutOfStock ? (
+                            <span style={{ color: '#d34848', fontWeight: 'bold' }}>Habis</span>
+                          ) : (
+                            `Tersedia : ${item.availability}`
+                          )}
+                        </div>
+                        <button 
+                          className="order-btn" 
+                          onClick={() => addToCartHandler(item)}
+                          disabled={isOutOfStock}
+                          style={{ 
+                            backgroundColor: isOutOfStock ? '#ccc' : '', 
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer' 
+                          }}
+                        >
+                          <span className="material-icons">{isOutOfStock ? 'block' : 'add'}</span>
+                          {isOutOfStock ? 'Habis' : 'Pesan'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
