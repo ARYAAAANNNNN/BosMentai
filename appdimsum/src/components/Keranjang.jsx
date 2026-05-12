@@ -18,19 +18,19 @@ const Keranjang = ({ visible, onClose }) => {
   const [showSentNotification, setShowSentNotification] = useState(false)
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrderId, setTrackingOrderId] = useState(null)
-  const [trackingStep, setTrackingStep] = useState(0)
-
   useEffect(() => {
-    if (!showTracking) return
+    // Poll orders when tracking is active to get updates from admin
+    if (!showTracking) return;
+    const interval = setInterval(refreshOrders, 3000);
+    return () => clearInterval(interval);
+  }, [showTracking, refreshOrders]);
 
-    setTrackingStep(0)
-    const timers = [
-      setTimeout(() => setTrackingStep(1), 1500),
-      setTimeout(() => setTrackingStep(2), 3200),
-    ]
-
-    return () => timers.forEach(clearTimeout)
-  }, [showTracking])
+  const getStepFromStatus = (status) => {
+    if (status === 'Selesai') return 2;
+    if (status === 'ready') return 1;
+    if (status === 'Diproses' || status === 'Terkonfirmasi' || status === 'cooking') return 0;
+    return -1; // Menunggu Konfirmasi / pending
+  };
 
   if (!visible) return null
 
@@ -81,7 +81,7 @@ const Keranjang = ({ visible, onClose }) => {
       }
     } catch (error) {
       console.error('Error creating order:', error)
-      alert('Terjadi kesalahan saat mengirim pesanan')
+      alert('Gagal mengirim pesanan: ' + error.message)
     }
   }
 
@@ -89,8 +89,10 @@ const Keranjang = ({ visible, onClose }) => {
   const totalItems = getTotalItems()
   const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
   const trackingOrder = orders.find(o => o.id === trackingOrderId)
-  const currentStatus = trackingOrder?.status || 'Menunggu'
-  const progressHeight = trackingStep === 0 ? '26%' : trackingStep === 1 ? '62%' : '100%'
+  const currentStatus = trackingOrder?.status || 'Menunggu Konfirmasi'
+  const trackingStep = getStepFromStatus(currentStatus)
+  
+  const progressHeight = trackingStep === -1 ? '0%' : trackingStep === 0 ? '26%' : trackingStep === 1 ? '62%' : '100%'
   const canClose = !showSentNotification && (!showTracking || currentStatus === 'Selesai')
 
   const handleOverlayClick = () => {
@@ -116,6 +118,9 @@ const Keranjang = ({ visible, onClose }) => {
         <div className="cart-modal tracking-modal" onClick={stopClose}>
           <div className="tracking-header">
             <h2 className="tracking-title">Lacak pesanan anda</h2>
+            {trackingStep === -1 && (
+              <p className="tracking-subtitle-pending">Mohon tunggu konfirmasi dari kasir...</p>
+            )}
           </div>
           <div className="tracking-steps">
             <div className="tracking-rail" />

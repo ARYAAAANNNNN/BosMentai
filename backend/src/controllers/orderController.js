@@ -162,7 +162,9 @@ exports.createOrder = async (req, res) => {
 
     console.log(`[orderController.createOrder] Processing ${items.length} items...`);
 
-    for (const { id_menu, jumlah } of items) {
+    for (let { id_menu, jumlah } of items) {
+      id_menu = parseInt(id_menu, 10);
+      jumlah  = parseInt(jumlah, 10);
       console.log(`[orderController.createOrder] Checking menu ${id_menu} (qty: ${jumlah})...`);
       const { rows: menuRows } = await conn.query(
         'SELECT id_menu, nama_menu, stok, harga FROM menu WHERE id_menu = $1 AND is_active = 1 FOR UPDATE',
