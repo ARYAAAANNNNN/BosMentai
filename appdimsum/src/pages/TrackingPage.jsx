@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderAPI } from '../services/api';
-import { ChevronLeft, RefreshCcw, Package, ChefHat, Truck, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, RefreshCcw, Package, ChefHat, Truck, CheckCircle, XCircle, Lock } from 'lucide-react';
 
 const TrackingPage = () => {
   const { orderId } = useParams();
@@ -24,35 +24,55 @@ const TrackingPage = () => {
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Poll every 5 seconds
+    const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, [orderId]);
 
   const getStatusIndex = (status) => {
-    const statuses = ['Menunggu Konfirmasi', 'Diproses', 'ready', 'Selesai'];
-    if (status === 'Terkonfirmasi' || status === 'cooking') return 1;
+    // Menyesuaikan dengan status dari admin: Menunggu Konfirmasi, Terkonfirmasi, Diproses, Selesai
+    const statuses = ['Menunggu Konfirmasi', 'Terkonfirmasi', 'Diproses', 'Selesai'];
     const idx = statuses.indexOf(status);
-    return idx;
+    return idx !== -1 ? idx : 0;
   };
 
   const steps = [
-    { label: 'Pesanan Diterima', icon: <Package size={20} />, dbStatus: 'Menunggu' },
-    { label: 'Sedang Dibuat', icon: <ChefHat size={20} />, dbStatus: 'Diproses' },
-    { label: 'Pesanan Diantarkan', icon: <Truck size={20} />, dbStatus: 'ready' },
-    { label: 'Selesai', icon: <CheckCircle size={20} />, dbStatus: 'Selesai' }
+    { label: 'Pesanan Diterima', icon: <Package size={20} /> },
+    { label: 'Dikonfirmasi', icon: <CheckCircle size={20} /> },
+    { label: 'Sedang Dibuat', icon: <ChefHat size={20} /> },
+    { label: 'Selesai', icon: <CheckCircle size={20} /> }
   ];
 
   const currentIdx = order ? getStatusIndex(order.status) : 0;
-  const isProcessing = currentIdx >= 1 && currentIdx < 3;
+  const isFinished = order?.status === 'Selesai';
+  const isProcessing = currentIdx >= 1 && !isFinished;
+
+  // --- LOGIKA ESTIMASI WAKTU ---
+  const calculateEstimation = () => {
+    if (!order?.items) return "15-20";
+    const totalQty = order.items.reduce((acc, item) => acc + item.qty, 0);
+    const minTime = totalQty * 3;
+    const maxTime = totalQty * 5;
+    return `${minTime}-${maxTime}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 p-6 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/menu')} className="p-2 text-gray-400 hover:text-gray-900 transition-colors">
-            <ChevronLeft size={24} />
-            </button>
+            {/* FITUR: Tombol kembali hanya muncul jika pesanan sudah Selesai */}
+            {isFinished ? (
+              <button onClick={() => navigate('/menu')} className="p-2 text-gray-400 hover:text-gray-900 transition-colors">
+                <ChevronLeft size={24} />
+              </button>
+            ) : (
+              <div className="p-2 text-gray-300 cursor-not-allowed group relative">
+                <Lock size={20} />
+                <span className="absolute left-0 top-10 w-40 bg-black text-white text-[8px] p-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  Selesaikan pesanan untuk kembali
+                </span>
+              </div>
+            )}
             <h1 className="text-lg font-black text-gray-900">Status Pesanan</h1>
         </div>
         <button onClick={fetchStatus} className={`p-2 text-[#D04040] ${loading ? 'animate-spin' : ''}`}>
@@ -69,7 +89,10 @@ const TrackingPage = () => {
             </div>
             <div className="text-right">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">ESTIMASI</p>
-                <h3 className="text-lg font-black text-gray-800">15-20 Menit</h3>
+                {/* FITUR: Menampilkan estimasi dinamis */}
+                <h3 className="text-lg font-black text-gray-800">
+                  {isFinished ? "0" : calculateEstimation()} Menit
+                </h3>
             </div>
         </div>
 
@@ -81,16 +104,13 @@ const TrackingPage = () => {
                 {steps.map((step, idx) => {
                     const isCompleted = idx < currentIdx;
                     const isActive = idx === currentIdx;
-                    const isUpcoming = idx > currentIdx;
 
                     return (
                         <div key={idx} className="flex gap-6 relative">
-                            {/* Connector Line */}
                             {idx < steps.length - 1 && (
                                 <div className={`absolute left-6 top-10 w-0.5 h-10 ${isCompleted ? 'bg-green-500' : 'bg-gray-100'}`}></div>
                             )}
 
-                            {/* Icon Circle */}
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
                                 isCompleted ? 'bg-green-100 text-green-600' : 
                                 isActive ? 'bg-[#D04040] text-white shadow-xl shadow-red-200 scale-110' : 
@@ -99,14 +119,13 @@ const TrackingPage = () => {
                                 {isCompleted ? <CheckCircle size={24} /> : step.icon}
                             </div>
 
-                            {/* Text */}
                             <div className="pt-2">
                                 <h4 className={`text-sm font-black transition-colors duration-500 ${
                                     isActive ? 'text-gray-900' : isCompleted ? 'text-green-600' : 'text-gray-300'
                                 }`}>
                                     {step.label}
                                 </h4>
-                                {isActive && (
+                                {isActive && !isFinished && (
                                     <p className="text-[10px] font-bold text-[#D04040] mt-1 animate-pulse uppercase tracking-widest">
                                         SEDANG DIPROSES
                                     </p>
@@ -120,7 +139,7 @@ const TrackingPage = () => {
 
         {/* Action Buttons */}
         <div className="mt-8 space-y-4">
-            {currentIdx === 3 ? (
+            {isFinished ? (
                 <button 
                     onClick={() => navigate('/menu')}
                     className="w-full bg-[#D04040] text-white py-5 rounded-[28px] font-black shadow-xl shadow-red-100 active:scale-95 transition-all"
@@ -128,23 +147,17 @@ const TrackingPage = () => {
                     PESAN LAGI?
                 </button>
             ) : (
-                <button 
-                    disabled={isProcessing}
-                    className={`w-full py-5 rounded-[28px] font-black flex items-center justify-center gap-2 transition-all ${
-                        isProcessing 
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200' 
-                        : 'bg-white text-gray-400 border border-gray-200 hover:bg-red-50 hover:text-red-500 hover:border-red-100 active:scale-95'
-                    }`}
-                >
-                    <XCircle size={20} />
-                    BATALKAN PESANAN
-                </button>
+                <div className="text-center p-4 bg-gray-100 rounded-2xl border border-dashed border-gray-300">
+                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                     Mohon tunggu, tim kami sedang menyiapkan pesanan Anda
+                   </p>
+                </div>
             )}
             
             <p className="text-center text-[10px] text-gray-400 font-medium px-10">
                 {isProcessing 
-                    ? 'Pesanan sudah dalam tahap pembuatan dan tidak dapat dibatalkan.' 
-                    : 'Anda dapat membatalkan pesanan sebelum tim dapur mulai memasak.'}
+                    ? 'Pesanan tidak dapat dibatalkan karena sedang diproses.' 
+                    : isFinished ? 'Terima kasih telah memesan di Bos Mentai!' : 'Menunggu konfirmasi admin untuk mulai memasak.'}
             </p>
         </div>
 

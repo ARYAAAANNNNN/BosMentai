@@ -54,7 +54,7 @@ export const OrderProvider = ({ children }) => {
 
   useEffect(() => {
     fetchOrders()
-    const intervalId = setInterval(fetchOrders, 5000) // Polling setiap 5 detik
+    const intervalId = setInterval(fetchOrders, 7000) // Polling setiap 7 detik
     return () => clearInterval(intervalId)
   }, [])
 
@@ -72,7 +72,7 @@ export const OrderProvider = ({ children }) => {
     };
     
     fetchMenus();
-    const intervalId = setInterval(fetchMenus, 5000); // Polling setiap 5 detik
+    const intervalId = setInterval(fetchMenus, 30000); // Polling setiap 30 detik (menu jarang berubah)
     return () => clearInterval(intervalId);
   }, []);
 

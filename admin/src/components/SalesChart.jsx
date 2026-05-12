@@ -4,7 +4,7 @@ import { statsAPI } from "../services/api";
 
 const FALLBACK = [
   { name: "Dimsum",    value: 35, color: "#C0534A" },
-  { name: "Goreng",    value: 15, color: "#A87060" },
+  { name: "Makanan",    value: 15, color: "#A87060" },
   { name: "Dessert",   value: 10, color: "#E8B8A0" },
   { name: "Minuman",   value: 20, color: "#A8B4BC" },
   { name: "Menu Lain", value: 20, color: "#C4AFA8" },

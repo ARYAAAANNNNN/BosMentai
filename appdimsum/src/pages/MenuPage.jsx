@@ -58,16 +58,12 @@ function MenuPage() {
 
   const normalizedMenu = menuItems.map(normalizeMenu)
 
+  // ─── Kategori Statis (Sesuai Permintaan User) ──────────────────────────────
   const categories = [
     { id: 'semua', name: 'Semua' },
-    ...normalizedMenu.reduce((acc, item) => {
-      if (!item.category) return acc
-      const categoryId = item.id_kategori || item.category.toLowerCase().replace(/\s+/g, '-')
-      if (!acc.some(category => category.id === categoryId)) {
-        acc.push({ id: categoryId, name: item.category })
-      }
-      return acc
-    }, []),
+    { id: '1', name: 'Makanan' },
+    { id: '2', name: 'Minuman' },
+    { id: '3', name: 'Snack' },
   ]
 
   const filteredMenu = normalizedMenu.filter(item => {

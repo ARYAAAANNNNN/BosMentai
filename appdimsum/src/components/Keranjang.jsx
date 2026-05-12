@@ -10,7 +10,6 @@ const Keranjang = ({ visible, onClose }) => {
     incrementQuantity,
     decrementQuantity,
     getTotalPrice,
-    getTotalItems,
     tableNumber,
   } = useCart()
 
@@ -20,20 +19,24 @@ const Keranjang = ({ visible, onClose }) => {
   const [showTracking, setShowTracking] = useState(false)
   const [trackingOrderId, setTrackingOrderId] = useState(null)
 
+  // 1. Sinkronisasi dengan LocalStorage saat refresh (Hanya load ID, jangan langsung tampilkan)
   useEffect(() => {
-    if (!showTracking) return
-    const interval = setInterval(refreshOrders, 3000)
-    return () => clearInterval(interval)
-  }, [showTracking, refreshOrders])
+    const savedOrderId = localStorage.getItem('activeTrackingOrderId')
+    if (savedOrderId) {
+      setTrackingOrderId(parseInt(savedOrderId))
+    }
+  }, [])
 
+  // 2. Auto Refresh Data Pesanan (Dihapus karena sudah ada polling global di OrderContext)
+  // Ini mencegah request berlebih yang menyebabkan error 429
+
+  // 3. Mapping Status ke Step (Disesuaikan dengan status di Orders.jsx)
   const getStepFromStatus = (status) => {
     if (status === 'Selesai') return 2
-    if (status === 'ready') return 1
-    if (['Diproses', 'Terkonfirmasi', 'cooking'].includes(status)) return 0
-    return -1
+    if (status === 'Diproses') return 1
+    if (status === 'Terkonfirmasi') return 0
+    return -1 // Menunggu Konfirmasi
   }
-
-  if (!visible) return null
 
   const getPriceValue = (item) => {
     if (typeof item.priceValue === 'number') return item.priceValue
@@ -43,6 +46,7 @@ const Keranjang = ({ visible, onClose }) => {
     return 0
   }
 
+  // 4. Handle Konfirmasi Pesanan
   const handleConfirm = async () => {
     if (!cart.length) {
       alert('Keranjang kosong')
@@ -63,14 +67,18 @@ const Keranjang = ({ visible, onClose }) => {
       const response = await orderAPI.create(orderData)
 
       if (response.success) {
-        const newOrderId = response.data?.id || response.id_pesanan || response.id || null
+        const newOrderId = response.data?.id || response.id_pesanan || response.id
+        
         if (!newOrderId) {
           alert('Gagal mengirim pesanan: response ID tidak ditemukan')
           return
         }
 
-        await refreshOrders()
+        // Simpan ID ke state dan localStorage
         setTrackingOrderId(newOrderId)
+        localStorage.setItem('activeTrackingOrderId', newOrderId)
+        
+        await refreshOrders()
         setShowSentNotification(true)
         clearCart()
 
@@ -89,20 +97,31 @@ const Keranjang = ({ visible, onClose }) => {
   const totalPrice = getTotalPrice()
   const formattedTotalPrice = `Rp ${Math.max(0, totalPrice).toLocaleString('id-ID')}`
 
+  // 5. Logika Tracking
   const trackingOrder = orders.find((o) => o.id === trackingOrderId)
   const currentStatus = trackingOrder?.status || 'Menunggu Konfirmasi'
   const trackingStep = getStepFromStatus(currentStatus)
 
-  // Logika persentase tinggi garis progress agar pas di tengah dot
+  // Jika pesanan selesai, bersihkan localStorage agar bisa pesan baru nanti
+  if (currentStatus === 'Selesai' && trackingOrderId) {
+    localStorage.removeItem('activeTrackingOrderId')
+  }
+
   const progressHeight =
     trackingStep === -1 ? '0%' :
-    trackingStep === 0  ? '15px' : 
+    trackingStep === 0  ? '12%' : 
     trackingStep === 1  ? '50%' : '100%';
 
-  const canClose = !showSentNotification && (!showTracking || currentStatus === 'Selesai')
+  // 6. Proteksi Modal (Tidak bisa diclose jika belum selesai)
+  // User hanya bisa tutup jika: 
+  // - Sedang di keranjang biasa (bukan tracking)
+  // - ATAU Pesanan sudah berstatus 'Selesai'
+  const canClose = !showTracking || currentStatus === 'Selesai'
 
   const handleOverlayClick = () => { if (canClose) onClose() }
   const stopClose = (e) => { e.stopPropagation() }
+
+  if (!visible) return null
 
   return (
     <div className="cart-overlay" onClick={handleOverlayClick}>
@@ -119,40 +138,35 @@ const Keranjang = ({ visible, onClose }) => {
         <div className="cart-modal tracking-modal" onClick={stopClose}>
           <div className="tracking-header">
             <h2 className="tracking-title">Lacak Pesanan</h2>
-            <button className="close-mini-btn" onClick={onClose}>
-              <span className="material-icons">close</span>
-            </button>
+            <div className="flex gap-2">
+              {cart.length > 0 && (
+                <button className="close-mini-btn" onClick={() => setShowTracking(false)} title="Kembali ke Keranjang">
+                  <span className="material-icons">shopping_cart</span>
+                </button>
+              )}
+              <button className="close-mini-btn" onClick={onClose}>
+                <span className="material-icons">close</span>
+              </button>
+            </div>
           </div>
 
           <div className="tracking-status-badge">
-            <span className="status-dot"></span>
+            <span className={`status-dot ${currentStatus === 'Selesai' ? 'done' : 'pulse'}`}></span>
             {currentStatus}
           </div>
 
-          {/* AREA TRACKING */}
           <div className="tracking-steps" style={{ position: 'relative', marginTop: '32px', paddingLeft: '40px' }}>
-            
-            {/* GARIS DASAR (ABU) */}
+            {/* GARIS DASAR */}
             <div style={{
-              position: 'absolute',
-              left: '14px',
-              top: '10px',
-              bottom: '10px',
-              width: '2px',
-              background: '#E5E7EB',
-              zIndex: 1
+              position: 'absolute', left: '14px', top: '10px', bottom: '10px',
+              width: '2px', background: '#E5E7EB', zIndex: 1
             }} />
 
-            {/* GARIS PROGRESS (MERAH) */}
+            {/* GARIS PROGRESS */}
             <div style={{
-              position: 'absolute',
-              left: '14px',
-              top: '10px',
-              width: '2px',
-              height: progressHeight,
-              background: '#ef4444',
-              zIndex: 2,
-              transition: 'height 0.5s ease'
+              position: 'absolute', left: '14px', top: '10px', width: '2px',
+              height: progressHeight, background: '#ef4444', zIndex: 2,
+              transition: 'height 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
             }} />
 
             {[
@@ -165,17 +179,9 @@ const Keranjang = ({ visible, onClose }) => {
 
               return (
                 <div key={idx} style={{ position: 'relative', marginBottom: idx === 2 ? 0 : 35, display: 'flex', flexDirection: 'column' }}>
-                  
-                  {/* BULATAN / DOT */}
                   <div style={{
-                    position: 'absolute',
-                    left: '-40px',
-                    width: '30px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 3
+                    position: 'absolute', left: '-40px', width: '30px', height: '24px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3
                   }}>
                     <div style={{
                       width: isActive ? '14px' : '10px',
@@ -188,7 +194,6 @@ const Keranjang = ({ visible, onClose }) => {
                     }} />
                   </div>
 
-                  {/* TEKS (Align Left) */}
                   <div className="tracking-step-info" style={{ textAlign: 'left' }}>
                     <h3 className={`tracking-step-title ${(isActive || isDone) ? 'active-text' : ''}`} 
                         style={{ margin: 0, fontSize: '14px', fontWeight: (isActive || isDone) ? '700' : '500' }}>
@@ -204,10 +209,28 @@ const Keranjang = ({ visible, onClose }) => {
           </div>
 
           {trackingStep === -1 && (
-            <div className="pending-notice" style={{ textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '20px' }}>
-              <span className="material-icons">hourglass_empty</span>
-              <p style={{ margin: 0 }}>Menunggu konfirmasi kasir...</p>
+            <div className="pending-notice" style={{ 
+                textAlign: 'left', display: 'flex', alignItems: 'center', 
+                gap: '8px', marginTop: '30px', padding: '12px', 
+                background: '#FEF3C7', borderRadius: '8px', color: '#92400E', fontSize: '12px' 
+            }}>
+              <span className="material-icons" style={{ fontSize: '18px' }}>hourglass_empty</span>
+              <p style={{ margin: 0, fontWeight: '600' }}>Menunggu konfirmasi kasir...</p>
             </div>
+          )}
+
+          {currentStatus === 'Selesai' && (
+            <button 
+              className="btn-browse" 
+              style={{ marginTop: '30px', width: '100%' }}
+              onClick={() => {
+                setTrackingOrderId(null)
+                setShowTracking(false)
+                onClose()
+              }}
+            >
+              Selesai & Tutup
+            </button>
           )}
         </div>
       ) : (
@@ -216,7 +239,18 @@ const Keranjang = ({ visible, onClose }) => {
             <div className="cart-header-main">
               <div className="header-info">
                 <h2 className="cart-title-large">Keranjang Saya</h2>
-                <div className="table-tag">Meja {tableNumber}</div>
+                <div className="flex gap-2 items-center">
+                  <div className="table-tag">Meja {tableNumber}</div>
+                  {trackingOrderId && (
+                    <button 
+                      className="tracking-pill-btn" 
+                      onClick={() => setShowTracking(true)}
+                    >
+                      <span className="material-icons">radar</span>
+                      Lacak Pesanan
+                    </button>
+                  )}
+                </div>
               </div>
               <button className="btn-close-circle" onClick={onClose}>
                 <span className="material-icons">close</span>
@@ -271,6 +305,18 @@ const Keranjang = ({ visible, onClose }) => {
           </div>
         </div>
       )}
+
+      <style>{`
+        .status-dot.pulse {
+          animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .active-text { color: #ef4444; }
+      `}</style>
     </div>
   )
 }

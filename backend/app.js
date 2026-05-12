@@ -55,11 +55,11 @@ app.use(
 );
 
 // Rate Limiting: cegah brute-force & DDoS ringan
-// Tiap IP dibatasi 120 request per 15 menit
+// Dinaikkan ke 5000 agar polling dari banyak device/tab tidak terblokir
 app.use(
   rateLimit({
     windowMs:         15 * 60 * 1000,
-    max:              500,   // Dinaikkan agar polling dashboard tidak block request CRUD
+    max:              5000, 
     standardHeaders:  true,
     legacyHeaders:    false,
     message: { success: false, message: 'Terlalu banyak request. Coba lagi dalam 15 menit.' },
