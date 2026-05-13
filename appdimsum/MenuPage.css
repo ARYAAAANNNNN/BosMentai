@@ -7,8 +7,7 @@
     box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
     background-color: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -53,7 +52,6 @@ body {
         transform: translateX(100%);
         opacity: 0;
     }
-
     to {
         transform: translateX(0);
         opacity: 1;
@@ -287,13 +285,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .cart-modal {
@@ -307,15 +300,8 @@ body {
 }
 
 @keyframes slideUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .order-notification-card {
@@ -400,17 +386,9 @@ body {
 }
 
 @keyframes pulse {
-    0% {
-        opacity: 0.7;
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0.7;
-    }
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
 }
 
 .tracking-steps {
@@ -497,17 +475,8 @@ body {
 }
 
 @keyframes trackingPulse {
-
-    0%,
-    100% {
-        opacity: 0.4;
-        transform: scaleY(1);
-    }
-
-    50% {
-        opacity: 1;
-        transform: scaleY(1.1);
-    }
+    0%, 100% { opacity: 0.4; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.1); }
 }
 
 .tracking-text {
@@ -882,36 +851,29 @@ body {
         gap: 1rem;
         padding: 1rem;
     }
-
     .nav-right {
         width: 100%;
         justify-content: space-between;
     }
-
     .search-bar {
         min-width: 200px;
     }
-
     .category-menu {
         padding: 1rem;
         gap: 0.5rem;
     }
-
     .category-btn {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
-
     .main-content {
         padding: 1rem;
     }
-
     .menu-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
-
     .menu-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 1rem;
@@ -923,31 +885,24 @@ body {
         grid-template-columns: repeat(2, 1fr);
         gap: 0.5rem;
     }
-
     .menu-card {
         border-radius: 8px;
     }
-
     .menu-image {
         height: 120px;
     }
-
     .menu-info {
         padding: 0.8rem;
     }
-
     .menu-price {
         font-size: 1rem;
     }
-
     .menu-name {
         font-size: 0.9rem;
     }
-
     .menu-availability {
         font-size: 0.7rem;
     }
-
     .order-btn {
         padding: 0.5rem;
         font-size: 0.8rem;
@@ -1096,7 +1051,7 @@ body {
     border-radius: 50%;
     border: none;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     cursor: pointer;
     font-weight: bold;
     display: flex;
@@ -1229,15 +1184,8 @@ body {
 }
 
 @keyframes blink {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
 }
 
 .pending-notice {
@@ -1272,26 +1220,12 @@ body {
     animation: dots 1.5s infinite;
 }
 
-.loading-dots span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.loading-dots span:nth-child(3) {
-    animation-delay: 0.4s;
-}
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes dots {
-
-    0%,
-    100% {
-        opacity: 0;
-        transform: translateY(0);
-    }
-
-    50% {
-        opacity: 1;
-        transform: translateY(-5px);
-    }
+    0%, 100% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(-5px); }
 }
 
 .close-mini-btn {
@@ -1305,4 +1239,40 @@ body {
     justify-content: center;
     cursor: pointer;
     z-index: 20;
+    transition: all 0.2s ease;
 }
+
+.close-mini-btn:hover {
+    background: #f1f5f9;
+    color: #dc2626;
+}
+
+.tracking-pill-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #0ea5e9;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);
+}
+
+.tracking-pill-btn:hover {
+    background: #0284c7;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.3);
+}
+
+.tracking-pill-btn .material-icons {
+    font-size: 1rem;
+}
+
+.flex { display: flex; }
+.gap-2 { gap: 0.5rem; }
+.items-center { align-items: center; }

@@ -48,7 +48,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function SalesChart() {
+export default function SalesChart({ data: propsData }) {
   const [salesData, setSalesData] = useState([]);
   const [activeIndex, setActiveIndex] = useState(null);
 
@@ -57,14 +57,28 @@ export default function SalesChart() {
     return MENU_COLORS[name.toLowerCase()] || MENU_COLORS.default;
   };
 
+  // Sinkronisasi data dari props (misal data mingguan)
+  useEffect(() => {
+    if (propsData && propsData.length > 0) {
+      const total = propsData.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+      const processed = propsData.map((item, idx) => ({
+        name: item.label || item.name,
+        value: total > 0 ? Math.round((Number(item.value) / total) * 100) : 0,
+        color: Object.values(MENU_COLORS)[idx % Object.values(MENU_COLORS).length]
+      }));
+      setSalesData(processed);
+    }
+  }, [propsData]);
+
   const fetchChart = useCallback(async () => {
+    if (propsData) return; // Prioritaskan data dari props
+    
     try {
       const json = await statsAPI.getSalesChart();
       const dataToProcess = (json.success && Array.isArray(json.data) && json.data.length > 0) 
         ? json.data 
         : FALLBACK;
 
-      // Map data untuk menyisipkan warna secara otomatis berdasarkan nama menu
       const processedData = dataToProcess.map(item => ({
         ...item,
         color: getColor(item.name)
@@ -74,13 +88,15 @@ export default function SalesChart() {
     } catch {
       setSalesData(FALLBACK.map(item => ({ ...item, color: getColor(item.name) })));
     }
-  }, []);
+  }, [propsData]);
 
   useEffect(() => {
-    fetchChart();
-    const id = setInterval(fetchChart, 30000);
-    return () => clearInterval(id);
-  }, [fetchChart]);
+    if (!propsData) {
+      fetchChart();
+      const id = setInterval(fetchChart, 30000);
+      return () => clearInterval(id);
+    }
+  }, [fetchChart, propsData]);
 
   return (
     <div style={{

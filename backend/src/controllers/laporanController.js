@@ -17,7 +17,7 @@ exports.getLaporan = async (req, res) => {
          COALESCE(SUM(p.total_harga), 0)              AS pendapatan
        FROM pesanan p
        LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
-       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY p.waktu_pesan::date
        ORDER BY p.waktu_pesan::date ASC`,
       [dari, sampai]
@@ -44,12 +44,12 @@ exports.getSummary = async (req, res) => {
     const sampai = req.query.sampai || new Date().toISOString().split('T')[0];
 
     const [totalPesanan, totalItem, diproses, pendapatan, terlaris] = await Promise.all([
-      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE waktu_pesan::date BETWEEN $1 AND $2`, [dari, sampai]),
+      pool.query(`SELECT COUNT(*) AS total FROM pesanan WHERE status_pesanan = 'Selesai' AND waktu_pesan::date BETWEEN $1 AND $2`, [dari, sampai]),
       pool.query(
         `SELECT COALESCE(SUM(dp.jumlah), 0) AS total
          FROM detail_pesanan dp
          JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
-         WHERE p.waktu_pesan::date BETWEEN $1 AND $2`,
+         WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2`,
         [dari, sampai]
       ),
       pool.query(
@@ -66,7 +66,7 @@ exports.getSummary = async (req, res) => {
          FROM detail_pesanan dp
          JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
          JOIN menu m ON dp.id_menu = m.id_menu
-         WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+         WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
          GROUP BY m.id_menu, m.nama_menu
          ORDER BY total_qty DESC
          LIMIT 1`,
@@ -105,7 +105,7 @@ exports.getLaporanKategori = async (req, res) => {
        JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
        JOIN menu m ON dp.id_menu = m.id_menu
        JOIN kategori k ON m.id_kategori = k.id_kategori
-       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY k.id_kategori, k.nama_kategori
        ORDER BY revenue DESC`,
       [dari, sampai]
@@ -129,7 +129,7 @@ exports.getTopMenu = async (req, res) => {
        FROM detail_pesanan dp
        JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
        JOIN menu m ON dp.id_menu = m.id_menu
-       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY m.id_menu, m.nama_menu
        ORDER BY qty DESC
        LIMIT 5`,
@@ -151,12 +151,13 @@ exports.getChart = async (req, res) => {
 
     const { rows } = await pool.query(
       `SELECT
-         TO_CHAR(waktu_pesan::date, 'DD/MM') AS label,
-         COALESCE(SUM(total_harga), 0) AS total
-       FROM pesanan
-       WHERE waktu_pesan::date BETWEEN $1 AND $2
-       GROUP BY waktu_pesan::date
-       ORDER BY waktu_pesan::date ASC`,
+         TO_CHAR(p.waktu_pesan::date, 'DD/MM') AS label,
+         COALESCE(SUM(dp.jumlah), 0) AS total
+       FROM pesanan p
+       LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
+       GROUP BY p.waktu_pesan::date
+       ORDER BY p.waktu_pesan::date ASC`,
       [dari, sampai]
     );
 
@@ -182,7 +183,7 @@ exports.exportPdf = async (req, res) => {
        FROM detail_pesanan dp
        JOIN pesanan p  ON dp.id_pesanan = p.id_pesanan
        JOIN menu m     ON dp.id_menu    = m.id_menu
-       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu
        ORDER BY p.waktu_pesan::date ASC, terjual DESC`,
       [dari, sampai]
@@ -220,7 +221,7 @@ exports.getDetailMenu = async (req, res) => {
        FROM detail_pesanan dp
        JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
        JOIN menu m    ON dp.id_menu    = m.id_menu
-       WHERE p.waktu_pesan::date BETWEEN $1 AND $2
+       WHERE p.status_pesanan = 'Selesai' AND p.waktu_pesan::date BETWEEN $1 AND $2
        GROUP BY p.waktu_pesan::date, m.id_menu, m.nama_menu
        ORDER BY p.waktu_pesan::date ASC, terjual DESC`,
       [dari, sampai]

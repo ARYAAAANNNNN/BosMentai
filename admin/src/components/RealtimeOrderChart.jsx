@@ -10,16 +10,30 @@ import {
 } from "recharts";
 import { laporanAPI } from "../services/api";
 
-const RealtimeOrderChart = () => {
+const RealtimeOrderChart = ({ data: propsData }) => {
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!propsData);
 
-  // Fungsi Fetch Data Riil dari Backend
+  // Sinkronisasi data dari props jika dikirim oleh Dashboard.jsx
+  useEffect(() => {
+    if (propsData && propsData.length > 0) {
+      // Normalisasi format: pastikan ada property 'name' dan 'orders'
+      const normalized = propsData.map(item => ({
+        name: item.label || item.name,
+        orders: Number(item.value || item.orders || 0)
+      }));
+      setData(normalized);
+      setLoading(false);
+    }
+  }, [propsData]);
+
+  // Fungsi Fetch Data Riil dari Backend (hanya jika propsData tidak ada)
   const fetchChartData = useCallback(async () => {
+    if (propsData) return; // Prioritaskan data dari props
+    
     try {
       const res = await laporanAPI.getChart();
       if (res) {
-        // Mapping data agar sesuai dengan kebutuhan chart
         const formatted = res.map((item) => ({
           name: item.hari,
           orders: parseInt(item.total || 0),
@@ -28,27 +42,27 @@ const RealtimeOrderChart = () => {
       }
     } catch (err) {
       console.warn("Gagal mengambil data chart riil, menggunakan fallback.");
-      // Fallback data jika API bermasalah agar UI tidak kosong
       setData([
-        { name: "Senin", orders: 25 },
-        { name: "Selasa", orders: 40 },
-        { name: "Rabu", orders: 15 },
-        { name: "Kamis", orders: 30 },
-        { name: "Jumat", orders: 45 },
-        { name: "Sabtu", orders: 60 },
-        { name: "Minggu", orders: 55 },
+        { name: "Senin", orders: 0 },
+        { name: "Selasa", orders: 0 },
+        { name: "Rabu", orders: 0 },
+        { name: "Kamis", orders: 0 },
+        { name: "Jumat", orders: 0 },
+        { name: "Sabtu", orders: 0 },
+        { name: "Minggu", orders: 0 },
       ]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [propsData]);
 
   useEffect(() => {
-    fetchChartData();
-    // Sinkronisasi setiap 10 detik agar tetap realtime tapi tidak "loncat-loncat"
-    const interval = setInterval(fetchChartData, 10000);
-    return () => clearInterval(interval);
-  }, [fetchChartData]);
+    if (!propsData) {
+      fetchChartData();
+      const interval = setInterval(fetchChartData, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchChartData, propsData]);
 
   if (loading) return <SkeletonLoading />;
 

@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import { menuAPI, getImageUrl } from '../services/api'
 import { useCart } from '../context/CartContext'
 import Keranjang from '../components/Keranjang'
-import MenuCard from '../components/MenuCard'
 import './MenuPage.css'
 
 function MenuPage() {
@@ -46,21 +45,20 @@ function MenuPage() {
       : parseInt(String(rawPrice).replace(/\D/g, ''), 10) || 0
     const price = `Rp ${priceValue.toLocaleString('id-ID')}`
     return {
-      ...item, 
       id: item.id_menu || item.id,
       name,
-      nama_menu: name,
       price,
       priceValue,
-      stok: Number(item.stok ?? item.availability ?? 0),
+      availability: Number(item.availability ?? item.stok ?? 0), // Memastikan ini angka
       category: item.category || item.kategori || item.nama_kategori || '',
       id_kategori: item.id_kategori ? String(item.id_kategori) : '',
       image: getImageUrl(item.image || item.gambar),
     }
   }
 
-  const normalizedMenu = (menuItems || []).map(normalizeMenu)
+  const normalizedMenu = menuItems.map(normalizeMenu)
 
+  // ─── Kategori Statis ──────────────────────────────────────────────────────
   const categories = [
     { id: 'semua', name: 'Semua' },
     { id: '1', name: 'Makanan' },
@@ -75,17 +73,40 @@ function MenuPage() {
     return matchesCategory && matchesSearch
   })
 
+  const getPriceValue = (item) => {
+    if (typeof item.priceValue === 'number') return item.priceValue
+    if (typeof item.price === 'string') {
+      return parseInt(item.price.replace(/\D/g, ''), 10) || 0
+    }
+    return 0
+  }
+
+  const addToCartHandler = (item) => {
+    // Validasi stok di sisi UI sebelum masuk ke context
+    if (item.availability <= 0) {
+      showNotification(`Maaf, ${item.name} sedang habis`)
+      return
+    }
+
+    const itemWithPrice = {
+      ...item,
+      priceValue: getPriceValue(item)
+    }
+    
+    const success = addToCart(itemWithPrice)
+    if (success) {
+      showNotification(`${item.name} ditambahkan ke keranjang`)
+    } else {
+      showNotification(`Stok ${item.name} tidak mencukupi`)
+    }
+  }
+
   const showNotification = (message) => {
     setNotification(message)
     setTimeout(() => setNotification(''), 3000)
   }
 
-  const handleAdd = (item) => {
-    addToCart(item);
-    showNotification(`${item.name} masuk keranjang`);
-  }
-
-  const tableNumber = tableId || '1'
+  const tableNumber = tableId || '12'
 
   return (
     <div className="app">
@@ -157,15 +178,39 @@ function MenuPage() {
               <div className="menu-grid" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '220px' }}>
                 <p style={{ color: '#666' }}>Memuat menu...</p>
               </div>
-            ) : filteredMenu.length === 0 ? (
-              <div className="menu-grid" style={{ justifyContent: 'center', alignItems: 'center', minHeight: '220px' }}>
-                <p style={{ color: '#999' }}>Menu tidak ditemukan atau belum tersedia.</p>
-              </div>
             ) : (
               <div className="menu-grid">
-                {filteredMenu.map(item => (
-                  <MenuCard key={item.id} item={item} onAdd={() => handleAdd(item)} />
-                ))}
+                {filteredMenu.map(item => {
+                  const isOutOfStock = item.availability <= 0;
+                  return (
+                    <div key={item.id} className={`menu-card ${isOutOfStock ? 'out-of-stock' : ''}`}>
+                      <img src={item.image} alt={item.name} className="menu-image" style={{ filter: isOutOfStock ? 'grayscale(1)' : 'none' }} />
+                      <div className="menu-info">
+                        <div className="menu-price">{item.price}</div>
+                        <div className="menu-name">{item.name}</div>
+                        <div className="menu-availability">
+                          {isOutOfStock ? (
+                            <span style={{ color: '#d34848', fontWeight: 'bold' }}>Habis</span>
+                          ) : (
+                            `Tersedia : ${item.availability}`
+                          )}
+                        </div>
+                        <button 
+                          className="order-btn" 
+                          onClick={() => addToCartHandler(item)}
+                          disabled={isOutOfStock}
+                          style={{ 
+                            backgroundColor: isOutOfStock ? '#ccc' : '', 
+                            cursor: isOutOfStock ? 'not-allowed' : 'pointer' 
+                          }}
+                        >
+                          <span className="material-icons">{isOutOfStock ? 'block' : 'add'}</span>
+                          {isOutOfStock ? 'Habis' : 'Pesan'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>

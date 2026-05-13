@@ -19,7 +19,7 @@ const formatRupiah = (angka) =>
     .replace("IDR", "Rp")
     .trim();
 
-// ─── ANIMATED COUNTER (Efek Angka Berjalan) ────────────────────────
+// ─── ANIMATED COUNTER ──────────────────────────────────────────────
 const AnimatedNumber = ({ value, isRupiah = false }) => {
   const [display, setDisplay] = useState(0);
   const ref = useRef(null);
@@ -78,9 +78,8 @@ const StatCard = ({ label, value, sub, bg, isRupiah }) => {
   );
 };
 
-// ─── CONTAINER CARD ───────────────────────────────────────────────
-const SectionCard = ({ children, style }) => (
-  <div style={{ 
+const SectionCard = ({ children, style, className }) => (
+  <div className={className} style={{ 
     background: "#fff", 
     borderRadius: 28, 
     padding: "24px", 
@@ -94,48 +93,100 @@ const SectionCard = ({ children, style }) => (
 
 // ─── DASHBOARD MAIN COMPONENT ──────────────────────────────────────
 const Dashboard = () => {
-  const { orders, refreshOrders } = useOrderContext();
+  const { orders } = useOrderContext();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // State UI
+  // State UI & Data
   const [showNotif, setShowNotif] = useState(false);
   const [notifData, setNotifData] = useState(null);
   const [summary, setSummary] = useState({ totalPesanan: 0, totalItem: 0, diproses: 0, terlaris: "—" });
+  const [weeklyChartData, setWeeklyChartData] = useState([]);
 
   const lastOrderIdRef = useRef(null);
   const isInitialLoad = useRef(true);
   const audioRef = useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"));
 
-  // ─── FETCH DATA STATISTIK ───
-  const fetchStats = useCallback(async (quiet = false) => {
+  // ─── FUNGSI KRITIKAL: HITUNG DATA GRAFIK DARI ORDERS ───
+  const calculateStatsFromOrders = useCallback((orderList) => {
+    if (!orderList) return;
+
+    const dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    // Inisialisasi ulang ke 0 agar tidak akumulasi data lama
+    const chartMap = { Senin: 0, Selasa: 0, Rabu: 0, Kamis: 0, Jumat: 0, Sabtu: 0, Minggu: 0 };
+    
+    let totalItemCount = 0;
+    let processingCount = 0;
+
+    orderList.forEach(order => {
+      // 1. Tentukan Hari (Gunakan field yang tepat dari backend: waktu_pesan)
+      const dateSource = order.waktu_pesan || order.created_at || order.createdAt || order.tanggal;
+      const d = new Date(dateSource);
+      
+      if (!isNaN(d.getTime())) {
+        const dayName = dayNames[d.getDay()];
+        if (chartMap[dayName] !== undefined) {
+          chartMap[dayName] += 1;
+        }
+      }
+
+      // 2. Hitung Total Item Terjual
+      if (order.items && Array.isArray(order.items)) {
+        totalItemCount += order.items.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+      }
+
+      // 3. Hitung Pesanan Aktif (selain 'selesai' atau 'batal')
+      const status = order.status?.toLowerCase();
+      if (status && status !== 'selesai' && status !== 'batal') {
+        processingCount += 1;
+      }
+    });
+
+    // Update State Grafik
+    setWeeklyChartData([
+      { label: 'Senin', value: chartMap['Senin'] },
+      { label: 'Selasa', value: chartMap['Selasa'] },
+      { label: 'Rabu', value: chartMap['Rabu'] },
+      { label: 'Kamis', value: chartMap['Kamis'] },
+      { label: 'Jumat', value: chartMap['Jumat'] },
+      { label: 'Sabtu', value: chartMap['Sabtu'] },
+      { label: 'Minggu', value: chartMap['Minggu'] },
+    ]);
+
+    // Update State Summary (Angka di Card)
+    setSummary(prev => ({
+      ...prev,
+      totalPesanan: orderList.length, // PASTI SAMA DENGAN JUMLAH DATA
+      totalItem: totalItemCount,
+      diproses: processingCount,
+    }));
+  }, []);
+
+  // Sync setiap kali 'orders' berubah
+  useEffect(() => {
+    calculateStatsFromOrders(orders);
+  }, [orders, calculateStatsFromOrders]);
+
+  // Ambil data tambahan (Terlaris) dari API Laporan
+  const fetchLaporanLainnya = useCallback(async () => {
     const today = new Date().toISOString().split("T")[0];
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-
     try {
       const res = await laporanAPI.getSummary(weekAgo, today);
-      if (res.success) {
-        setSummary({
-          totalPesanan: res.data.totalPesanan ?? 0,
-          totalItem: res.data.totalItem ?? 0,
-          diproses: res.data.diproses ?? 0,
-          terlaris: res.data.terlaris || "—",
-        });
+      if (res.success && res.data.terlaris) {
+        setSummary(prev => ({ ...prev, terlaris: res.data.terlaris }));
       }
     } catch (err) {
-      if (!quiet) console.warn("Gagal mengambil summary:", err.message);
+      console.warn("Gagal ambil menu terlaris:", err.message);
     }
   }, []);
 
-  // ─── LOGIKA REALTIME NOTIFIKASI & POLLING ───
   useEffect(() => {
-    fetchStats();
-    const intervalId = setInterval(() => {
-      if (refreshOrders) refreshOrders();
-      fetchStats(true);
-    }, 8000);
+    fetchLaporanLainnya();
+    const intervalId = setInterval(fetchLaporanLainnya, 30000); // Terlaris update tiap 30 detik
     return () => clearInterval(intervalId);
-  }, [fetchStats, refreshOrders]);
+  }, [fetchLaporanLainnya]);
 
+  // Logika Notifikasi
   useEffect(() => {
     if (orders && orders.length > 0) {
       const latestOrder = orders[0];
@@ -144,52 +195,50 @@ const Dashboard = () => {
         isInitialLoad.current = false;
         return;
       }
-
       if (latestOrder.id !== lastOrderIdRef.current) {
         lastOrderIdRef.current = latestOrder.id;
-        const jam = new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' });
-        
         setNotifData({
-          meja: latestOrder.meja || latestOrder.nomor_meja,
-          item: latestOrder.items?.reduce((sum, i) => sum + i.qty, 0) || 0,
-          waktu: jam
+          meja: latestOrder.meja || latestOrder.nomor_meja || "Kasir",
+          item: latestOrder.items?.reduce((sum, i) => sum + (i.qty || 0), 0) || 0,
+          waktu: new Date().toLocaleTimeString("id-ID", { hour: '2-digit', minute: '2-digit' })
         });
-
         setShowNotif(true);
         audioRef.current.play().catch(() => {});
-        fetchStats(true);
         setTimeout(() => setShowNotif(false), 7000);
       }
     }
-  }, [orders, fetchStats]);
+  }, [orders]);
 
   const cards = [
-    { label: "Total Pesanan", value: summary.totalPesanan, sub: "7 hari terakhir", bg: "#4F46E5" },
-    { label: "Total Menu Terjual", value: summary.totalItem, sub: "item terjual", bg: "#F59E0B" },
-    { label: "Sedang Diproses", value: summary.diproses, sub: "pesanan aktif", bg: "#EF4444" },
-    { label: "Menu Terlaris", value: summary.terlaris, sub: "paling disukai", bg: "#10B981" },
+    { label: "Total Pesanan", value: summary.totalPesanan, sub: "Data Real-time", bg: "#4F46E5" },
+    { label: "Total Menu Terjual", value: summary.totalItem, sub: "Item keluar", bg: "#F59E0B" },
+    { label: "Sedang Diproses", value: summary.diproses, sub: "Antrean aktif", bg: "#EF4444" },
+    { label: "Menu Terlaris", value: summary.terlaris, sub: "Paling laku", bg: "#10B981" },
   ];
 
   return (
     <div style={{ padding: "32px", width: "100%", background: "#F8FAFC", minHeight: "100vh", boxSizing: "border-box", position: "relative" }}>
-
-      {/* ── POP-UP NOTIFIKASI ── */}
+      
+      {/* NOTIFIKASI */}
       {showNotif && notifData && (
         <div className="fixed top-8 right-8 z-[9999] bg-white rounded-2xl p-5 shadow-2xl flex items-center gap-4 border-l-8 border-red-500 min-w-[350px] animate-in slide-in-from-right duration-500">
           <div className="bg-red-50 p-3 rounded-xl"><Bell size={24} className="text-red-500" /></div>
           <div className="flex-1">
-            <h4 className="text-sm font-black text-gray-900 m-0">Pesanan Baru Masuk!</h4>
+            <h4 className="text-sm font-black text-gray-900 m-0">Pesanan Baru!</h4>
             <p className="text-xs text-gray-500 font-medium mt-1">Meja {notifData.meja} • {notifData.item} Item • {notifData.waktu} WIB</p>
           </div>
           <button onClick={() => setShowNotif(false)} className="bg-gray-100 p-1.5 rounded-full text-gray-400 hover:text-gray-600 transition-colors"><X size={16} /></button>
         </div>
       )}
 
-      {/* ── HEADER ── */}
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900 m-0 tracking-tight">Dashboard Admin</h1>
-          <p className="text-sm text-slate-400 mt-1 font-medium">Monitoring aktivitas restoran secara realtime</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+            <p className="text-sm text-slate-400 font-medium">Data tersinkronisasi dengan Pesanan ({summary.totalPesanan})</p>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative w-72">
@@ -205,45 +254,29 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ── STAT CARDS ── */}
+      {/* STATS */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         {cards.map((c, i) => (
           <StatCard key={i} label={c.label} value={c.value} sub={c.sub} bg={c.bg} />
         ))}
       </div>
 
-      {/* ── GRID TENGAH (UTAMA) ── */}
+      {/* CHARTS & MENU */}
       <div className="grid grid-cols-[1fr_400px] gap-6 mb-8">
-        {/* Restaurant Menu List */}
         <SectionCard>
           <RestaurantMenu searchTerm={searchTerm} />
         </SectionCard>
-
-        {/* Realtime Vertical Bar Chart */}
-        <RealtimeOrderChart />
+        <RealtimeOrderChart data={weeklyChartData} />
       </div>
 
-      {/* ── GRID BAWAH ── */}
       <div className="grid grid-cols-[1fr_400px] gap-6">
         <SectionCard className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-black text-slate-900">Pesanan Terbaru</h3>
-          </div>
           <RecentOrders />
         </SectionCard>
-        
         <SectionCard className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-black text-slate-900">Performa Penjualan</h3>
-          </div>
-          <SalesChart />
+          <SalesChart data={weeklyChartData} />
         </SectionCard>
       </div>
-
-      <style>{`
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        .animate-pulse-slow { animation: pulse 2s infinite; }
-      `}</style>
     </div>
   );
 };

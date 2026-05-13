@@ -22,21 +22,21 @@ export const menuData = [
   { id: 20, name: "Lo Mai Gai (Nasi Ketan Ayam)", category: "Dimsum", image: "/images/LoMaiGai.jpg", price: 15000 },
 
   // 🥟 Dimsum - Goreng (15 Menu)
-  { id: 21, name: "Lumpia Udang", category: "Goreng", image: "/images/LumpiaUdang.jpg", price: 8000 },
-  { id: 22, name: "Lumpia Ayam", category: "Goreng", image: "/images/LumpiaAyam.jpg", price: 7000 },
-  { id: 23, name: "Lumpia Sayur", category: "Goreng", image: "/images/LumpiaSayur.jpg", price: 6000 },
-  { id: 24, name: "Udang Rambutan", category: "Goreng", image: "/images/UdangRambutan.jpg", price: 10000 },
-  { id: 25, name: "Bola Udang Goreng", category: "Goreng", image: "/images/BolaUdangGoreng.jpg", price: 9000 },
-  { id: 26, name: "Pangsit Goreng", category: "Goreng", image: "/images/PangsitGoreng.jpg", price: 6000 },
-  { id: 27, name: "Wonton Goreng", category: "Goreng", image: "/images/WontonGoreng.jpg", price: 7000 },
-  { id: 28, name: "Kulit Tahu Udang", category: "Goreng", image: "/images/KulitTahuUdang.jpg", price: 10000 },
-  { id: 29, name: "Dimsum Jamur", category: "Goreng", image: "/images/DimsumJamur.jpg", price: 7000 },
-  { id: 30, name: "Dimsum Ayam Wortel", category: "Goreng", image: "/images/DimsumAyamWortel.jpg", price: 7000 },
-  { id: 31, name: "Dimsum Seafood", category: "Goreng", image: "/images/DimsumSeafood.jpg", price: 12000 },
-  { id: 32, name: "Dimsum Kepiting", category: "Goreng", image: "/images/DimsumKepiting.jpg", price: 12000 },
-  { id: 33, name: "Taro Dumpling", category: "Goreng", image: "/images/TaroDumpling.jpg", price: 9000 },
-  { id: 34, name: "Cakwe Udang", category: "Goreng", image: "/images/CakweUdang.jpg", price: 8000 },
-  { id: 35, name: "Bola Wijen", category: "Goreng", image: "/images/BolaWijen.jpg", price: 7000 },
+  { id: 21, name: "Lumpia Udang", category: "Snack", image: "/images/LumpiaUdang.jpg", price: 8000 },
+  { id: 22, name: "Lumpia Ayam", category: "Snack", image: "/images/LumpiaAyam.jpg", price: 7000 },
+  { id: 23, name: "Lumpia Sayur", category: "Snack", image: "/images/LumpiaSayur.jpg", price: 6000 },
+  { id: 24, name: "Udang Rambutan", category: "Snack", image: "/images/UdangRambutan.jpg", price: 10000 },
+  { id: 25, name: "Bola Udang Goreng", category: "Snack", image: "/images/BolaUdangGoreng.jpg", price: 9000 },
+  { id: 26, name: "Pangsit Goreng", category: "Snack", image: "/images/PangsitGoreng.jpg", price: 6000 },
+  { id: 27, name: "Wonton Goreng", category: "Snack", image: "/images/WontonGoreng.jpg", price: 7000 },
+  { id: 28, name: "Kulit Tahu Udang", category: "Snack", image: "/images/KulitTahuUdang.jpg", price: 10000 },
+  { id: 29, name: "Dimsum Jamur", category: "Snack", image: "/images/DimsumJamur.jpg", price: 7000 },
+  { id: 30, name: "Dimsum Ayam Wortel", category: "Snack", image: "/images/DimsumAyamWortel.jpg", price: 7000 },
+  { id: 31, name: "Dimsum Seafood", category: "Snack", image: "/images/DimsumSeafood.jpg", price: 12000 },
+  { id: 32, name: "Dimsum Kepiting", category: "Snack", image: "/images/DimsumKepiting.jpg", price: 12000 },
+  { id: 33, name: "Taro Dumpling", category: "Snack", image: "/images/TaroDumpling.jpg", price: 9000 },
+  { id: 34, name: "Cakwe Udang", category: "Snack", image: "/images/CakweUdang.jpg", price: 8000 },
+  { id: 35, name: "Bola Wijen", category: "Snack", image: "/images/BolaWijen.jpg", price: 7000 },
 
   // 🥟 Dimsum - Lainnya (5 Menu)
   { id: 36, name: "Dimsum Ayam Jamur", category: "Lain", image: "/images/DimsumAyamJamur.jpg", price: 8000 },
@@ -74,5 +74,5 @@ export const menuData = [
   { id: 64, name: "Milk Tea", category: "Minuman", image: "/images/MilkTea.jpg", price: 15000 }
 ];
 
-export const categories = ["Semua", "Dimsum", "Goreng", "Lain", "Dessert", "Minuman"];
+export const categories = ["Semua", "Makanan", "Minuman", "Snack"];
 

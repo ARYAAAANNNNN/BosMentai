@@ -1,0 +1,123 @@
+import { CheckCircle2, XCircle, Clock, ChefHat } from 'lucide-react';
+
+const StatusView = ({ status, orderId, onClose }) => {
+  const isSuccess = status === 'success';
+  const isFailed = status === 'failed';
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-50 animate-in fade-in duration-300" />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 animate-in zoom-in duration-300">
+        <div className="bg-white rounded-[32px] p-8 max-w-[320px] w-full text-center shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)]">
+          
+          {/* Icon Status */}
+          <div className="relative w-20 h-20 mx-auto mb-5">
+            {isSuccess && (
+              <>
+                <div className="absolute inset-0 bg-green-100 rounded-full animate-ping opacity-20" />
+                <div className="relative w-20 h-20 bg-green-500 rounded-full flex items-center justify-center border-[6px] border-green-50 shadow-lg">
+                  <CheckCircle2 size={40} className="text-white" />
+                </div>
+              </>
+            )}
+            {isFailed && (
+              <div className="relative w-20 h-20 bg-red-500 rounded-full flex items-center justify-center border-[6px] border-red-50 shadow-lg">
+                <XCircle size={40} className="text-white" />
+              </div>
+            )}
+            {!isSuccess && !isFailed && (
+              <>
+                <div className="absolute inset-0 bg-amber-100 rounded-full animate-ping opacity-20" />
+                <div className="relative w-20 h-20 bg-amber-500 rounded-full flex items-center justify-center border-[6px] border-amber-50 shadow-lg">
+                  <ChefHat size={40} className="text-white" />
+                </div>
+              </>
+            )}
+          </div>
+
+          <h3 className="font-black text-gray-900 text-xl mb-1.5 tracking-tight">
+            {isSuccess ? 'Pesanan Berhasil!' : isFailed ? 'Pesanan Gagal' : 'Sedang Diproses'}
+          </h3>
+
+          {/* FIX: Subtitle Error diperebaiki disini */}
+          <p className="text-sm text-gray-500 font-medium leading-relaxed px-2 mb-2">
+            {isSuccess 
+              ? 'Pesanan Anda sedang diteruskan ke dapur. Mohon ditunggu ya! 🥟' 
+              : isFailed 
+              ? 'Pesanan tidak berhasil dikirim. Silakan coba lagi.' 
+              : 'Menunggu konfirmasi pesanan...'}
+          </p>
+
+          {orderId && (
+            <div className="bg-gray-50 rounded-xl px-3 py-2 mb-4 inline-block">
+              <span className="text-[10px] text-gray-400 font-bold">ORDER ID</span>
+              <p className="text-xs font-mono font-bold text-gray-600">{orderId}</p>
+            </div>
+          )}
+
+          {/* FIX: Alur Timeline yang lurus dan rapih */}
+          {isSuccess && (
+            <div className="mt-6 mb-6 px-2">
+              <div className="flex flex-col items-center">
+                {[
+                  { label: 'Pesanan dibuat', done: true },
+                  { label: 'Pesanan dikonfirmasi', done: true },
+                  { label: 'Pesanan diproses', done: false, active: true },
+                  { label: 'Pesanan siap', done: false },
+                ].map((step, i, arr) => (
+                  <div key={i} className="w-full flex flex-col items-center">
+                    <div className="flex items-center w-full gap-3">
+                      {/* Kolom Kiri: Garis & Bulatan */}
+                      <div className="flex flex-col items-center w-6 shrink-0">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center z-10 ${
+                          step.done ? 'bg-green-500' : step.active ? 'bg-amber-400 animate-pulse' : 'bg-gray-200'
+                        }`}>
+                          {step.done && <CheckCircle2 size={12} className="text-white" />}
+                          {step.active && <Clock size={10} className="text-white" />}
+                        </div>
+                      </div>
+                      
+                      {/* Kolom Kanan: Teks */}
+                      <span className={`text-xs font-bold text-left flex-1 ${
+                        step.done ? 'text-green-600' : step.active ? 'text-amber-600' : 'text-gray-400'
+                      }`}>
+                        {step.label}
+                      </span>
+                    </div>
+
+                    {/* Garis Vertikal Tengah */}
+                    {i < arr.length - 1 && (
+                      <div className="w-full flex justify-start">
+                        <div className={`ml-[11px] w-0.5 h-5 my-0.5 ${step.done ? 'bg-green-300' : 'bg-gray-200'}`} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={onClose}
+            className="w-full h-11 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all mt-2"
+          >
+            {isSuccess ? 'Kembali ke Menu' : isFailed ? 'Coba Lagi' : 'Tutup'}
+          </button>
+
+          {!isSuccess && !isFailed && (
+            <div className="mt-4 flex justify-center gap-1.5">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default StatusView;
